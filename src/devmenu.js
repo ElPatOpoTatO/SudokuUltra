@@ -11,6 +11,9 @@ import { openSheet } from './token.js';
 import { startPuzzle } from './game.js';
 import { worlds, quick, daily, todayDailyId, modeLabel, entry } from './puzzles.js';
 import { BANDS, dailyIndex, DAILY_EPOCH } from './shared.js';
+/* --- level0: campaign runner entries --- */
+import { devEntries } from './campaign.js';
+/* --- end level0 --- */
 
 const sheet = $('devSheet'), bg = $('devBg');
 
@@ -36,6 +39,9 @@ function render() {
   sheet.textContent = '';
   const h = el('h2', null, null, sheet); h.innerHTML = '<b>DEV</b> · Puzzles';
   el('p', 'sub', `Current: ${S.id} · ${modeLabel(S.id)}${S.mode === 'spot' ? ' · target: ' + S.spot.label : ''}`, sheet);
+  /* --- level0: campaign runner + Level 0 entries (no data-id, so the chip handler below skips them) --- */
+  devEntries(sheet, el, chip, closeDev);
+  /* --- end level0 --- */
 
   el('div', 'grp', 'Campaign', sheet);
   for (const w of worlds) {

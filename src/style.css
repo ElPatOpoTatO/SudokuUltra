@@ -303,6 +303,56 @@ html, body {
 .toast p { margin: 0 0 14px; font-size: 13px; color: var(--ink-2); }
 .toast .key { width: 150px; margin: 0 auto; --kh: 48px; }
 .toast .key .lbl { font-size: 14px; font-weight: 650; color: var(--cap-ink); }
+/* --- level0: coach line, dim overlay, focus and highlight (inert unless .app.l0) ---
+   The coach is a fixed-height slot between the board and the pad, so changing
+   its text never moves the board. Dimming is an overlay per cell and opacity
+   on keys (opacity only); focus reuses the peer tint layer, highlight reuses
+   the select ring's inset outline. */
+.coach { display: none; }
+.app.l0 .coach {
+  flex: none; height: 80px; display: grid;
+  grid-template-columns: minmax(0, 1fr); grid-template-rows: 8px minmax(0, 1fr); column-gap: 10px; row-gap: 2px;
+  padding: 6px 8px 6px 14px; border-radius: 14px;
+  background: var(--surface); box-shadow: 0 0 0 1px var(--line);
+}
+.app.l0 .coach.keys { grid-template-columns: minmax(0, 1fr) 92px; }
+.coach .cdots { grid-column: 1; display: flex; gap: 4px; align-items: center; padding-top: 2px; }
+.coach .dot { width: 6px; height: 6px; border-radius: 3px; background: var(--line); transition: background 200ms ease-out; }
+.coach .dot.done { background: var(--accent); }
+.coach .dot.cur { width: 14px; background: var(--accent-glow); box-shadow: inset 0 0 0 1px var(--accent); }
+.coach .csay {
+  grid-column: 1; margin: 0; align-self: center; overflow: hidden;
+  font-size: 14px; line-height: 1.3; font-weight: 520; color: var(--ink);
+  -webkit-user-select: none; user-select: none;
+}
+.coach .csay.nudge { color: var(--accent-ink); }
+.coach .csay.demo { color: var(--ink-2); font-weight: 620; }
+.coach .csay.outro { font-weight: 620; }
+.coach .ckeys { display: none; grid-column: 2; grid-row: 1 / span 2; flex-direction: column; justify-content: center; gap: 6px; }
+.coach.keys .ckeys { display: flex; }
+.coach .key { display: none; --kh: 36px; }
+.coach .key.show { display: block; }
+.coach .key.skip { --kh: 26px; }
+.coach .key .lbl { font-size: 13px; font-weight: 650; color: var(--cap-ink); }
+.coach .key.skip .lbl { font-size: 11px; font-weight: 620; color: var(--ink-2); }
+.cell .l0d { position: absolute; inset: 0; background: var(--bg); opacity: 0; pointer-events: none; transition: opacity 260ms ease-out; }
+.cell.l0-dim .l0d { opacity: .62; }
+.cell.l0-f .fx-t { opacity: 1; }
+.cell.l0-hl::after, .key.l0-hk::after {
+  content: ""; position: absolute; pointer-events: none;
+  animation: l0pulse 1.6s ease-in-out infinite;
+}
+.cell.l0-hl::after { inset: 0; border-radius: 2px; box-shadow: inset 0 0 0 2px var(--accent); }
+.key.l0-hk::after { left: -3px; right: -3px; top: -3px; bottom: 1px; border-radius: 14px; box-shadow: 0 0 0 2px var(--accent); }
+@keyframes l0pulse { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
+.app.l0 .pad .key { transition: opacity 260ms ease-out; }
+.app.l0 .pad .key.l0-dim { opacity: .3; }
+.app.l0 .stat { opacity: .35; }
+@media (prefers-reduced-motion: reduce) {
+  .cell.l0-hl::after, .key.l0-hk::after { animation: none; }
+  .cell .l0d, .app.l0 .pad .key { transition-duration: 120ms; }
+}
+/* --- end level0 --- */
 /* =========================================================================
    PROGRESS TOKEN SHEET
    ========================================================================= */

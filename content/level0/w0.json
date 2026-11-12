@@ -1,0 +1,96 @@
+{
+  "id": "w0-l0",
+  "world": 0,
+  "title": "Full house",
+  "board": "864351729927486513531279684702534168308107402410802075143728956685913247279645831",
+  "showCands": false,
+  "steps": [
+    {
+      "say": "This board is almost full. You'll finish it yourself, one move at a time.",
+      "dim": "none",
+      "expect": { "continue": true }
+    },
+    {
+      "say": "Every row holds 1 to 9, once each. Tap this row's one gap.",
+      "focus": { "row": 3 },
+      "highlight": { "cells": [28] },
+      "expect": { "tap": [28] },
+      "nudge": "The gap is in the bright row."
+    },
+    {
+      "say": "Which number is this row missing? Type it.",
+      "focus": { "row": 3 },
+      "highlight": { "cells": [28] },
+      "expect": { "place": { "cell": 28, "digit": 9 } },
+      "nudge": "Read along the row. Which of 1 to 9 isn't there yet?"
+    },
+    {
+      "say": "Columns follow the same rule. Fill this column's gap.",
+      "focus": { "col": 6 },
+      "highlight": { "cells": [51] },
+      "expect": { "place": { "cell": 51, "digit": 3 } },
+      "nudge": "Tap the gap, then type the number the column is missing."
+    },
+    {
+      "say": "So do the 3×3 boxes. Fill this box's gap.",
+      "focus": { "box": 5 },
+      "highlight": { "cells": [43] },
+      "expect": { "place": { "cell": 43, "digit": 9 } },
+      "nudge": "Which of 1 to 9 is missing from the box?"
+    },
+    {
+      "say": "The last gap in a row, column or box is a full house. Only one number fits.",
+      "dim": "none",
+      "expect": { "continue": true }
+    },
+    {
+      "say": "Pencil marks are notes. Tap Pencil to switch to notes.",
+      "expect": { "press": "pencil" },
+      "nudge": "Pencil is the key at the bottom right."
+    },
+    {
+      "say": "Notes are free thinking, never mistakes. Write a small 6 here.",
+      "focus": { "cells": [49] },
+      "highlight": { "cells": [49], "digits": [6] },
+      "expect": { "note": { "cell": 49, "digit": 6 } },
+      "nudge": "Tap the glowing cell, then press 6."
+    },
+    {
+      "say": "Changed your mind? Press 6 again, or Erase, to rub it out.",
+      "focus": { "cells": [49] },
+      "highlight": { "cells": [49], "digits": [6] },
+      "expect": { "eliminate": [[49, 6]] },
+      "nudge": "Select the cell, then press 6 or Erase."
+    },
+    {
+      "say": "Tap Pencil again to go back to writing answers.",
+      "expect": { "press": "pencil" },
+      "nudge": "Tap Pencil to turn notes off."
+    },
+    {
+      "say": "Now a chain. This column has one gap left.",
+      "focus": { "col": 1 },
+      "highlight": { "cells": [37] },
+      "expect": { "place": { "cell": 37, "digit": 5 } }
+    },
+    {
+      "say": "That left one gap in this row.",
+      "focus": { "row": 4 },
+      "highlight": { "cells": [40] },
+      "expect": { "place": { "cell": 40, "digit": 6 } }
+    },
+    {
+      "say": "And one in this box.",
+      "focus": { "box": 4 },
+      "highlight": { "cells": [49] },
+      "expect": { "place": { "cell": 49, "digit": 9 } }
+    },
+    {
+      "say": "Last one. Finish the board!",
+      "focus": { "row": 5 },
+      "highlight": { "cells": [47] },
+      "expect": { "place": { "cell": 47, "digit": 6 } }
+    }
+  ],
+  "outro": "Solved! When a row, column or box has one gap left, the missing number goes there."
+}

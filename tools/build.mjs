@@ -20,6 +20,11 @@
 // Each module becomes `const __m_x = (() => { const {..} = __m_dep; <body>; return {..}; })();`
 // so modules keep their own scope. Exported objects are shared by reference.
 // './puzzles-data.js' is a virtual module: `export const DATA = <data/puzzles.json>`.
+/* --- level0: Level 0 scripts --- */
+// './level0-data.js' is a virtual module: `export const SCRIPTS = { w0: <content/level0/w0.json>, … }`
+// (one key per content/level0/*.json, by file name). Every script must pass
+// validateScript() (src/level0-script.js) or the build fails.
+/* --- end level0 --- */
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -35,6 +40,13 @@ const VIRTUAL = {
     const json = JSON.stringify(JSON.parse(fs.readFileSync(path.join(ROOT, 'data/puzzles.json'), 'utf8')));
     return `export const DATA = ${json};\n`;
   },
+  /* --- level0: Level 0 scripts --- */
+  [path.join(SRC, 'level0-data.js')]: () => {
+    const dir = path.join(ROOT, 'content/level0'), out = {};
+    for (const f of fs.readdirSync(dir).filter((x) => x.endsWith('.json')).sort()) out[f.replace(/\.json$/, '')] = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8'));
+    return `export const SCRIPTS = ${JSON.stringify(out)};\n`;
+  },
+  /* --- end level0 --- */
 };
 
 const fail = (file, msg) => { console.error(`build: ${path.relative(ROOT, file)}: ${msg}`); process.exit(1); };
@@ -104,6 +116,16 @@ function load(file, from) {
   return mod;
 }
 
+/* --- level0: validate the Level 0 scripts before bundling --- */
+{
+  const { validateScript } = await import('../src/level0-script.js');
+  const dir = path.join(ROOT, 'content/level0');
+  for (const f of fs.readdirSync(dir).filter((x) => x.endsWith('.json')).sort()) {
+    const r = validateScript(JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')));
+    if (!r.ok) fail(path.join(dir, f), 'invalid Level 0 script:\n  ' + r.errors.join('\n  '));
+  }
+}
+/* --- end level0 --- */
 load(ENTRY, ENTRY);
 let js = order.map((m) => m.code).join('\n\n');
 if (/<\/script/i.test(js)) js = js.replace(/<\/script/gi, '<\\/script');

@@ -18,6 +18,9 @@ import { FX } from './particles.js';
 const toastTitle = $('toastTitle'), againLbl = document.querySelector('#againKey .lbl');
 export const deadEl = $('dead');
 export const shell = { rewindKey: null };   // set by main.js once the banner key is built
+/* --- level0: toast hooks (level0.js shows its outro instead; campaign.js relabels the keycap) --- */
+export const toastHooks = { before: null, after: null };
+/* --- end level0 --- */
 
 /* =========================================================================
    8. GAME ACTIONS
@@ -117,7 +120,7 @@ function consequences(i, d) {
   } else if (wrong) S.silentWrong++;
 
   // 3) Completions
-  const solved = S.mode === 'free' && isSolvedBoard();
+  const solved = (S.mode === 'free' /* --- level0 --- */ || S.mode === 'l0' /* --- end level0 --- */) && isSolvedBoard();
   const spotHit = S.mode === 'spot' && !wrong && !S.solved ? spotPlacementHit(i, d) : null;
   if (spotHit) spotSuccess(spotHit, i);
   else if (solved) {
@@ -314,6 +317,7 @@ export function resetGame() {
 }
 export function showToast() {
   if (!S.solved) return;
+  /* --- level0 --- */ if (toastHooks.before && toastHooks.before()) return; /* --- end level0 --- */
   if (S.mode === 'spot') {
     toastTitle.textContent = 'Spotted it';
     toastMsg.textContent = S.spot.found ? S.spot.found.text : '';
@@ -324,5 +328,6 @@ export function showToast() {
     againLbl.textContent = 'Play again';
   }
   toastEl.classList.add('show');
+  /* --- level0 --- */ if (toastHooks.after) toastHooks.after(); /* --- end level0 --- */
 }
 export function hideToast() { toastEl.classList.remove('show'); }

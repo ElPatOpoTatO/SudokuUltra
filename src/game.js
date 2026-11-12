@@ -12,14 +12,21 @@ import { boardFor, nextId, modeLabel, has } from './puzzles.js';
 const pidEl = $('pid');
 const LAST_KEY = 'sudoku.last';
 
+/* --- level0: hooks for the Level 0 engine and the campaign runner (campaign.js, level0.js) --- */
+// start: listeners called with the id before any puzzle starts; next: the toast
+// keycap asks it first (return true = handled); label: header label override.
+export const gameHooks = { start: [], next: null, label: null };
+/* --- end level0 --- */
+
 export function updatePid() {
-  pidEl.innerHTML = `<b>DEV</b> · ${S.id} · ${modeLabel(S.id)}`;
+  pidEl.innerHTML = /* --- level0 --- */ (gameHooks.label && gameHooks.label()) || /* --- end level0 --- */ `<b>DEV</b> · ${S.id} · ${modeLabel(S.id)}`;
 }
 
 /* Start (or switch to) a puzzle. `restore`: load this id's autosave if any. */
 export function startPuzzle(id, restore = true) {
   const b = boardFor(id);
   if (!b || !b.sol) return false;
+  /* --- level0 --- */ for (const f of gameHooks.start) f(id); /* --- end level0 --- */
   if (S.id && S.id !== id) flushSave();          // keep the puzzle we are leaving
   S.id = id; S.mode = b.mode; S.kind = b.kind; S.world = b.world;
   S.given.set(b.given); S.sol.set(b.sol); S.startNotes.set(b.notes);
@@ -46,6 +53,7 @@ export function initGame() {
   // Toast keycap: "Play again" after a solve, "Next" after a Spot it
   bindPress($('againKey'), () => {
     sfx.mod();
+    /* --- level0 --- */ if (gameHooks.next && gameHooks.next()) return; /* --- end level0 --- */
     if (S.mode === 'spot' && S.solved) startPuzzle(nextId(S.id));
     else resetGame();
   });

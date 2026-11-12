@@ -13,9 +13,49 @@ import {
   togglePencil, doErase, doUndo, release, resetGame
 } from './actions.js';
 
+/* --- level0: input guard ---
+   While a Level 0 script runs, level0.js sets inputGuard.fn. Every input is
+   described as an action BEFORE it changes anything; the guard returns false
+   to block it (level0.js plays the blocked sound and shows its nudge). With no
+   guard set, nothing here runs and input behaves exactly as before.
+   Actions: select/deselect {cell}, place/note/clear {cell, digit}, load/unload/
+   loadNote {digit}, convert {cell, digit} (long-press turns a placement into a
+   note), press {key: 'pencil'|'erase'|'undo', cell}, reset. */
+export const inputGuard = { fn: null, reset: null };
+const blockedBy = a => !!(inputGuard.fn && a && inputGuard.fn(a) === false);
+function digitAction(d) {
+  const sel = S.selected;
+  if (sel >= 0 && !S.loaded) {
+    if (S.given[sel]) return null;
+    if (S.pencil) return S.values[sel] ? null : { type: 'note', cell: sel, digit: d, on: !(S.notes[sel] & (1 << (d - 1))) };
+    if (S.values[sel] === d) return { type: 'clear', cell: sel, digit: d };
+    if (isLocked(d)) return null;
+    return { type: 'place', cell: sel, digit: d };
+  }
+  if (S.loaded === d) return { type: 'unload', digit: d };
+  if (isLocked(d)) return null;
+  return { type: 'load', digit: d };
+}
+function cellAction(i) {
+  if (S.loaded) {
+    const d = S.loaded;
+    if (S.given[i]) return null;
+    if (S.pencil || S.loadedNote) return S.values[i] ? null : { type: 'note', cell: i, digit: d, on: !(S.notes[i] & (1 << (d - 1))) };
+    if (S.values[i] === d) return { type: 'clear', cell: i, digit: d };
+    return { type: 'place', cell: i, digit: d };
+  }
+  return { type: S.selected === i ? 'deselect' : 'select', cell: i };
+}
+const pressAction = key => ({ type: 'press', key, cell: S.selected });
+const gUndo = () => { if (!blockedBy(pressAction('undo'))) doUndo(); };
+const gErase = () => { if (!blockedBy(pressAction('erase'))) doErase(); };
+const gPencil = () => { if (!blockedBy(pressAction('pencil'))) togglePencil(); };
+/* --- end level0 --- */
+
 /* ---- Digit key ------------------------------------------------------- */
 function digitDown(d, pressId) {
   if (S.solved) { sfx.blocked(); return 'none'; }
+  /* --- level0 --- */ if (inputGuard.fn && blockedBy(digitAction(d))) return 'none'; /* --- end level0 --- */
   const sel = S.selected;
 
   // Cell-first: a cell is selected and nothing is loaded
@@ -46,9 +86,11 @@ function digitDown(d, pressId) {
 }
 
 function digitLong(d, press) {
+  /* --- level0 --- */ if (S.pending && S.pending.pressId === press.id && blockedBy({ type: 'convert', cell: S.pending.i, digit: S.pending.d })) return; /* --- end level0 --- */
   if (S.pending && S.pending.pressId === press.id) { convertPendingToNote(); return; }
   // Number-first long-press: load the digit for notes instead
-  if ((press.result === 'load' || press.result === 'unload') && !S.solved && !isLocked(d)) {
+  if ((press.result === 'load' || press.result === 'unload') && !S.solved && !isLocked(d)
+      /* --- level0 --- */ && !blockedBy({ type: 'loadNote', digit: d }) /* --- end level0 --- */) {
     S.loaded = d; S.loadedNote = true; S.selected = -1;
     sfx.pencil(); haptic(4); refresh();
   }
@@ -59,6 +101,7 @@ let lastTap = null;   // where the finger landed on the board (for the select ri
 function selectFx(i, x, y) { animReach(i); FX.ring(i, x, y); }
 function cellDown(i, pressId) {
   if (S.solved) return;
+  /* --- level0 --- */ if (inputGuard.fn && blockedBy(cellAction(i))) return; /* --- end level0 --- */
   if (S.loaded) {
     const d = S.loaded;
     if (S.given[i]) { sfx.blocked(); return; }
@@ -78,6 +121,7 @@ function cellDown(i, pressId) {
   if (S.selected === i) selectFx(i, lastTap && lastTap.i === i ? lastTap.x : null, lastTap && lastTap.i === i ? lastTap.y : null);
 }
 function cellLong(i, press) {
+  /* --- level0 --- */ if (S.pending && S.pending.pressId === press.id && blockedBy({ type: 'convert', cell: S.pending.i, digit: S.pending.d })) return; /* --- end level0 --- */
   if (S.pending && S.pending.pressId === press.id) convertPendingToNote();
 }
 
@@ -130,9 +174,9 @@ export function bindHeaderBtn(el, fn) {
 export function buildBoundPad() {
   buildPad((el, kind, d) => {
     if (kind === 'digit') bindPress(el, id => digitDown(d, id), p => digitLong(d, p));
-    if (kind === 'undo')   bindPress(el, () => { doUndo(); });
-    if (kind === 'erase')  bindPress(el, () => { doErase(); });
-    if (kind === 'pencil') bindPress(el, () => { togglePencil(); });
+    if (kind === 'undo')   bindPress(el, () => { /* --- level0 --- */ gUndo(); /* --- end level0 --- */ });
+    if (kind === 'erase')  bindPress(el, () => { /* --- level0 --- */ gErase(); /* --- end level0 --- */ });
+    if (kind === 'pencil') bindPress(el, () => { /* --- level0 --- */ gPencil(); /* --- end level0 --- */ });
   });
 }
 
@@ -174,7 +218,7 @@ export function initInput() {
     muteBtn.classList.toggle('muted', sfx.muted);
     if (!sfx.muted) sfx.select();
   });
-  bindHeaderBtn($('resetBtn'), () => { sfx.mod(); resetGame(); });
+  bindHeaderBtn($('resetBtn'), () => { sfx.mod(); /* --- level0 --- */ if (inputGuard.reset && inputGuard.reset()) return; /* --- end level0 --- */ resetGame(); });
 
   /* =========================================================================
      10. INPUT: DESKTOP KEYBOARD (same press system, so long-hold works too)
@@ -187,11 +231,11 @@ export function initInput() {
       const d = +k;
       pressStart(id, digitKeys[d].el, pid => digitDown(d, pid), p => digitLong(d, p));
     } else if (k === 'Backspace' || k === 'Delete' || k === '0') {
-      e.preventDefault(); pressStart(id, keys.erase, doErase, null);
+      e.preventDefault(); pressStart(id, keys.erase, /* --- level0 --- */ gErase /* --- end level0 --- */, null);
     } else if ((k === 'z' || k === 'Z') && (e.metaKey || e.ctrlKey) || k === 'u') {
-      e.preventDefault(); pressStart(id, keys.undo, doUndo, null);
+      e.preventDefault(); pressStart(id, keys.undo, /* --- level0 --- */ gUndo /* --- end level0 --- */, null);
     } else if (k === 'p' || k === 'n') {
-      pressStart(id, keys.pencil, togglePencil, null);
+      pressStart(id, keys.pencil, /* --- level0 --- */ gPencil /* --- end level0 --- */, null);
     } else if (k === 'Escape') {
       release();
     } else if (k.startsWith('Arrow') && !S.loaded && !S.solved) {
@@ -203,6 +247,7 @@ export function initInput() {
         if (k === 'ArrowLeft') c = (c + 8) % 9;
         if (k === 'ArrowRight') c = (c + 1) % 9;
       }
+      /* --- level0 --- */ if (blockedBy({ type: 'select', cell: r * 9 + c })) return; /* --- end level0 --- */
       S.selected = r * 9 + c;
       sfx.select(); refresh(); selectFx(S.selected);
     }

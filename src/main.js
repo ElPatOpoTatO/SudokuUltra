@@ -14,6 +14,10 @@ import { startPuzzle, initialId, initGame } from './game.js';
 import { initDevMenu, openDev, closeDev } from './devmenu.js';
 import { boardFor, allIds, entry, solutionOf } from './puzzles.js';
 import { ALLOW, WORLD_TECHS, decodeCands } from './shared.js';
+/* --- level0: Level 0 engine + campaign runner --- */
+import { initLevel0, L0 } from './level0.js';
+import { initCampaign, camp } from './campaign.js';
+/* --- end level0 --- */
 
 const REWIND_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 18 4 12l7-6z"/><path d="M20 18l-7-6 7-6z"/></svg>';
 
@@ -30,6 +34,9 @@ bindPress(shell.rewindKey, () => { doRewind(); });
 initToken();
 initGame();
 initDevMenu();
+/* --- level0 --- */
+initLevel0();     // after initToken: wraps the autosave refresh hook
+/* --- end level0 --- */
 
 /* PWA: offline cache + install (needs https; skipped in sandboxed frames) */
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
@@ -39,12 +46,16 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
 }
 
 loadSaved();
+/* --- level0: after loadSaved; may start the runner / a Level 0 from the URL (#camp=0, #l0=w0) --- */
+initCampaign();
+/* --- end level0 --- */
 
 /* Test hooks, only with ?debug=1 */
 if (DEBUG) {
   window.__debug = {
     S, UI, sfx, FX, cells, solver, ALLOW, WORLD_TECHS, decodeCands, Token, packState,
     refresh, saveNow, isSolvedBoard, checkDeadEnd, openDev, closeDev,
-    startPuzzle, boardFor, allIds, entry, solutionOf
+    startPuzzle, boardFor, allIds, entry, solutionOf,
+    /* --- level0 --- */ L0, camp /* --- end level0 --- */
   };
 }
