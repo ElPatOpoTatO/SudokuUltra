@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f3f2ef" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16171a" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Sudoku">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Sudoku</title>
+<style>
+/*__STYLE__*/
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header class="hdr">
+    <span class="pid" id="pid" role="button" aria-label="DEV puzzle menu"></span>
+    <div class="dead" id="dead" role="status" aria-live="polite"><span class="msg">Something went wrong earlier</span></div>
+    <div class="stat"><span class="lbl">Mistakes</span><span class="num" id="mist">0</span></div>
+    <div class="status" id="status"></div>
+    <div class="hbtns">
+      <div class="hbtn" id="tokenBtn" role="button" aria-label="Progress token">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="4.5"/><path d="m10.7 12.3 9.3-9.3"/><path d="m16 7 3 3"/><path d="m18.5 4.5 2 2"/></svg>
+      </div>
+      <div class="hbtn" id="resetBtn" role="button" aria-label="Restart puzzle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+      </div>
+      <div class="hbtn" id="muteBtn" role="button" aria-label="Toggle sound">
+        <svg class="ic-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>
+        <svg class="ic-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="m16 9 5 6"/><path d="m21 9-5 6"/></svg>
+      </div>
+    </div>
+  </header>
+
+  <main class="board-wrap">
+    <div class="board" id="board" aria-label="Sudoku board"></div>
+    <div class="toast" id="toast" role="dialog" aria-live="polite">
+      <h2 id="toastTitle">Solved</h2>
+      <p id="toastMsg"></p>
+      <div class="key mod" id="againKey" role="button">
+        <div class="shadow"></div><div class="wall"></div>
+        <div class="cap"><span class="lbl">Play again</span></div>
+      </div>
+    </div>
+  </main>
+
+  <section class="pad" id="pad" aria-label="Number pad"></section>
+</div>
+<canvas class="fxc" id="fxc" aria-hidden="true"></canvas>
+<div class="sheet-bg" id="sheetBg"></div>
+<div class="sheet" id="sheet" role="dialog" aria-label="Progress token">
+  <h2>Progress token</h2>
+  <p class="sub">Copy this code to move your progress to another browser or device. Paste a code below to load it. Your progress also saves automatically on this device.</p>
+  <label for="tokOut">Your token</label>
+  <textarea id="tokOut" readonly spellcheck="false"></textarea>
+  <div class="row">
+    <div class="key mod" id="copyKey" role="button"><div class="shadow"></div><div class="wall"></div><div class="cap"><span class="lbl">Copy</span></div></div>
+  </div>
+  <label for="tokIn">Load a token</label>
+  <textarea id="tokIn" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="Paste a token here"></textarea>
+  <div class="row">
+    <div class="key mod" id="loadKey" role="button"><div class="shadow"></div><div class="wall"></div><div class="cap"><span class="lbl">Load</span></div></div>
+    <div class="key mod" id="closeKey" role="button"><div class="shadow"></div><div class="wall"></div><div class="cap"><span class="lbl">Close</span></div></div>
+  </div>
+  <p class="msg" id="tokMsg"></p>
+</div>
+<!-- DEV menu (temporary) -->
+<div class="sheet-bg" id="devBg"></div>
+<div class="sheet dev" id="devSheet" role="dialog" aria-label="DEV puzzle menu"></div>
+
+<script type="module">
+//__SCRIPT__
+</script>
+</body>
+</html>

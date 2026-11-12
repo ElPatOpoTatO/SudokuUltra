@@ -1,0 +1,390 @@
+/* =========================================================================
+   1. TOKENS (light default, dark via prefers-color-scheme)
+   ========================================================================= */
+:root {
+  --bg: #f2f1ee;
+  --surface: #fbfaf8;
+  --ink: #1c1e22;
+  --ink-2: #5d6168;
+  --ink-3: #8f939a;
+  --line: #dcd9d3;
+  --line-strong: #7d7a75;
+  --accent: #3767e8;
+  --accent-ink: #2552cc;
+  --accent-soft: rgba(55, 103, 232, .075);
+  --accent-sel: rgba(55, 103, 232, .20);
+  --accent-same: rgba(55, 103, 232, .15);
+  --accent-glow: rgba(55, 103, 232, .26);
+  --err: #d2413a;
+  --err-soft: rgba(210, 65, 58, .30);
+
+  /* keycaps */
+  --cap-hi: #ffffff;
+  --cap: #f1efeb;
+  --cap-ink: #26282d;
+  --cap-edge: rgba(0, 0, 0, .07);
+  --wall: #c4c0b8;
+  --mod-hi: #e9e7e2;
+  --mod: #dedbd5;
+  --mod-wall: #aeaaa2;
+  --key-shadow: rgba(40, 32, 20, .22);
+  --cap-inset-hi: rgba(255, 255, 255, .85);
+
+  --radius-key: 12px;
+  --travel: 3.5px;      /* full press travel */
+  --latch: 2.5px;       /* latched (held-down) depth */
+  --kh: clamp(46px, 7.4dvh, 66px);  /* key height */
+  --release: 150ms;     /* upstroke: snappier, with a small overshoot */
+  --spring: cubic-bezier(.25, 1.42, .5, 1);
+  --flash: rgba(55, 103, 232, .20);   /* 1-frame landing flash */
+  --rub: rgba(226, 132, 146, .26);    /* eraser highlight (soft pink rubber) */
+  --graphite: rgba(70, 72, 78, .10);  /* pencil-mode shimmer */
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #16171a;
+    --surface: #1f2125;
+    --ink: #eceef1;
+    --ink-2: #a3a8b0;
+    --ink-3: #6f747c;
+    --line: #2f3238;
+    --line-strong: #5d626b;
+    --accent: #7ea3ff;
+    --accent-ink: #9bb8ff;
+    --accent-soft: rgba(126, 163, 255, .07);
+    --accent-sel: rgba(126, 163, 255, .22);
+    --accent-same: rgba(126, 163, 255, .15);
+    --accent-glow: rgba(126, 163, 255, .28);
+    --err: #ff6b62;
+    --err-soft: rgba(255, 107, 98, .30);
+
+    --cap-hi: #34373e;
+    --cap: #2a2d33;
+    --cap-ink: #e9ebef;
+    --cap-edge: rgba(255, 255, 255, .04);
+    --wall: #0f1012;
+    --mod-hi: #2b2e34;
+    --mod: #23262b;
+    --mod-wall: #0b0c0e;
+    --key-shadow: rgba(0, 0, 0, .55);
+    --cap-inset-hi: rgba(255, 255, 255, .07);
+    --flash: rgba(255, 255, 255, .13);
+    --rub: rgba(255, 176, 188, .16);
+    --graphite: rgba(205, 210, 220, .08);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  :root { --release: 70ms; --spring: ease-out; }
+}
+
+/* =========================================================================
+   2. BASE / KILL BROWSER TOUCH DEFAULTS
+   ========================================================================= */
+*, *::before, *::after { box-sizing: border-box; }
+html, body {
+  margin: 0; height: 100%; overflow: hidden;
+  overscroll-behavior: none;
+  background: var(--bg); color: var(--ink);
+  font-family: system-ui, -apple-system, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-variant-numeric: tabular-nums;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none; user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
+}
+
+/* =========================================================================
+   3. LAYOUT (portrait, one screen, safe areas)
+   ========================================================================= */
+.app {
+  height: 100vh; height: 100dvh;
+  max-width: 500px; margin: 0 auto;
+  display: flex; flex-direction: column; gap: 10px;
+  padding:
+    max(env(safe-area-inset-top), 8px)
+    max(env(safe-area-inset-right), 14px)
+    max(env(safe-area-inset-bottom), 14px)
+    max(env(safe-area-inset-left), 14px);
+}
+
+/* Header */
+.hdr { flex: none; height: 44px; display: flex; align-items: center; gap: 10px; }
+.stat { display: flex; flex-direction: column; line-height: 1.05; min-width: 64px; }
+.stat .lbl { font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; }
+.stat .num { font-size: 19px; font-weight: 650; color: var(--ink); }
+.stat .num.bad { color: var(--err); }
+.stat .num { transform-origin: 0 60%; }
+.status { flex: 1; text-align: center; font-size: 12.5px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.status b { color: var(--accent-ink); font-weight: 650; }
+.hbtns { display: flex; gap: 4px; min-width: 64px; justify-content: flex-end; }
+.hbtn {
+  width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center;
+  color: var(--ink-2); cursor: pointer; touch-action: none;
+  transition: transform 160ms var(--spring), opacity 160ms;
+}
+.hbtn.down { transform: scale(.88); opacity: .6; transition-duration: 0s; }
+.hbtn svg { width: 20px; height: 20px; }
+.hbtn .ic-off { display: none; }
+.hbtn.muted .ic-on { display: none; }
+.hbtn.muted .ic-off { display: block; }
+
+/* Board area: a size container so the board is the largest square that fits */
+.board-wrap {
+  flex: 1 1 0; min-height: 0; position: relative;
+  container-type: size;
+  display: grid; place-items: center;
+}
+
+/* =========================================================================
+   4. BOARD
+   ========================================================================= */
+.board {
+  width: min(92vw, 52vh);              /* fallback */
+  width: min(100cqw, 100cqh);
+  aspect-ratio: 1 / 1;
+  container-type: inline-size;         /* children size text with cqw */
+  display: grid; grid-template: repeat(3, 1fr) / repeat(3, 1fr);
+  gap: 2px; padding: 2px;
+  background: var(--line-strong);
+  border-radius: 12px; overflow: hidden;
+  touch-action: none;
+}
+.box { display: grid; grid-template: repeat(3, 1fr) / repeat(3, 1fr); gap: 1px; background: var(--line); }
+.cell {
+  position: relative; background: var(--surface);
+  cursor: pointer; overflow: hidden;
+}
+/* tints layered over the opaque surface (no color-mix, works on older Safari) */
+/* peer tint lives on its own layer so it can sweep outward (opacity only) */
+.cell .fx-t { background: var(--accent-soft); }
+.cell.peer .fx-t { opacity: 1; }
+.cell.peer.same .fx-t { opacity: 0; }
+.cell.same { background-image: linear-gradient(var(--accent-same), var(--accent-same)); }
+.board.loaded .cell.same { background-image: linear-gradient(var(--accent-glow), var(--accent-glow)); }
+.cell.sel { background-image: linear-gradient(var(--accent-sel), var(--accent-sel)); }
+.cell.sel::before {
+  content: ""; position: absolute; inset: 0; border-radius: 2px;
+  box-shadow: inset 0 0 0 2px var(--accent); pointer-events: none;
+}
+/* value layer */
+.cell .v {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  font-size: 6.3cqw; line-height: 1; font-weight: 450; color: var(--accent-ink);
+  will-change: transform;
+}
+.cell.given .v { color: var(--ink); font-weight: 640; }
+.cell.conflict .v { color: var(--err); }
+.board.loaded .cell.same .v { font-weight: 700; }
+/* notes 3x3 */
+.cell .notes {
+  position: absolute; inset: 5%;
+  display: grid; grid-template: repeat(3, 1fr) / repeat(3, 1fr);
+}
+.cell .notes span {
+  display: grid; place-items: center;
+  font-size: 2.65cqw; line-height: 1; color: var(--ink-2); font-weight: 520;
+  opacity: 0;
+}
+.cell .notes span.on { opacity: 1; }
+.cell .notes span.hit { color: var(--accent-ink); font-weight: 760; }
+/* effect layers (animated with opacity only) */
+.cell .fx { position: absolute; inset: 0; opacity: 0; pointer-events: none; }
+.cell .fx-a { background: var(--accent-glow); }
+.cell .fx-e { background: var(--err-soft); }
+.cell .fx-f { background: var(--flash); }
+.cell .fx-g { background: var(--graphite); }
+/* erase: a ghost of what was there + an eraser-shaped highlight (both transient) */
+.cell .ghost { pointer-events: none; }
+.cell .rub {
+  position: absolute; top: -12%; height: 124%; left: 28%; width: 44%;
+  border-radius: 45%; background: var(--rub); opacity: 0; pointer-events: none;
+  will-change: transform, opacity;
+}
+
+/* Fallback text sizing if cq units are unsupported */
+@supports not (width: 1cqw) {
+  .cell .v { font-size: min(5.6vw, 3.2vh); }
+  .cell .notes span { font-size: min(2.4vw, 1.4vh); }
+}
+
+/* =========================================================================
+   5. KEYCAPS
+   Structure: .key > .shadow + .wall + .cap
+   - .wall is the static "side" of the key, visible under the cap
+   - .cap travels down with transform only; .shadow fades (opacity only)
+   ========================================================================= */
+.pad {
+  flex: none;
+  display: grid; grid-template-columns: repeat(3, 1fr) 1.18fr;
+  gap: 9px 8px;
+  touch-action: none;
+}
+.key { position: relative; height: var(--kh); cursor: pointer; touch-action: none; }
+.key .shadow {
+  position: absolute; left: 3px; right: 3px; top: 10px; bottom: -1px;
+  border-radius: var(--radius-key);
+  box-shadow: 0 6px 12px -3px var(--key-shadow), 0 2px 3px -1px var(--key-shadow);
+  transition: opacity var(--release) ease-out;
+}
+.key .wall {
+  position: absolute; left: 0; right: 0; top: 8px; bottom: 0;
+  border-radius: var(--radius-key); background: var(--wall);
+}
+.key .cap {
+  position: absolute; left: 0; right: 0; top: 0; bottom: 4px;
+  border-radius: var(--radius-key);
+  background: linear-gradient(180deg, var(--cap-hi) 0%, var(--cap) 70%);
+  box-shadow: inset 0 1px 0 var(--cap-inset-hi), inset 0 0 0 1px var(--cap-edge), inset 0 -3px 4px -2px rgba(0,0,0,.06);
+  color: var(--cap-ink);
+  display: grid; place-items: center;
+  transform: translate3d(0, 0, 0);
+  transition: transform var(--release) var(--spring);
+  will-change: transform;
+}
+/* press tint: opacity-only overlay */
+.key .cap::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit;
+  background: rgba(0, 0, 0, .06); opacity: 0; transition: opacity var(--release);
+}
+/* PRESSED — applied on the exact pointerdown frame, no transition in */
+.key.down .cap { transform: translate3d(0, var(--travel), 0); transition-duration: 0s; }
+.key.down .cap::after { opacity: 1; transition-duration: 0s; }
+.key.down .shadow { opacity: .25; transition-duration: 0s; }
+/* LATCHED — stays partly down */
+.key.latched .cap { transform: translate3d(0, var(--latch), 0); }
+.key.latched .shadow { opacity: .45; }
+.key.latched.down .cap { transform: translate3d(0, var(--travel), 0); }
+
+/* digit key content */
+.key .lg { font-size: clamp(22px, 3.6dvh, 30px); font-weight: 560; line-height: 1; }
+.key .cnt {
+  position: absolute; top: 5px; right: 8px;
+  font-size: 10.5px; font-weight: 650; color: var(--ink-3); line-height: 1;
+}
+.key .led {
+  position: absolute; top: 7px; left: 8px; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent); box-shadow: 0 0 6px var(--accent);
+  opacity: 0; transition: opacity 120ms;
+}
+.key.latched .led { opacity: 1; }
+.key.digit.latched .lg { color: var(--accent-ink); }
+.key.digit.note-latched .lg { font-size: clamp(16px, 2.6dvh, 21px); }
+.key.digit.locked .lg, .key.digit.locked .cnt { opacity: .28; }
+.key.digit.locked .cap { transform: translate3d(0, 1.2px, 0); }
+.key.digit.locked.down .cap { transform: translate3d(0, var(--travel), 0); }
+
+/* modifier keys (Undo / Erase / Pencil) */
+.key.mod .wall { background: var(--mod-wall); }
+.key.mod .cap { background: linear-gradient(180deg, var(--mod-hi) 0%, var(--mod) 75%); }
+.key.mod .cap { grid-template-rows: auto auto; align-content: center; gap: 3px; }
+.key.mod svg { width: 20px; height: 20px; justify-self: center; }
+.key.mod .lbl { font-size: 11px; font-weight: 620; letter-spacing: .02em; color: var(--ink-2); }
+.key.mod.latched .lbl, .key.mod.latched svg { color: var(--accent-ink); }
+
+@media (hover: hover) {
+  .key:hover .cap::after { opacity: .5; }
+  .key.down:hover .cap::after { opacity: 1; }
+}
+
+/* =========================================================================
+   6. SOLVED TOAST
+   ========================================================================= */
+.toast {
+  position: absolute; left: 50%; top: 50%;
+  transform: translate(-50%, -40%) scale(.96); opacity: 0; pointer-events: none;
+  background: var(--surface); color: var(--ink);
+  border-radius: 18px; padding: 18px 20px 16px; min-width: 210px; text-align: center;
+  box-shadow: 0 18px 50px -12px rgba(0,0,0,.35), 0 0 0 1px var(--line);
+  transition: opacity 260ms ease-out, transform 360ms var(--spring);
+}
+.toast.show { opacity: 1; transform: translate(-50%, -50%) scale(1); pointer-events: auto; }
+.toast h2 { margin: 0 0 4px; font-size: 20px; font-weight: 700; }
+.toast p { margin: 0 0 14px; font-size: 13px; color: var(--ink-2); }
+.toast .key { width: 150px; margin: 0 auto; --kh: 48px; }
+.toast .key .lbl { font-size: 14px; font-weight: 650; color: var(--cap-ink); }
+/* =========================================================================
+   PROGRESS TOKEN SHEET
+   ========================================================================= */
+.sheet-bg {
+  position: fixed; inset: 0; z-index: 50; background: rgba(10, 10, 12, .38);
+  opacity: 0; pointer-events: none; transition: opacity 220ms ease-out;
+}
+.sheet-bg.show { opacity: 1; pointer-events: auto; }
+.sheet {
+  position: fixed; left: 50%; bottom: 0; z-index: 51;
+  width: min(520px, 100%); box-sizing: border-box;
+  padding: 18px 18px calc(18px + env(safe-area-inset-bottom));
+  background: var(--surface); color: var(--ink);
+  border-radius: 20px 20px 0 0; box-shadow: 0 -12px 40px -10px rgba(0,0,0,.35), 0 0 0 1px var(--line);
+  transform: translate(-50%, 105%); transition: transform 360ms var(--spring);
+}
+.sheet.show { transform: translate(-50%, 0); }
+.sheet h2 { margin: 0 0 2px; font-size: 18px; font-weight: 700; }
+.sheet .sub { margin: 0 0 12px; font-size: 12.5px; color: var(--ink-2); line-height: 1.4; }
+.sheet label { display: block; font-size: 11px; font-weight: 650; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); margin: 10px 0 5px; }
+.sheet textarea {
+  width: 100%; box-sizing: border-box; height: 74px; resize: none;
+  font: 12px/1.35 ui-monospace, SFMono-Regular, Menlo, monospace; word-break: break-all;
+  color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px;
+  -webkit-user-select: text; user-select: text; touch-action: auto;
+}
+.sheet textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.sheet .row { display: flex; gap: 10px; margin-top: 8px; }
+.sheet .row .key { flex: 1; --kh: 44px; }
+.sheet .row .key .lbl { font-size: 14px; font-weight: 650; color: var(--cap-ink); }
+.sheet .msg { min-height: 18px; margin: 8px 0 0; font-size: 12.5px; color: var(--ink-2); }
+.sheet .msg.ok { color: var(--accent-ink); }
+.sheet .msg.bad { color: var(--err); }
+/* =========================================================================
+   PARTICLE OVERLAY (one canvas, never intercepts input)
+   ========================================================================= */
+.fxc { position: fixed; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; z-index: 40; }
+/* =========================================================================
+   SHELL ADDITIONS (not in the feel prototype; all inside the header or in
+   hidden-by-default overlays, so the board and pad render identically)
+   ========================================================================= */
+.hdr { position: relative; }
+/* DEV: current puzzle id + mode, tap to open the dev menu */
+.pid {
+  position: absolute; left: 50%; top: 1px; transform: translateX(-50%);
+  max-width: 56%; padding: 1px 7px; border-radius: 7px;
+  font-size: 9.5px; line-height: 1.25; font-weight: 650; letter-spacing: .04em;
+  color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  cursor: pointer; touch-action: none;
+}
+.pid b { color: var(--err); font-weight: 750; }
+/* Dead-end banner: slides over the header, never blocks the board */
+.dead {
+  position: absolute; inset: 0; z-index: 5;
+  display: flex; align-items: center; gap: 10px; padding: 0 2px;
+  background: var(--bg);
+  opacity: 0; transform: translateY(-6px); pointer-events: none;
+  transition: opacity 200ms ease-out, transform 300ms var(--spring);
+}
+.dead.show { opacity: 1; transform: none; pointer-events: auto; }
+.dead .msg { flex: 1; font-size: 12.5px; font-weight: 600; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dead .key { width: 112px; --kh: 40px; flex: none; }
+.dead .key .cap { grid-template-columns: auto auto; grid-template-rows: none; justify-content: center; gap: 7px; }
+.dead .key .lbl { font-size: 12.5px; font-weight: 650; color: var(--cap-ink); }
+.dead .key svg { width: 17px; height: 17px; }
+/* DEV menu sheet (reuses .sheet) */
+.sheet.dev { max-height: 86dvh; overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; }
+.sheet.dev h2 b { color: var(--err); }
+.dev .grp { margin: 10px 0 4px; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); }
+.dev .wrow { display: flex; flex-wrap: wrap; align-items: center; gap: 3px; margin: 3px 0; }
+.dev .wrow .tag { width: 64px; font-size: 11px; font-weight: 650; color: var(--ink-2); white-space: nowrap; }
+.dev .wrow.grid { display: grid; grid-template-columns: 64px repeat(12, minmax(0, 1fr)); gap: 3px; }
+.dev .wrow.grid .tag { width: auto; }
+.dev .wrow.grid .chip { min-width: 0; padding: 0; }
+.dev .chip {
+  min-width: 21px; height: 26px; padding: 0 4px; border-radius: 7px; display: inline-grid; place-items: center;
+  background: var(--bg); color: var(--ink); border: 1px solid var(--line);
+  font-size: 11.5px; font-weight: 600; cursor: pointer; touch-action: manipulation;
+}
+.dev .chip.cur { border-color: var(--accent); color: var(--accent-ink); box-shadow: inset 0 0 0 1px var(--accent); }
+.dev .chip.done::after { content: "\2713"; margin-left: 2px; font-size: 9px; color: var(--accent-ink); }
+.dev input { width: 76px; height: 26px; border-radius: 7px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font: inherit; font-size: 12px; padding: 0 6px; -webkit-user-select: text; user-select: text; touch-action: auto; }
+.dev .note { font-size: 11.5px; color: var(--ink-2); margin: 2px 0; }
+/* keep the hidden dev sheet's upward shadow fully below the viewport */
+.sheet.dev:not(.show) { transform: translate(-50%, calc(105% + 64px)); }
