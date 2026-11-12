@@ -4,7 +4,7 @@
 // Listeners are registered by initInput() (called once from main.js).
 import { $, rowOf, colOf, LONG_MS, haptic } from './util.js';
 import { sfx } from './audio.js';
-import { S, UI, isLocked } from './state.js';
+import { S, UI, isLocked, hintHooks } from './state.js';
 import { boardEl, refresh, animReach } from './board.js';
 import { digitKeys, keys, buildPad } from './pad.js';
 import { FX } from './particles.js';
@@ -54,6 +54,9 @@ const gPencil = () => { if (!blockedBy(pressAction('pencil'))) togglePencil(); }
 
 /* ---- Digit key ------------------------------------------------------- */
 function digitDown(d, pressId) {
+  /* --- hints: check mode reads digits from the keypad --- */
+  if (hintHooks.digit && hintHooks.digit(d)) return 'none';
+  /* --- end hints --- */
   if (S.solved) { sfx.blocked(); return 'none'; }
   /* --- level0 --- */ if (inputGuard.fn && blockedBy(digitAction(d))) return 'none'; /* --- end level0 --- */
   const sel = S.selected;
@@ -100,6 +103,9 @@ function digitLong(d, press) {
 let lastTap = null;   // where the finger landed on the board (for the select ring)
 function selectFx(i, x, y) { animReach(i); FX.ring(i, x, y); }
 function cellDown(i, pressId) {
+  /* --- hints: check mode toggles cells instead of selecting --- */
+  if (hintHooks.cell && hintHooks.cell(i)) return;
+  /* --- end hints --- */
   if (S.solved) return;
   /* --- level0 --- */ if (inputGuard.fn && blockedBy(cellAction(i))) return; /* --- end level0 --- */
   if (S.loaded) {
@@ -203,6 +209,7 @@ export function initInput() {
   document.addEventListener('pointerdown', e => {
     sfx.unlock();
     if (e.target.closest('.board, .pad, .hbtn, .toast, .sheet, .sheet-bg, .pid, .dead')) return;
+    /* --- hints --- */ if (e.target.closest('.hintbar, .hkeys')) return; /* --- end hints --- */
     release();
   });
 
@@ -227,6 +234,9 @@ export function initInput() {
     if (UI.sheetOpen) return;            // typing in the token sheet (or the dev sheet)
     if (e.repeat || e.altKey) return;
     const k = e.key, id = 'k' + e.code;
+    /* --- hints: H = hint, C = check, Esc = leave check mode --- */
+    if (!e.metaKey && !e.ctrlKey && hintHooks.key && hintHooks.key(k, id)) { e.preventDefault(); return; }
+    /* --- end hints --- */
     if (/^[1-9]$/.test(k) && !e.metaKey && !e.ctrlKey) {
       const d = +k;
       pressStart(id, digitKeys[d].el, pid => digitDown(d, pid), p => digitLong(d, p));

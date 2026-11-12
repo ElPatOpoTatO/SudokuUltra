@@ -438,3 +438,88 @@ html, body {
 .dev .note { font-size: 11.5px; color: var(--ink-2); margin: 2px 0; }
 /* keep the hidden dev sheet's upward shadow fully below the viewport */
 .sheet.dev:not(.show) { transform: translate(-50%, calc(105% + 64px)); }
+
+/* --- hints: hint ladder + check my thinking ---------------------------------
+   The Hint / Check keys and the coach line live in the free band between the
+   board and the pad (inside .board-wrap, absolutely placed: the board never
+   moves). .app.hb-hdr = that band is too thin: keys go to the header, the
+   coach floats over the board's bottom edge. */
+.hintbar {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 3;
+  display: flex; align-items: center; gap: 10px; pointer-events: none;
+}
+.hintbar > * { pointer-events: auto; }
+.hcoach { position: relative; flex: 1; align-self: stretch; min-width: 0; pointer-events: none; }
+.hcoach .ctext {
+  position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%);
+  max-height: 100%; overflow: hidden;
+  font-size: 12px; line-height: 1.3; color: var(--ink-2); letter-spacing: .005em;
+  opacity: 0; transition: opacity 160ms ease-out;
+}
+.hcoach.show .ctext { opacity: 1; }
+.hcoach .ctext b { color: var(--accent-ink); font-weight: 650; }
+.hcoach.over:not(.top) .ctext { top: auto; }
+.hcoach.over.top .ctext { bottom: auto; }
+.hcoach.over .ctext {
+  bottom: 3px; transform: none; max-height: none;
+  padding: 8px 10px; border-radius: 12px;
+  background: var(--surface); color: var(--ink);
+  box-shadow: 0 10px 28px -10px rgba(0,0,0,.35), 0 0 0 1px var(--line);
+}
+.pips { display: inline-flex; gap: 3px; margin-right: 7px; vertical-align: 1px; }
+.pips i { width: 5px; height: 5px; border-radius: 50%; background: var(--line-strong); opacity: .45; }
+.pips i.on { background: var(--accent); opacity: 1; box-shadow: 0 0 4px var(--accent-glow); }
+.hcoach.ck .pips { display: none; }
+.hcoach.ok .ct::before { content: "\2713\00a0"; color: var(--accent-ink); font-weight: 750; }
+.hcoach.ok .ct { color: var(--ink); }
+.hkeys { display: flex; gap: 6px; flex: none; }
+.hkeys .key { --kh: var(--hkh, 38px); width: 64px; }
+.hkeys .key.ckk { width: 72px; }
+.hkeys .key .cap { grid-template-columns: auto auto; grid-template-rows: none; justify-content: center; gap: 5px; }
+.hkeys .key svg { width: 16px; height: 16px; }
+.hkeys .key .lbl { font-size: 12px; font-weight: 650; color: var(--cap-ink); }
+.hkeys .key.latched .lbl { color: var(--accent-ink); }
+.hkeys .key .led { top: 5px; left: 6px; width: 5px; height: 5px; }
+/* header fallback */
+.hdr-slot:empty { display: none; }
+.hdr .hkeys { gap: 4px; }
+.hdr .hkeys { align-self: flex-end; }
+.hdr .hkeys .key { --kh: 31px; width: 40px; }
+.hdr .hkeys .key .lbl { display: none; }
+.app.hb-hdr .hintbar { left: 8px; right: 8px; bottom: 8px; height: auto; }
+.app.hb-hdr .hintbar.top { top: 8px; bottom: auto; }
+.app.hb-hdr .hcoach { min-height: 1px; }
+.app.hb-hdr .hcoach .ctext {
+  position: relative; top: auto; transform: none; max-height: none;
+  padding: 8px 10px; border-radius: 12px;
+  background: var(--surface); color: var(--ink);
+  box-shadow: 0 10px 28px -10px rgba(0,0,0,.35), 0 0 0 1px var(--line);
+}
+/* board overlays: unit tint, pattern outline, target, accent fill, check selection */
+.cell .hl { position: absolute; inset: 0; pointer-events: none; }
+.cell .hl.u { background: var(--accent-same); }
+.cell .hl.f { background: var(--accent-glow); }
+.cell .hl.p::after, .cell .hl.t::after { content: ""; position: absolute; inset: 0; border-radius: 2px; box-shadow: inset 0 0 0 2px var(--accent); }
+.cell .hl.t::after { box-shadow: inset 0 0 0 2px var(--accent), inset 0 0 0 4px var(--accent-sel); }
+.cell .hl.ck::before { content: ""; position: absolute; inset: 3px; border: 2px dashed var(--accent); border-radius: 4px; }
+.cell .hx { position: absolute; inset: 5%; display: grid; grid-template: repeat(3, 1fr) / repeat(3, 1fr); pointer-events: none; }
+.cell .hx span {
+  display: grid; place-items: center; font-size: 3cqw; line-height: 1; font-weight: 700;
+  color: var(--err); opacity: 0;
+  text-decoration: line-through; text-decoration-thickness: 2px;
+}
+.cell .hx span.on { opacity: 1; }
+.cell .hx span.keep { opacity: 1; color: var(--accent-ink); text-decoration: none; font-weight: 760; }
+.cell .notes span.hxk { color: transparent; }
+@supports not (width: 1cqw) { .cell .hx span { font-size: min(2.4vw, 1.4vh); } }
+/* claim sheet (reuses .sheet) */
+.sheet.ck .ckgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 10px; margin: 4px 0 6px; }
+.sheet.ck .ckgrid .key { --kh: 50px; }
+.sheet.ck .ckgrid .key .cap { grid-template-rows: auto auto; gap: 2px; padding: 0 6px; text-align: center; }
+.sheet.ck .ckgrid .key .lbl { font-size: 13px; font-weight: 650; color: var(--cap-ink); }
+.sheet.ck .ckgrid .key .req { font-size: 10.5px; color: var(--ink-3); font-weight: 560; }
+.sheet.ck .ckgrid .key.off .cap > * { opacity: .35; }
+.sheet.ck .row .key .lbl { font-size: 13.5px; }
+.sheet.ck:not(.show) { transform: translate(-50%, calc(105% + 64px)); }
+.app.l0 .hintbar, .app.l0 .key.hk, .app.l0 .key.ckk { display: none !important; }
+/* --- end hints --- */

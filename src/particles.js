@@ -327,6 +327,27 @@ export const FX = (() => {
       wake();
     },
 
+    /* --- hints: CAUSE -> EFFECT. Thin motes leave the pattern cells and travel
+          to what the pattern decides: each eliminated candidate (a note
+          position) or the target cell. links = [{from, to, d}] where d is the
+          note digit at `to` (0 = the cell centre). Returns the longest flight
+          (ms) so the caller can land an effect on arrival. --- */
+    hintTrace(links, startDelay = 0) {
+      if (rm() || !links.length) return 0;
+      let far = 0;
+      links.forEach((ln, k) => {
+        const s = centerOf(cells[ln.from].el), t = centerOf(ln.d ? cells[ln.to].n[ln.d - 1] : cells[ln.to].el);
+        const dx = t.x - s.x, dy = t.y - s.y, L = Math.sqrt(dx * dx + dy * dy) || 1;
+        const delay = startDelay + k * 26, life = Math.min(260 + L * 0.8, 600);
+        const p = get(MOTE, s.x, s.y, life, delay, ln.err ? C.err : C.accent, 1.0);
+        p.tx = t.x; p.ty = t.y; p.nx = -dy / L; p.ny = dx / L; p.curve = rnd(-0.08, 0.08) * L; p.a = 0.8;
+        if (delay + life > far) far = delay + life;
+      });
+      wake();
+      return far;
+    },
+    /* --- end hints --- */
+
     /* 6. Solved: one wave born at the winning cell, riding the cascade
           outward — a single short streak per cell, pointing away from it */
     wave(origin, step) {

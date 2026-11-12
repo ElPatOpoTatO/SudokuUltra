@@ -130,11 +130,13 @@ const SAVE_PREFIX = 'sudoku.save.v1.', META_PREFIX = 'sudoku.meta.v1.';
 let saveTimer = 0;
 function packMeta() {
   const m = { silentWrong: S.silentWrong };
+  /* --- hints --- */ m.paidHints = S.paidHints; /* --- end hints --- */
   if (S.spot) { m.erased = [...S.spot.erased]; m.found = S.spot.found ? S.spot.steps.indexOf(S.spot.found) : -1; }
   return m;
 }
 function applyMeta(m) {
   S.silentWrong = m.silentWrong | 0;
+  /* --- hints --- */ S.paidHints = m.paidHints | 0; /* --- end hints --- */
   if (S.spot) {
     S.spot.erased = new Set(Array.isArray(m.erased) ? m.erased : []);
     S.spot.found = m.found >= 0 ? S.spot.steps[m.found] || null : null;

@@ -18,6 +18,10 @@ import { ALLOW, WORLD_TECHS, decodeCands } from './shared.js';
 import { initLevel0, L0 } from './level0.js';
 import { initCampaign, camp } from './campaign.js';
 /* --- end level0 --- */
+/* --- hints --- */
+import { initHints, hintTap, enterCheck, exitCheck, hintState, hintOpts } from './hintui.js';
+import * as hintlogic from './hintlogic.js';
+/* --- end hints --- */
 
 const REWIND_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 18 4 12l7-6z"/><path d="M20 18l-7-6 7-6z"/></svg>';
 
@@ -37,6 +41,7 @@ initDevMenu();
 /* --- level0 --- */
 initLevel0();     // after initToken: wraps the autosave refresh hook
 /* --- end level0 --- */
+/* --- hints --- */ initHints(); /* --- end hints --- */
 
 /* PWA: offline cache + install (needs https; skipped in sandboxed frames) */
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
@@ -56,6 +61,7 @@ if (DEBUG) {
     S, UI, sfx, FX, cells, solver, ALLOW, WORLD_TECHS, decodeCands, Token, packState,
     refresh, saveNow, isSolvedBoard, checkDeadEnd, openDev, closeDev,
     startPuzzle, boardFor, allIds, entry, solutionOf,
-    /* --- level0 --- */ L0, camp /* --- end level0 --- */
+    /* --- level0 --- */ L0, camp, /* --- end level0 --- */
+    /* --- hints --- */ hintTap, enterCheck, exitCheck, hintState, hintOpts, hintlogic /* --- end hints --- */
   };
 }

@@ -320,6 +320,56 @@ html, body {
 .toast p { margin: 0 0 14px; font-size: 13px; color: var(--ink-2); }
 .toast .key { width: 150px; margin: 0 auto; --kh: 48px; }
 .toast .key .lbl { font-size: 14px; font-weight: 650; color: var(--cap-ink); }
+/* --- level0: coach line, dim overlay, focus and highlight (inert unless .app.l0) ---
+   The coach is a fixed-height slot between the board and the pad, so changing
+   its text never moves the board. Dimming is an overlay per cell and opacity
+   on keys (opacity only); focus reuses the peer tint layer, highlight reuses
+   the select ring's inset outline. */
+.coach { display: none; }
+.app.l0 .coach {
+  flex: none; height: 80px; display: grid;
+  grid-template-columns: minmax(0, 1fr); grid-template-rows: 8px minmax(0, 1fr); column-gap: 10px; row-gap: 2px;
+  padding: 6px 8px 6px 14px; border-radius: 14px;
+  background: var(--surface); box-shadow: 0 0 0 1px var(--line);
+}
+.app.l0 .coach.keys { grid-template-columns: minmax(0, 1fr) 92px; }
+.coach .cdots { grid-column: 1; display: flex; gap: 4px; align-items: center; padding-top: 2px; }
+.coach .dot { width: 6px; height: 6px; border-radius: 3px; background: var(--line); transition: background 200ms ease-out; }
+.coach .dot.done { background: var(--accent); }
+.coach .dot.cur { width: 14px; background: var(--accent-glow); box-shadow: inset 0 0 0 1px var(--accent); }
+.coach .csay {
+  grid-column: 1; margin: 0; align-self: center; overflow: hidden;
+  font-size: 14px; line-height: 1.3; font-weight: 520; color: var(--ink);
+  -webkit-user-select: none; user-select: none;
+}
+.coach .csay.nudge { color: var(--accent-ink); }
+.coach .csay.demo { color: var(--ink-2); font-weight: 620; }
+.coach .csay.outro { font-weight: 620; }
+.coach .ckeys { display: none; grid-column: 2; grid-row: 1 / span 2; flex-direction: column; justify-content: center; gap: 6px; }
+.coach.keys .ckeys { display: flex; }
+.coach .key { display: none; --kh: 36px; }
+.coach .key.show { display: block; }
+.coach .key.skip { --kh: 26px; }
+.coach .key .lbl { font-size: 13px; font-weight: 650; color: var(--cap-ink); }
+.coach .key.skip .lbl { font-size: 11px; font-weight: 620; color: var(--ink-2); }
+.cell .l0d { position: absolute; inset: 0; background: var(--bg); opacity: 0; pointer-events: none; transition: opacity 260ms ease-out; }
+.cell.l0-dim .l0d { opacity: .62; }
+.cell.l0-f .fx-t { opacity: 1; }
+.cell.l0-hl::after, .key.l0-hk::after {
+  content: ""; position: absolute; pointer-events: none;
+  animation: l0pulse 1.6s ease-in-out infinite;
+}
+.cell.l0-hl::after { inset: 0; border-radius: 2px; box-shadow: inset 0 0 0 2px var(--accent); }
+.key.l0-hk::after { left: -3px; right: -3px; top: -3px; bottom: 1px; border-radius: 14px; box-shadow: 0 0 0 2px var(--accent); }
+@keyframes l0pulse { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
+.app.l0 .pad .key { transition: opacity 260ms ease-out; }
+.app.l0 .pad .key.l0-dim { opacity: .3; }
+.app.l0 .stat { opacity: .35; }
+@media (prefers-reduced-motion: reduce) {
+  .cell.l0-hl::after, .key.l0-hk::after { animation: none; }
+  .cell .l0d, .app.l0 .pad .key { transition-duration: 120ms; }
+}
+/* --- end level0 --- */
 /* =========================================================================
    PROGRESS TOKEN SHEET
    ========================================================================= */
@@ -405,6 +455,91 @@ html, body {
 .dev .note { font-size: 11.5px; color: var(--ink-2); margin: 2px 0; }
 /* keep the hidden dev sheet's upward shadow fully below the viewport */
 .sheet.dev:not(.show) { transform: translate(-50%, calc(105% + 64px)); }
+
+/* --- hints: hint ladder + check my thinking ---------------------------------
+   The Hint / Check keys and the coach line live in the free band between the
+   board and the pad (inside .board-wrap, absolutely placed: the board never
+   moves). .app.hb-hdr = that band is too thin: keys go to the header, the
+   coach floats over the board's bottom edge. */
+.hintbar {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 3;
+  display: flex; align-items: center; gap: 10px; pointer-events: none;
+}
+.hintbar > * { pointer-events: auto; }
+.hcoach { position: relative; flex: 1; align-self: stretch; min-width: 0; pointer-events: none; }
+.hcoach .ctext {
+  position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%);
+  max-height: 100%; overflow: hidden;
+  font-size: 12px; line-height: 1.3; color: var(--ink-2); letter-spacing: .005em;
+  opacity: 0; transition: opacity 160ms ease-out;
+}
+.hcoach.show .ctext { opacity: 1; }
+.hcoach .ctext b { color: var(--accent-ink); font-weight: 650; }
+.hcoach.over:not(.top) .ctext { top: auto; }
+.hcoach.over.top .ctext { bottom: auto; }
+.hcoach.over .ctext {
+  bottom: 3px; transform: none; max-height: none;
+  padding: 8px 10px; border-radius: 12px;
+  background: var(--surface); color: var(--ink);
+  box-shadow: 0 10px 28px -10px rgba(0,0,0,.35), 0 0 0 1px var(--line);
+}
+.pips { display: inline-flex; gap: 3px; margin-right: 7px; vertical-align: 1px; }
+.pips i { width: 5px; height: 5px; border-radius: 50%; background: var(--line-strong); opacity: .45; }
+.pips i.on { background: var(--accent); opacity: 1; box-shadow: 0 0 4px var(--accent-glow); }
+.hcoach.ck .pips { display: none; }
+.hcoach.ok .ct::before { content: "\2713\00a0"; color: var(--accent-ink); font-weight: 750; }
+.hcoach.ok .ct { color: var(--ink); }
+.hkeys { display: flex; gap: 6px; flex: none; }
+.hkeys .key { --kh: var(--hkh, 38px); width: 64px; }
+.hkeys .key.ckk { width: 72px; }
+.hkeys .key .cap { grid-template-columns: auto auto; grid-template-rows: none; justify-content: center; gap: 5px; }
+.hkeys .key svg { width: 16px; height: 16px; }
+.hkeys .key .lbl { font-size: 12px; font-weight: 650; color: var(--cap-ink); }
+.hkeys .key.latched .lbl { color: var(--accent-ink); }
+.hkeys .key .led { top: 5px; left: 6px; width: 5px; height: 5px; }
+/* header fallback */
+.hdr-slot:empty { display: none; }
+.hdr .hkeys { gap: 4px; }
+.hdr .hkeys { align-self: flex-end; }
+.hdr .hkeys .key { --kh: 31px; width: 40px; }
+.hdr .hkeys .key .lbl { display: none; }
+.app.hb-hdr .hintbar { left: 8px; right: 8px; bottom: 8px; height: auto; }
+.app.hb-hdr .hintbar.top { top: 8px; bottom: auto; }
+.app.hb-hdr .hcoach { min-height: 1px; }
+.app.hb-hdr .hcoach .ctext {
+  position: relative; top: auto; transform: none; max-height: none;
+  padding: 8px 10px; border-radius: 12px;
+  background: var(--surface); color: var(--ink);
+  box-shadow: 0 10px 28px -10px rgba(0,0,0,.35), 0 0 0 1px var(--line);
+}
+/* board overlays: unit tint, pattern outline, target, accent fill, check selection */
+.cell .hl { position: absolute; inset: 0; pointer-events: none; }
+.cell .hl.u { background: var(--accent-same); }
+.cell .hl.f { background: var(--accent-glow); }
+.cell .hl.p::after, .cell .hl.t::after { content: ""; position: absolute; inset: 0; border-radius: 2px; box-shadow: inset 0 0 0 2px var(--accent); }
+.cell .hl.t::after { box-shadow: inset 0 0 0 2px var(--accent), inset 0 0 0 4px var(--accent-sel); }
+.cell .hl.ck::before { content: ""; position: absolute; inset: 3px; border: 2px dashed var(--accent); border-radius: 4px; }
+.cell .hx { position: absolute; inset: 5%; display: grid; grid-template: repeat(3, 1fr) / repeat(3, 1fr); pointer-events: none; }
+.cell .hx span {
+  display: grid; place-items: center; font-size: 3cqw; line-height: 1; font-weight: 700;
+  color: var(--err); opacity: 0;
+  text-decoration: line-through; text-decoration-thickness: 2px;
+}
+.cell .hx span.on { opacity: 1; }
+.cell .hx span.keep { opacity: 1; color: var(--accent-ink); text-decoration: none; font-weight: 760; }
+.cell .notes span.hxk { color: transparent; }
+@supports not (width: 1cqw) { .cell .hx span { font-size: min(2.4vw, 1.4vh); } }
+/* claim sheet (reuses .sheet) */
+.sheet.ck .ckgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 10px; margin: 4px 0 6px; }
+.sheet.ck .ckgrid .key { --kh: 50px; }
+.sheet.ck .ckgrid .key .cap { grid-template-rows: auto auto; gap: 2px; padding: 0 6px; text-align: center; }
+.sheet.ck .ckgrid .key .lbl { font-size: 13px; font-weight: 650; color: var(--cap-ink); }
+.sheet.ck .ckgrid .key .req { font-size: 10.5px; color: var(--ink-3); font-weight: 560; }
+.sheet.ck .ckgrid .key.off .cap > * { opacity: .35; }
+.sheet.ck .row .key .lbl { font-size: 13.5px; }
+.sheet.ck:not(.show) { transform: translate(-50%, calc(105% + 64px)); }
+.app.l0 .hintbar, .app.l0 .key.hk, .app.l0 .key.ckk { display: none !important; }
+/* --- end hints --- */
 </style>
 </head>
 <body>
@@ -440,6 +575,9 @@ html, body {
     </div>
   </main>
 
+  <!-- --- level0: coach line (shown only while a Level 0 script runs) --- -->
+  <section class="coach" id="coach" aria-live="polite" aria-label="Coach"></section>
+  <!-- --- end level0 --- -->
   <section class="pad" id="pad" aria-label="Number pad"></section>
 </div>
 <canvas class="fxc" id="fxc" aria-hidden="true"></canvas>
@@ -727,6 +865,31 @@ const engine = (() => {
       src.connect(bp); bp.connect(g); g.connect(master);
       src.start(t, Math.random() * 0.8); src.stop(t + d + 0.05);
     },
+    /* --- hints: sounds for the hint ladder and check my thinking --- */
+    /* HINT — a soft glassy "ding", no click transient (so it never reads as a
+       key). Each ladder level sits one step higher on the pentatonic ladder. */
+    hint(level = 1) {
+      if (!ready()) return; const t = now() + 0.008, p = pj(), v = jit(0.1);
+      const f = pent(880, Math.max(0, level - 1)) * p;
+      burst(t, { type: 'lowpass', f: 2400 * p, q: 0.6, gain: 0.018 * v, dur: 0.05, attack: 0.012 });
+      tone(t, { f0: f, dur: 0.42, gain: 0.05 * v, attack: 0.008 });
+      tone(t + 0.006, { f0: f * 2, dur: 0.22, gain: 0.014 * v, attack: 0.006 });
+      tone(t + 0.07, { f0: f * 1.5, dur: 0.34, gain: 0.022 * v, attack: 0.01 });
+    },
+    /* CHECK, right — latch-ish: one soft ratchet tick, then a small rising chime */
+    checkYes() {
+      if (!ready()) return; const t = now() + 0.006, p = pj();
+      burst(t, { type: 'bandpass', f: 2900 * p, q: 3, gain: 0.09, dur: 0.01 });
+      tone(t + 0.04, { f0: pent(1046.5, 0) * p, dur: 0.3, gain: 0.04, attack: 0.004 });
+      tone(t + 0.11, { f0: pent(1046.5, 2) * p, dur: 0.42, gain: 0.04, attack: 0.004 });
+    },
+    /* CHECK, not quite — gentle low two-note fall (not the error clunk: it's not a mistake) */
+    checkNo() {
+      if (!ready()) return; const t = now() + 0.006, p = pj();
+      tone(t, { type: 'triangle', f0: 392 * p, dur: 0.16, gain: 0.04, attack: 0.006 });
+      tone(t + 0.12, { type: 'triangle', f0: 330 * p, f1: 311 * p, dur: 0.26, gain: 0.035, attack: 0.006 });
+    },
+    /* --- end hints --- */
     /* Puzzle complete: rising mechanical cascade + chord */
     complete() {
       if (!ready()) return; const t0 = now() + 0.05, p = pj();
@@ -1791,7 +1954,10 @@ const S = {
   startNotes: new Uint16Array(81),
   silentWrong: 0,      // wrong digits without a visible clash (never shown)
   deadEnd: false,      // dead-end banner showing
-  spot: null           // Spot it: { steps: [...], erased: Set<cell*10+digit> }
+  spot: null,          // Spot it: { steps: [...], erased: Set<cell*10+digit> }
+  /* --- hints: paid hint levels (3-4) used on this puzzle, saved in the meta --- */
+  paidHints: 0
+  /* --- end hints --- */
 };
 
 /* Transient UI flags shared across modules (not saved). */
@@ -1800,6 +1966,11 @@ const UI = {
   mistGen: 0,
   sheetOpen: false     // token sheet or dev sheet open: keyboard goes to the sheet
 };
+
+/* --- hints: input hooks set by hintui.js (check mode takes over cell taps and
+   digits; H / C / Esc on the keyboard). Each returns true when it handled the input. --- */
+const hintHooks = { cell: null, digit: null, key: null, refresh: null };
+/* --- end hints --- */
 
 function snapshot() { return { v: S.values.slice(), n: S.notes.slice(), solved: S.solved }; }
 function pushUndo() { S.undo.push(snapshot()); if (S.undo.length > 400) S.undo.shift(); }
@@ -1875,7 +2046,7 @@ function spotEliminationHit() {
   return S.spot.steps.find(st => !st.place && st.eliminate.length &&
     st.eliminate.every(([c, d]) => E.has(c * 10 + d) && !S.values[c] && !(S.notes[c] & bit(d)))) || null;
 }
-return Object.freeze({ S, UI, snapshot, pushUndo, restore, conflictAt, countOf, isLocked, wrongAt, isSolvedBoard, checkDeadEnd, rewindTarget, rewindNotes, spotSteps, spotPlacementHit, spotEliminationHit });
+return Object.freeze({ S, UI, hintHooks, snapshot, pushUndo, restore, conflictAt, countOf, isLocked, wrongAt, isSolvedBoard, checkDeadEnd, rewindTarget, rewindNotes, spotSteps, spotPlacementHit, spotEliminationHit });
 })();
 
 /* ---- src/pad.js ---- */
@@ -1932,7 +2103,7 @@ return Object.freeze({ padEl, digitKeys, keys, ICONS, makeKey, buildPad });
 /* ---- src/board.js ---- */
 const __m_board = (() => {
 const { $, div, rowOf, colOf, BOXES, PEERS, PEERFLAG, bit, reducedMotion, dist } = __m_util;
-const { S, UI, conflictAt, countOf, wrongAt } = __m_state;
+const { S, UI, conflictAt, countOf, wrongAt, hintHooks } = __m_state;
 const { digitKeys, keys } = __m_pad;
 // board.js — board DOM build, rendering, refresh, and every cell effect.
 // Moved verbatim from the feel prototype (sections 5 buildBoard, 6 RENDERING,
@@ -2034,6 +2205,9 @@ function refresh() {
   else msg = `Tap a cell or a number · ${mode}`;
   statusEl.innerHTML = msg;
   if (hooks.afterRefresh) hooks.afterRefresh();   // autosave (token.js)
+  /* --- hints: board changed -> the hint ladder resets --- */
+  if (hintHooks.refresh) hintHooks.refresh();
+  /* --- end hints --- */
 }
 
 /* =========================================================================
@@ -2531,6 +2705,27 @@ const FX = (() => {
       wake();
     },
 
+    /* --- hints: CAUSE -> EFFECT. Thin motes leave the pattern cells and travel
+          to what the pattern decides: each eliminated candidate (a note
+          position) or the target cell. links = [{from, to, d}] where d is the
+          note digit at `to` (0 = the cell centre). Returns the longest flight
+          (ms) so the caller can land an effect on arrival. --- */
+    hintTrace(links, startDelay = 0) {
+      if (rm() || !links.length) return 0;
+      let far = 0;
+      links.forEach((ln, k) => {
+        const s = centerOf(cells[ln.from].el), t = centerOf(ln.d ? cells[ln.to].n[ln.d - 1] : cells[ln.to].el);
+        const dx = t.x - s.x, dy = t.y - s.y, L = Math.sqrt(dx * dx + dy * dy) || 1;
+        const delay = startDelay + k * 26, life = Math.min(260 + L * 0.8, 600);
+        const p = get(MOTE, s.x, s.y, life, delay, ln.err ? C.err : C.accent, 1.0);
+        p.tx = t.x; p.ty = t.y; p.nx = -dy / L; p.ny = dx / L; p.curve = rnd(-0.08, 0.08) * L; p.a = 0.8;
+        if (delay + life > far) far = delay + life;
+      });
+      wake();
+      return far;
+    },
+    /* --- end hints --- */
+
     /* 6. Solved: one wave born at the winning cell, riding the cascade
           outward — a single short streak per cell, pointing away from it */
     wave(origin, step) {
@@ -2569,6 +2764,9 @@ const { FX } = __m_particles;
 const toastTitle = $('toastTitle'), againLbl = document.querySelector('#againKey .lbl');
 const deadEl = $('dead');
 const shell = { rewindKey: null };   // set by main.js once the banner key is built
+/* --- level0: toast hooks (level0.js shows its outro instead; campaign.js relabels the keycap) --- */
+const toastHooks = { before: null, after: null };
+/* --- end level0 --- */
 
 /* =========================================================================
    8. GAME ACTIONS
@@ -2668,7 +2866,7 @@ function consequences(i, d) {
   } else if (wrong) S.silentWrong++;
 
   // 3) Completions
-  const solved = S.mode === 'free' && isSolvedBoard();
+  const solved = (S.mode === 'free' /* --- level0 --- */ || S.mode === 'l0' /* --- end level0 --- */) && isSolvedBoard();
   const spotHit = S.mode === 'spot' && !wrong && !S.solved ? spotPlacementHit(i, d) : null;
   if (spotHit) spotSuccess(spotHit, i);
   else if (solved) {
@@ -2746,6 +2944,10 @@ function afterErase(list, i) {
   const hit = spotEliminationHit();
   if (hit) { spotSuccess(hit, i); refresh(); }
 }
+
+/* --- hints: the hint ladder removes notes through the same rules path --- */
+function notesRemoved(list, i) { afterErase(list, i); }
+/* --- end hints --- */
 
 /* =========================================================================
    rules: Spot it success — the latch/sweep language of a closed unit, then
@@ -2859,12 +3061,14 @@ function resetGame() {
   S.selected = -1; S.loaded = 0; S.loadedNote = false; S.pencil = false;
   S.mistakes = 0; S.solved = false; S.undo = [];
   S.silentWrong = 0; if (S.spot) S.spot.erased.clear();
+  /* --- hints: a restart is a fresh attempt --- */ S.paidHints = 0; /* --- end hints --- */
   UI.mistHeld = 0; UI.mistGen++;
   hideToast(); hideDeadEnd(); FX.clear();
   renderAll(); refresh();
 }
 function showToast() {
   if (!S.solved) return;
+  /* --- level0 --- */ if (toastHooks.before && toastHooks.before()) return; /* --- end level0 --- */
   if (S.mode === 'spot') {
     toastTitle.textContent = 'Spotted it';
     toastMsg.textContent = S.spot.found ? S.spot.found.text : '';
@@ -2875,16 +3079,17 @@ function showToast() {
     againLbl.textContent = 'Play again';
   }
   toastEl.classList.add('show');
+  /* --- level0 --- */ if (toastHooks.after) toastHooks.after(); /* --- end level0 --- */
 }
 function hideToast() { toastEl.classList.remove('show'); }
-return Object.freeze({ deadEl, shell, toggleNote, placeProvisional, clearCell, finalizePending, convertPendingToNote, showDeadEnd, hideDeadEnd, doRewind, togglePencil, doErase, doUndo, release, resetGame, showToast, hideToast });
+return Object.freeze({ deadEl, shell, toastHooks, toggleNote, placeProvisional, clearCell, finalizePending, convertPendingToNote, notesRemoved, showDeadEnd, hideDeadEnd, doRewind, togglePencil, doErase, doUndo, release, resetGame, showToast, hideToast });
 })();
 
 /* ---- src/input.js ---- */
 const __m_input = (() => {
 const { $, rowOf, colOf, LONG_MS, haptic } = __m_util;
 const { sfx } = __m_audio;
-const { S, UI, isLocked } = __m_state;
+const { S, UI, isLocked, hintHooks } = __m_state;
 const { boardEl, refresh, animReach } = __m_board;
 const { digitKeys, keys, buildPad } = __m_pad;
 const { FX } = __m_particles;
@@ -2901,9 +3106,52 @@ const { toggleNote, placeProvisional, clearCell, finalizePending, convertPending
 
 
 
+/* --- level0: input guard ---
+   While a Level 0 script runs, level0.js sets inputGuard.fn. Every input is
+   described as an action BEFORE it changes anything; the guard returns false
+   to block it (level0.js plays the blocked sound and shows its nudge). With no
+   guard set, nothing here runs and input behaves exactly as before.
+   Actions: select/deselect {cell}, place/note/clear {cell, digit}, load/unload/
+   loadNote {digit}, convert {cell, digit} (long-press turns a placement into a
+   note), press {key: 'pencil'|'erase'|'undo', cell}, reset. */
+const inputGuard = { fn: null, reset: null };
+const blockedBy = a => !!(inputGuard.fn && a && inputGuard.fn(a) === false);
+function digitAction(d) {
+  const sel = S.selected;
+  if (sel >= 0 && !S.loaded) {
+    if (S.given[sel]) return null;
+    if (S.pencil) return S.values[sel] ? null : { type: 'note', cell: sel, digit: d, on: !(S.notes[sel] & (1 << (d - 1))) };
+    if (S.values[sel] === d) return { type: 'clear', cell: sel, digit: d };
+    if (isLocked(d)) return null;
+    return { type: 'place', cell: sel, digit: d };
+  }
+  if (S.loaded === d) return { type: 'unload', digit: d };
+  if (isLocked(d)) return null;
+  return { type: 'load', digit: d };
+}
+function cellAction(i) {
+  if (S.loaded) {
+    const d = S.loaded;
+    if (S.given[i]) return null;
+    if (S.pencil || S.loadedNote) return S.values[i] ? null : { type: 'note', cell: i, digit: d, on: !(S.notes[i] & (1 << (d - 1))) };
+    if (S.values[i] === d) return { type: 'clear', cell: i, digit: d };
+    return { type: 'place', cell: i, digit: d };
+  }
+  return { type: S.selected === i ? 'deselect' : 'select', cell: i };
+}
+const pressAction = key => ({ type: 'press', key, cell: S.selected });
+const gUndo = () => { if (!blockedBy(pressAction('undo'))) doUndo(); };
+const gErase = () => { if (!blockedBy(pressAction('erase'))) doErase(); };
+const gPencil = () => { if (!blockedBy(pressAction('pencil'))) togglePencil(); };
+/* --- end level0 --- */
+
 /* ---- Digit key ------------------------------------------------------- */
 function digitDown(d, pressId) {
+  /* --- hints: check mode reads digits from the keypad --- */
+  if (hintHooks.digit && hintHooks.digit(d)) return 'none';
+  /* --- end hints --- */
   if (S.solved) { sfx.blocked(); return 'none'; }
+  /* --- level0 --- */ if (inputGuard.fn && blockedBy(digitAction(d))) return 'none'; /* --- end level0 --- */
   const sel = S.selected;
 
   // Cell-first: a cell is selected and nothing is loaded
@@ -2934,9 +3182,11 @@ function digitDown(d, pressId) {
 }
 
 function digitLong(d, press) {
+  /* --- level0 --- */ if (S.pending && S.pending.pressId === press.id && blockedBy({ type: 'convert', cell: S.pending.i, digit: S.pending.d })) return; /* --- end level0 --- */
   if (S.pending && S.pending.pressId === press.id) { convertPendingToNote(); return; }
   // Number-first long-press: load the digit for notes instead
-  if ((press.result === 'load' || press.result === 'unload') && !S.solved && !isLocked(d)) {
+  if ((press.result === 'load' || press.result === 'unload') && !S.solved && !isLocked(d)
+      /* --- level0 --- */ && !blockedBy({ type: 'loadNote', digit: d }) /* --- end level0 --- */) {
     S.loaded = d; S.loadedNote = true; S.selected = -1;
     sfx.pencil(); haptic(4); refresh();
   }
@@ -2946,7 +3196,11 @@ function digitLong(d, press) {
 let lastTap = null;   // where the finger landed on the board (for the select ring)
 function selectFx(i, x, y) { animReach(i); FX.ring(i, x, y); }
 function cellDown(i, pressId) {
+  /* --- hints: check mode toggles cells instead of selecting --- */
+  if (hintHooks.cell && hintHooks.cell(i)) return;
+  /* --- end hints --- */
   if (S.solved) return;
+  /* --- level0 --- */ if (inputGuard.fn && blockedBy(cellAction(i))) return; /* --- end level0 --- */
   if (S.loaded) {
     const d = S.loaded;
     if (S.given[i]) { sfx.blocked(); return; }
@@ -2966,6 +3220,7 @@ function cellDown(i, pressId) {
   if (S.selected === i) selectFx(i, lastTap && lastTap.i === i ? lastTap.x : null, lastTap && lastTap.i === i ? lastTap.y : null);
 }
 function cellLong(i, press) {
+  /* --- level0 --- */ if (S.pending && S.pending.pressId === press.id && blockedBy({ type: 'convert', cell: S.pending.i, digit: S.pending.d })) return; /* --- end level0 --- */
   if (S.pending && S.pending.pressId === press.id) convertPendingToNote();
 }
 
@@ -3018,9 +3273,9 @@ function bindHeaderBtn(el, fn) {
 function buildBoundPad() {
   buildPad((el, kind, d) => {
     if (kind === 'digit') bindPress(el, id => digitDown(d, id), p => digitLong(d, p));
-    if (kind === 'undo')   bindPress(el, () => { doUndo(); });
-    if (kind === 'erase')  bindPress(el, () => { doErase(); });
-    if (kind === 'pencil') bindPress(el, () => { togglePencil(); });
+    if (kind === 'undo')   bindPress(el, () => { /* --- level0 --- */ gUndo(); /* --- end level0 --- */ });
+    if (kind === 'erase')  bindPress(el, () => { /* --- level0 --- */ gErase(); /* --- end level0 --- */ });
+    if (kind === 'pencil') bindPress(el, () => { /* --- level0 --- */ gPencil(); /* --- end level0 --- */ });
   });
 }
 
@@ -3047,6 +3302,7 @@ function initInput() {
   document.addEventListener('pointerdown', e => {
     sfx.unlock();
     if (e.target.closest('.board, .pad, .hbtn, .toast, .sheet, .sheet-bg, .pid, .dead')) return;
+    /* --- hints --- */ if (e.target.closest('.hintbar, .hkeys')) return; /* --- end hints --- */
     release();
   });
 
@@ -3062,7 +3318,7 @@ function initInput() {
     muteBtn.classList.toggle('muted', sfx.muted);
     if (!sfx.muted) sfx.select();
   });
-  bindHeaderBtn($('resetBtn'), () => { sfx.mod(); resetGame(); });
+  bindHeaderBtn($('resetBtn'), () => { sfx.mod(); /* --- level0 --- */ if (inputGuard.reset && inputGuard.reset()) return; /* --- end level0 --- */ resetGame(); });
 
   /* =========================================================================
      10. INPUT: DESKTOP KEYBOARD (same press system, so long-hold works too)
@@ -3071,15 +3327,18 @@ function initInput() {
     if (UI.sheetOpen) return;            // typing in the token sheet (or the dev sheet)
     if (e.repeat || e.altKey) return;
     const k = e.key, id = 'k' + e.code;
+    /* --- hints: H = hint, C = check, Esc = leave check mode --- */
+    if (!e.metaKey && !e.ctrlKey && hintHooks.key && hintHooks.key(k, id)) { e.preventDefault(); return; }
+    /* --- end hints --- */
     if (/^[1-9]$/.test(k) && !e.metaKey && !e.ctrlKey) {
       const d = +k;
       pressStart(id, digitKeys[d].el, pid => digitDown(d, pid), p => digitLong(d, p));
     } else if (k === 'Backspace' || k === 'Delete' || k === '0') {
-      e.preventDefault(); pressStart(id, keys.erase, doErase, null);
+      e.preventDefault(); pressStart(id, keys.erase, /* --- level0 --- */ gErase /* --- end level0 --- */, null);
     } else if ((k === 'z' || k === 'Z') && (e.metaKey || e.ctrlKey) || k === 'u') {
-      e.preventDefault(); pressStart(id, keys.undo, doUndo, null);
+      e.preventDefault(); pressStart(id, keys.undo, /* --- level0 --- */ gUndo /* --- end level0 --- */, null);
     } else if (k === 'p' || k === 'n') {
-      pressStart(id, keys.pencil, togglePencil, null);
+      pressStart(id, keys.pencil, /* --- level0 --- */ gPencil /* --- end level0 --- */, null);
     } else if (k === 'Escape') {
       release();
     } else if (k.startsWith('Arrow') && !S.loaded && !S.solved) {
@@ -3091,13 +3350,14 @@ function initInput() {
         if (k === 'ArrowLeft') c = (c + 8) % 9;
         if (k === 'ArrowRight') c = (c + 1) % 9;
       }
+      /* --- level0 --- */ if (blockedBy({ type: 'select', cell: r * 9 + c })) return; /* --- end level0 --- */
       S.selected = r * 9 + c;
       sfx.select(); refresh(); selectFx(S.selected);
     }
   });
   document.addEventListener('keyup', e => pressEnd('k' + e.code));
 }
-return Object.freeze({ pressStart, pressEnd, cancelAllPresses, bindPress, bindHeaderBtn, buildBoundPad, initInput });
+return Object.freeze({ inputGuard, pressStart, pressEnd, cancelAllPresses, bindPress, bindHeaderBtn, buildBoundPad, initInput });
 })();
 
 /* ---- src/token.js ---- */
@@ -3241,11 +3501,13 @@ const SAVE_PREFIX = 'sudoku.save.v1.', META_PREFIX = 'sudoku.meta.v1.';
 let saveTimer = 0;
 function packMeta() {
   const m = { silentWrong: S.silentWrong };
+  /* --- hints --- */ m.paidHints = S.paidHints; /* --- end hints --- */
   if (S.spot) { m.erased = [...S.spot.erased]; m.found = S.spot.found ? S.spot.steps.indexOf(S.spot.found) : -1; }
   return m;
 }
 function applyMeta(m) {
   S.silentWrong = m.silentWrong | 0;
+  /* --- hints --- */ S.paidHints = m.paidHints | 0; /* --- end hints --- */
   if (S.spot) {
     S.spot.erased = new Set(Array.isArray(m.erased) ? m.erased : []);
     S.spot.found = m.found >= 0 ? S.spot.steps[m.found] || null : null;
@@ -3437,14 +3699,21 @@ const { boardFor, nextId, modeLabel, has } = __m_puzzles;
 const pidEl = $('pid');
 const LAST_KEY = 'sudoku.last';
 
+/* --- level0: hooks for the Level 0 engine and the campaign runner (campaign.js, level0.js) --- */
+// start: listeners called with the id before any puzzle starts; next: the toast
+// keycap asks it first (return true = handled); label: header label override.
+const gameHooks = { start: [], next: null, label: null };
+/* --- end level0 --- */
+
 function updatePid() {
-  pidEl.innerHTML = `<b>DEV</b> · ${S.id} · ${modeLabel(S.id)}`;
+  pidEl.innerHTML = /* --- level0 --- */ (gameHooks.label && gameHooks.label()) || /* --- end level0 --- */ `<b>DEV</b> · ${S.id} · ${modeLabel(S.id)}`;
 }
 
 /* Start (or switch to) a puzzle. `restore`: load this id's autosave if any. */
 function startPuzzle(id, restore = true) {
   const b = boardFor(id);
   if (!b || !b.sol) return false;
+  /* --- level0 --- */ for (const f of gameHooks.start) f(id); /* --- end level0 --- */
   if (S.id && S.id !== id) flushSave();          // keep the puzzle we are leaving
   S.id = id; S.mode = b.mode; S.kind = b.kind; S.world = b.world;
   S.given.set(b.given); S.sol.set(b.sol); S.startNotes.set(b.notes);
@@ -3471,6 +3740,7 @@ function initGame() {
   // Toast keycap: "Play again" after a solve, "Next" after a Spot it
   bindPress($('againKey'), () => {
     sfx.mod();
+    /* --- level0 --- */ if (gameHooks.next && gameHooks.next()) return; /* --- end level0 --- */
     if (S.mode === 'spot' && S.solved) startPuzzle(nextId(S.id));
     else resetGame();
   });
@@ -3479,7 +3749,930 @@ function initGame() {
     if (m && has(m[1]) && m[1] !== S.id) startPuzzle(m[1]);
   });
 }
-return Object.freeze({ updatePid, startPuzzle, initialId, initGame });
+return Object.freeze({ gameHooks, updatePid, startPuzzle, initialId, initGame });
+})();
+
+/* ---- src/level0-script.js ---- */
+const __m_level0_script = (() => {
+const { parseGrid, computeCands, findConflicts, countSolutions, findSolution, allSteps, ROWS, COLS, BOXES, peers, bit } = __m_solver;
+const { ALLOW } = __m_shared;
+// level0-script.js — Level 0 script format: schema check, validator, and the
+// small pure helpers the engine (level0.js) shares with it. No DOM, so the
+// same file runs in the browser bundle, in tools/build.mjs and in
+// tools/validate-level0.mjs. Format reference: docs/level0.md.
+//
+// A script is data:
+//   { id, world, title, board, showCands?, steps: [ step… ], outro }
+//   step = { say, focus?, dim?, highlight?, expect, nudge?, show? }
+//   expect = exactly one of
+//     {tap: [cells], mode?: 'any'|'all'}   {place: {cell, digit}}
+//     {note: {cell, digit}}                {eliminate: [[cell, digit], …]}
+//     {loadDigit: d}                       {press: 'pencil'|'erase'|'undo'}
+//     {continue: true}
+// validateScript() rejects unknown fields and simulates the whole script on
+// the board: every expected action must be legal at its step (placements must
+// match the unique solution AND be found by the solver with the techniques of
+// worlds 0..script.world; notes need Pencil on; erased notes must not be the
+// cell's answer; …).
+
+
+
+const EXPECT_TYPES = ['tap', 'place', 'note', 'eliminate', 'loadDigit', 'press', 'continue'];
+const PRESS_KEYS = ['pencil', 'erase', 'undo'];
+const TOP_KEYS = ['id', 'world', 'title', 'board', 'showCands', 'steps', 'outro'];
+const STEP_KEYS = ['say', 'focus', 'dim', 'highlight', 'expect', 'nudge', 'show'];
+const FOCUS_KEYS = ['cells', 'row', 'col', 'box'];
+const HL_KEYS = ['cells', 'digits'];
+const SAY_MAX = 140;          // characters (warning above this)
+
+const isCell = (c) => Number.isInteger(c) && c >= 0 && c < 81;
+const isDigit = (d) => Number.isInteger(d) && d >= 1 && d <= 9;
+const isIdx = (n) => Number.isInteger(n) && n >= 0 && n < 9;
+const name = (i) => `r${((i / 9) | 0) + 1}c${(i % 9) + 1}`;
+
+/** The expect type of a step ('place', 'tap', …). */
+const expectType = (step) => EXPECT_TYPES.find((t) => step.expect && t in step.expect);
+
+/** Cells a step focuses (undimmed): focus.cells/row/col/box, else highlight.cells, else the expect's cells. */
+function focusCells(step) {
+  const f = step.focus || {}, out = new Set();
+  (f.cells || []).forEach((c) => out.add(c));
+  if (f.row != null) ROWS[f.row].forEach((c) => out.add(c));
+  if (f.col != null) COLS[f.col].forEach((c) => out.add(c));
+  if (f.box != null) BOXES[f.box].forEach((c) => out.add(c));
+  if (!out.size) (highlightCells(step)).forEach((c) => out.add(c));
+  return [...out];
+}
+/** Unit cells of the focus (these get the unit tint). */
+function focusUnitCells(step) {
+  const f = step.focus || {}, out = new Set();
+  if (f.row != null) ROWS[f.row].forEach((c) => out.add(c));
+  if (f.col != null) COLS[f.col].forEach((c) => out.add(c));
+  if (f.box != null) BOXES[f.box].forEach((c) => out.add(c));
+  return [...out];
+}
+/** Cells to outline: highlight.cells, else the cells the expect acts on. */
+function highlightCells(step) {
+  if (step.highlight && step.highlight.cells) return step.highlight.cells.slice();
+  return expectCells(step);
+}
+function expectCells(step) {
+  const e = step.expect || {};
+  if (e.tap) return e.tap.slice();
+  if (e.place) return [e.place.cell];
+  if (e.note) return [e.note.cell];
+  if (e.eliminate) return [...new Set(e.eliminate.map((x) => x[0]))];
+  return [];
+}
+/** dim mode: explicit, else 'all-but' when there is something to focus, else 'none'. */
+function dimMode(step) {
+  if (step.dim) return step.dim;
+  const t = expectType(step);
+  return focusCells(step).length || t === 'press' ? 'all-but' : 'none';
+}
+/** Does this step have a "show me" demo? (continue never; show:false opts out) */
+const hasShow = (step) => step.show !== false && expectType(step) !== 'continue';
+
+/* ---------------------------------------------------------------------------
+   Schema (unknown fields are errors)
+   --------------------------------------------------------------------------- */
+function checkKeys(obj, allowed, where, errors) {
+  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) { errors.push(`${where}: must be an object`); return false; }
+  for (const k of Object.keys(obj)) if (!allowed.includes(k)) errors.push(`${where}: unknown field "${k}"`);
+  return true;
+}
+function checkText(v, where, errors, warnings, required = true) {
+  if (v == null) { if (required) errors.push(`${where}: missing`); return; }
+  if (typeof v !== 'string' || !v.trim()) { errors.push(`${where}: must be a non-empty string`); return; }
+  if (warnings) {
+    if (v.length > SAY_MAX) warnings.push(`${where}: ${v.length} characters (keep it under ${SAY_MAX})`);
+    const sentences = v.split(/[.!?]+(?:\s|$)/).filter((s) => s.trim()).length;
+    if (sentences > 2) warnings.push(`${where}: ${sentences} sentences (keep it to 2)`);
+  }
+}
+function checkCells(v, where, errors) {
+  if (!Array.isArray(v) || !v.length || !v.every(isCell)) errors.push(`${where}: must be a non-empty array of cells 0-80`);
+}
+function checkCellDigit(v, where, errors) {
+  if (!checkKeys(v, ['cell', 'digit'], where, errors)) return;
+  if (!isCell(v.cell)) errors.push(`${where}.cell: must be a cell 0-80`);
+  if (!isDigit(v.digit)) errors.push(`${where}.digit: must be a digit 1-9`);
+}
+
+function checkSchema(s, errors, warnings) {
+  if (!checkKeys(s, TOP_KEYS, 'script', errors)) return;
+  if (typeof s.id !== 'string' || !/^w\d+-l0$/.test(s.id)) errors.push('id: must look like "w0-l0"');
+  if (!Number.isInteger(s.world) || !ALLOW[s.world]) errors.push(`world: must be 0-${ALLOW.length - 1}`);
+  else if (typeof s.id === 'string' && s.id !== `w${s.world}-l0`) errors.push(`id: must be "w${s.world}-l0" for world ${s.world}`);
+  checkText(s.title, 'title', errors);
+  if (typeof s.board !== 'string' || !/^[0-9]{81}$/.test(s.board)) errors.push('board: must be 81 digits (0 = empty)');
+  if (s.showCands != null && s.showCands !== true && s.showCands !== false && s.showCands !== 'computed') errors.push('showCands: must be true, false or "computed"');
+  checkText(s.outro, 'outro', errors, warnings);
+  if (!Array.isArray(s.steps) || !s.steps.length) { errors.push('steps: must be a non-empty array'); return; }
+  if (s.steps.length > 30) errors.push('steps: at most 30');
+  s.steps.forEach((st, k) => {
+    const w = `steps[${k}]`;
+    if (!checkKeys(st, STEP_KEYS, w, errors)) return;
+    checkText(st.say, `${w}.say`, errors, warnings);
+    checkText(st.nudge, `${w}.nudge`, errors, warnings, false);
+    if (st.show != null && typeof st.show !== 'boolean') errors.push(`${w}.show: must be true or false`);
+    if (st.dim != null && st.dim !== 'all-but' && st.dim !== 'none') errors.push(`${w}.dim: must be "all-but" or "none"`);
+    if (st.focus != null && checkKeys(st.focus, FOCUS_KEYS, `${w}.focus`, errors)) {
+      if (st.focus.cells != null) checkCells(st.focus.cells, `${w}.focus.cells`, errors);
+      for (const u of ['row', 'col', 'box']) if (st.focus[u] != null && !isIdx(st.focus[u])) errors.push(`${w}.focus.${u}: must be 0-8`);
+      if (!Object.keys(st.focus).length) errors.push(`${w}.focus: empty`);
+    }
+    if (st.highlight != null && checkKeys(st.highlight, HL_KEYS, `${w}.highlight`, errors)) {
+      if (st.highlight.cells != null) checkCells(st.highlight.cells, `${w}.highlight.cells`, errors);
+      if (st.highlight.digits != null && (!Array.isArray(st.highlight.digits) || !st.highlight.digits.length || !st.highlight.digits.every(isDigit)))
+        errors.push(`${w}.highlight.digits: must be a non-empty array of digits 1-9`);
+    }
+    const e = st.expect, we = `${w}.expect`;
+    if (!e || typeof e !== 'object' || Array.isArray(e)) { errors.push(`${we}: missing`); return; }
+    const types = Object.keys(e).filter((x) => EXPECT_TYPES.includes(x));
+    for (const x of Object.keys(e)) if (!EXPECT_TYPES.includes(x) && x !== 'mode') errors.push(`${we}: unknown field "${x}"`);
+    if (types.length !== 1) { errors.push(`${we}: needs exactly one of ${EXPECT_TYPES.join(', ')} (got ${types.length})`); return; }
+    const t = types[0];
+    if ('mode' in e && t !== 'tap') errors.push(`${we}.mode: only allowed with tap`);
+    if (t === 'tap') {
+      checkCells(e.tap, `${we}.tap`, errors);
+      if (e.mode != null && e.mode !== 'any' && e.mode !== 'all') errors.push(`${we}.mode: must be "any" or "all"`);
+    } else if (t === 'place' || t === 'note') checkCellDigit(e[t], `${we}.${t}`, errors);
+    else if (t === 'eliminate') {
+      if (!Array.isArray(e.eliminate) || !e.eliminate.length) errors.push(`${we}.eliminate: must be a non-empty array of [cell, digit]`);
+      else e.eliminate.forEach((x, j) => {
+        if (!Array.isArray(x) || x.length !== 2 || !isCell(x[0]) || !isDigit(x[1])) errors.push(`${we}.eliminate[${j}]: must be [cell 0-80, digit 1-9]`);
+      });
+    } else if (t === 'loadDigit') { if (!isDigit(e.loadDigit)) errors.push(`${we}.loadDigit: must be a digit 1-9`); }
+    else if (t === 'press') { if (!PRESS_KEYS.includes(e.press)) errors.push(`${we}.press: must be one of ${PRESS_KEYS.join(', ')}`); }
+    else if (t === 'continue') { if (e.continue !== true) errors.push(`${we}.continue: must be true`); }
+  });
+}
+
+/* ---------------------------------------------------------------------------
+   Board helpers shared with the engine
+   --------------------------------------------------------------------------- */
+/** Starting notes for a script board. */
+function startNotes(script, values) {
+  return script.showCands ? computeCands(values) : new Uint16Array(81);
+}
+/** Unique solution of the script board, or null. */
+function scriptSolution(board) {
+  const v = parseGrid(board);
+  if (countSolutions(v) !== 1) return null;
+  return Int8Array.from(findSolution(v));
+}
+
+/* ---------------------------------------------------------------------------
+   Validation: schema + a full simulation of the script on its board
+   --------------------------------------------------------------------------- */
+function validateScript(script) {
+  const errors = [], warnings = [];
+  checkSchema(script, errors, warnings);
+  if (errors.length) return { ok: false, errors, warnings };
+
+  const values = Int8Array.from(parseGrid(script.board));
+  if (findConflicts(values).length) return { ok: false, errors: ['board: has conflicts'], warnings };
+  const sol = scriptSolution(script.board);
+  if (!sol) return { ok: false, errors: ['board: must have exactly one solution'], warnings };
+  const notes = startNotes(script, values);
+  const allow = ALLOW[script.world];
+  const sim = { pencil: false, selected: -1, loaded: 0 };
+  const history = [];
+  const snap = () => ({ v: values.slice(), n: notes.slice() });
+  const count = (d) => values.reduce((n, x) => n + (x === d), 0);
+
+  script.steps.forEach((st, k) => {
+    const w = `steps[${k}]`, e = st.expect, t = expectType(st);
+    const err = (m) => errors.push(`${w} (${t}): ${m}`);
+    for (const c of highlightCells(st)) if (!isCell(c)) err('bad highlight cell');
+    if (t === 'tap') {
+      sim.selected = e.tap.length === 1 ? e.tap[0] : -2;   // -2: some cell, not known
+      sim.loaded = 0;
+    } else if (t === 'place') {
+      const { cell, digit } = e.place;
+      if (sim.pencil) err('Pencil is on here, so a digit would become a note (add a press: "pencil" step first)');
+      if (values[cell]) err(`${name(cell)} is not empty`);
+      else if (sol[cell] !== digit) err(`${name(cell)} is ${sol[cell]} in the solution, not ${digit}`);
+      else if (peers[cell].some((j) => values[j] === digit)) err(`${digit} clashes with a peer of ${name(cell)}`);
+      else {
+        const cands = computeCands(values);
+        let found = null;
+        for (const s of allSteps(values, cands, allow)) if (s.place && s.place.cell === cell && s.place.digit === digit) { found = s; break; }
+        if (!found) err(`the solver cannot justify ${digit} in ${name(cell)} with the techniques of worlds 0-${script.world} (${allow.join(', ')}) on this board`);
+      }
+      history.push(snap());
+      values[cell] = digit; notes[cell] = 0;
+      for (const j of peers[cell]) notes[j] &= ~bit(digit);
+      sim.selected = cell;
+    } else if (t === 'note') {
+      const { cell, digit } = e.note;
+      if (!sim.pencil) err('Pencil is off here (add a press: "pencil" step first)');
+      if (values[cell]) err(`${name(cell)} is not empty`);
+      else if (notes[cell] & bit(digit)) err(`${name(cell)} already has the note ${digit}`);
+      else if (peers[cell].some((j) => values[j] === digit)) err(`${digit} is already in a peer of ${name(cell)}, so it is not a candidate`);
+      history.push(snap());
+      notes[cell] |= bit(digit);
+      sim.selected = cell;
+    } else if (t === 'eliminate') {
+      history.push(snap());
+      for (const [cell, digit] of e.eliminate) {
+        if (values[cell]) err(`${name(cell)} is not empty`);
+        else if (!(notes[cell] & bit(digit))) err(`${name(cell)} has no note ${digit} to erase`);
+        else if (sol[cell] === digit) err(`${digit} is the answer of ${name(cell)}; erasing it teaches the wrong thing`);
+        notes[cell] &= ~bit(digit);
+      }
+    } else if (t === 'loadDigit') {
+      if (count(e.loadDigit) >= 9) err(`all nine ${e.loadDigit}s are placed, the key is locked`);
+      sim.loaded = e.loadDigit; sim.selected = -1;
+    } else if (t === 'press') {
+      if (e.press === 'pencil') sim.pencil = !sim.pencil;
+      else if (e.press === 'erase') {
+        const c = sim.selected;
+        if (c < 0) err('Erase needs a known selected cell (put a tap/place/note step on one cell first)');
+        else {
+          const given = parseGrid(script.board)[c];
+          if (given) err(`${name(c)} is a given and cannot be erased`);
+          else if (!values[c] && !notes[c]) err(`${name(c)} is already empty`);
+          history.push(snap());
+          values[c] = 0; notes[c] = 0;
+        }
+      } else if (e.press === 'undo') {
+        const h = history.pop();
+        if (!h) err('nothing to undo');
+        else { values.set(h.v); notes.set(h.n); }
+      }
+    }
+  });
+  const complete = values.every((v, i) => v === sol[i]);
+  if (!complete) warnings.push('the board is not complete after the last step (no finishing cascade)');
+  return { ok: errors.length === 0, errors, warnings, complete, steps: script.steps.length };
+}
+return Object.freeze({ EXPECT_TYPES, PRESS_KEYS, SAY_MAX, expectType, focusCells, focusUnitCells, highlightCells, expectCells, dimMode, hasShow, startNotes, scriptSolution, validateScript });
+})();
+
+/* ---- src/level0-data.js ---- */
+const __m_level0_data = (() => {
+
+const SCRIPTS = {"w0":{"id":"w0-l0","world":0,"title":"Full house","board":"864351729927486513531279684702534168308107402410802075143728956685913247279645831","showCands":false,"steps":[{"say":"This board is almost full. You'll finish it yourself, one move at a time.","dim":"none","expect":{"continue":true}},{"say":"Every row holds 1 to 9, once each. Tap this row's one gap.","focus":{"row":3},"highlight":{"cells":[28]},"expect":{"tap":[28]},"nudge":"The gap is in the bright row."},{"say":"Which number is this row missing? Type it.","focus":{"row":3},"highlight":{"cells":[28]},"expect":{"place":{"cell":28,"digit":9}},"nudge":"Read along the row. Which of 1 to 9 isn't there yet?"},{"say":"Columns follow the same rule. Fill this column's gap.","focus":{"col":6},"highlight":{"cells":[51]},"expect":{"place":{"cell":51,"digit":3}},"nudge":"Tap the gap, then type the number the column is missing."},{"say":"So do the 3×3 boxes. Fill this box's gap.","focus":{"box":5},"highlight":{"cells":[43]},"expect":{"place":{"cell":43,"digit":9}},"nudge":"Which of 1 to 9 is missing from the box?"},{"say":"The last gap in a row, column or box is a full house. Only one number fits.","dim":"none","expect":{"continue":true}},{"say":"Pencil marks are notes. Tap Pencil to switch to notes.","expect":{"press":"pencil"},"nudge":"Pencil is the key at the bottom right."},{"say":"Notes are free thinking, never mistakes. Write a small 6 here.","focus":{"cells":[49]},"highlight":{"cells":[49],"digits":[6]},"expect":{"note":{"cell":49,"digit":6}},"nudge":"Tap the glowing cell, then press 6."},{"say":"Changed your mind? Press 6 again, or Erase, to rub it out.","focus":{"cells":[49]},"highlight":{"cells":[49],"digits":[6]},"expect":{"eliminate":[[49,6]]},"nudge":"Select the cell, then press 6 or Erase."},{"say":"Tap Pencil again to go back to writing answers.","expect":{"press":"pencil"},"nudge":"Tap Pencil to turn notes off."},{"say":"Now a chain. This column has one gap left.","focus":{"col":1},"highlight":{"cells":[37]},"expect":{"place":{"cell":37,"digit":5}}},{"say":"That left one gap in this row.","focus":{"row":4},"highlight":{"cells":[40]},"expect":{"place":{"cell":40,"digit":6}}},{"say":"And one in this box.","focus":{"box":4},"highlight":{"cells":[49]},"expect":{"place":{"cell":49,"digit":9}}},{"say":"Last one. Finish the board!","focus":{"row":5},"highlight":{"cells":[47]},"expect":{"place":{"cell":47,"digit":6}}}],"outro":"Solved! When a row, column or box has one gap left, the missing number goes there."}};
+return Object.freeze({ SCRIPTS });
+})();
+
+/* ---- src/level0.js ---- */
+const __m_level0 = (() => {
+const { $, div, reducedMotion } = __m_util;
+const { sfx } = __m_audio;
+const { S } = __m_state;
+const { cells, renderCell, refresh, markGivens, animReach, animNoteIn, animPing, hooks } = __m_board;
+const { digitKeys, keys, makeKey } = __m_pad;
+const { FX } = __m_particles;
+const { resetGame, placeProvisional, finalizePending, toggleNote, clearCell, togglePencil, toastHooks } = __m_actions;
+const { inputGuard, bindPress, cancelAllPresses } = __m_input;
+const { flushSave } = __m_token;
+const { gameHooks, updatePid } = __m_game;
+const { parseGrid } = __m_solver;
+const { validateScript, expectType, focusCells, focusUnitCells, highlightCells, dimMode, hasShow, startNotes, scriptSolution } = __m_level0_script;
+const { SCRIPTS } = __m_level0_data;
+// level0.js — the Level 0 engine: plays a scripted, guided board (format and
+// validator in level0-script.js, reference in docs/level0.md).
+//
+// Level 0 is never a pop-up. The board stays playable; a coach line under the
+// board says what to do, everything but the focus is dimmed (opacity only),
+// the target is outlined, and the player DOES the move with the normal input
+// system (same keycaps, sounds, particles). How it hooks in:
+//   - input.js asks inputGuard.fn(action) before any input changes state. The
+//     engine judges the action against the current step: 'ok' (it is the
+//     move), 'neutral' (selecting, loading a digit, toggling Pencil while
+//     getting there) or wrong. Wrong actions are blocked (blocked sound + a
+//     gentle nudge in the coach line): never a mistake.
+//   - 3 wrong tries in a row on a step -> "show me": the engine performs the
+//     move slowly with the real actions (select ring, key press, placement
+//     spark / note stroke / erase rub), puts the board back, and the player
+//     repeats it.
+//   - board.js hooks.afterRefresh tells the engine to check whether the step
+//     is done (after the placement is released). Done -> soft rising tick
+//     (sfx.noteTick, climbs with the step number), next step.
+//   - S.mode is 'l0': no mistakes, no dead end; finishing the board runs the
+//     normal solve cascade, and actions.js toastHooks.before shows the outro in
+//     the coach instead of the toast.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const appEl = $('app'), coachEl = $('coach');
+const bit = d => 1 << (d - 1);
+const KEY_NAMES = { pencil: 'Pencil', erase: 'Erase', undo: 'Undo' };
+
+/* engine state (one script at a time) */
+const L = {
+  active: false, script: null, opts: {}, k: 0,
+  wrong: 0,            // wrong tries in a row on this step
+  demo: false,         // "show me" running
+  advancing: false,    // step done, next step not shown yet
+  done: false,         // outro reached
+  tapped: new Set(), pressed: false, starting: false,
+  shows: 0, nudges: 0, // counters for tests
+  timers: new Set(), nudgeTimer: 0, checkQueued: false
+};
+const step = () => L.script.steps[L.k];
+function later(fn, ms) {
+  const t = setTimeout(() => { L.timers.delete(t); fn(); }, ms);
+  L.timers.add(t);
+  return t;
+}
+const pace = ms => (reducedMotion() ? ms * 0.6 : ms) | 0;
+
+/* ---- coach DOM ------------------------------------------------------- */
+let dotsEl, sayEl, gotKey, skipKey, gotLbl;
+function buildCoach() {
+  coachEl.textContent = '';
+  dotsEl = div('cdots', coachEl);
+  sayEl = document.createElement('p'); sayEl.className = 'csay'; coachEl.appendChild(sayEl);
+  const ck = div('ckeys', coachEl);
+  gotKey = makeKey('mod ck', '<span class="lbl">Got it</span>', ck);
+  gotKey.setAttribute('aria-label', 'Got it');
+  gotLbl = gotKey.querySelector('.lbl');
+  skipKey = makeKey('mod ck skip', '<span class="lbl">Skip</span>', ck);
+  skipKey.setAttribute('aria-label', 'Skip Level 0');
+  bindPress(gotKey, onGot);
+  bindPress(skipKey, onSkip);
+}
+function setText(text, cls = '') {
+  sayEl.textContent = text;
+  sayEl.className = 'csay' + (cls ? ' ' + cls : '');
+  sayEl.animate([{ opacity: 0 }, { opacity: 1 }], { duration: reducedMotion() ? 90 : 160, easing: 'ease-out' });
+}
+function renderDots() {
+  const n = L.script.steps.length;
+  if (dotsEl.childElementCount !== n) { dotsEl.textContent = ''; for (let k = 0; k < n; k++) div('dot', dotsEl); }
+  [...dotsEl.children].forEach((d, k) => {
+    d.classList.toggle('done', L.done || k < L.k || (k === L.k && L.advancing));
+    d.classList.toggle('cur', !L.done && k === L.k);
+  });
+}
+function showKeys() {
+  const st = step();
+  const got = L.done || (st && expectType(st) === 'continue');
+  gotLbl.textContent = L.done ? (L.opts.onNext ? 'Next' : 'Again') : 'Got it';
+  gotKey.classList.toggle('show', !!got);
+  skipKey.classList.toggle('show', !!L.opts.canSkip && !L.done);
+  coachEl.classList.toggle('keys', !!got || (!!L.opts.canSkip && !L.done));
+}
+
+/* ---- focus / dim / highlight ----------------------------------------- */
+function ensureOverlays() {
+  for (let i = 0; i < 81; i++) if (!cells[i].l0d) cells[i].l0d = div('l0d', cells[i].el);
+}
+function relevantKeys(st) {
+  const t = expectType(st), e = st.expect, hd = st.highlight && st.highlight.digits;
+  const digits = new Set(), mods = new Set(), ring = new Set(hd || []), ringMods = new Set();
+  const all = () => { for (let d = 1; d <= 9; d++) digits.add(d); };
+  if (t === 'place') all();
+  if (t === 'note' || t === 'eliminate' || t === 'loadDigit') { if (hd) hd.forEach(d => digits.add(d)); else all(); }
+  if (t === 'note') mods.add('pencil');
+  if (t === 'eliminate') { mods.add('pencil'); mods.add('erase'); }
+  if (t === 'press') { mods.add(e.press); ringMods.add(e.press); }
+  return { digits, mods, ring, ringMods };
+}
+function applyVisuals(st) {
+  const dim = !L.done && st && dimMode(st) === 'all-but';
+  const focus = new Set(st && !L.done ? focusCells(st) : []);
+  const unit = new Set(st && !L.done ? focusUnitCells(st) : []);
+  const hl = new Set(st && !L.done ? highlightCells(st) : []);
+  for (let i = 0; i < 81; i++) {
+    const cl = cells[i].el.classList;
+    cl.toggle('l0-dim', dim && !focus.has(i));
+    cl.toggle('l0-f', unit.has(i));
+    cl.toggle('l0-hl', hl.has(i));
+  }
+  const r = st && !L.done ? relevantKeys(st) : { digits: new Set(), mods: new Set(), ring: new Set(), ringMods: new Set() };
+  for (let d = 1; d <= 9; d++) {
+    const cl = digitKeys[d].el.classList;
+    cl.toggle('l0-dim', dim && !r.digits.has(d));
+    cl.toggle('l0-hk', r.ring.has(d));
+  }
+  for (const m of ['pencil', 'erase', 'undo']) {
+    keys[m].classList.toggle('l0-dim', dim && !r.mods.has(m));
+    keys[m].classList.toggle('l0-hk', r.ringMods.has(m));
+  }
+}
+function clearVisuals() {
+  for (let i = 0; i < 81; i++) cells[i].el.classList.remove('l0-dim', 'l0-f', 'l0-hl');
+  for (let d = 1; d <= 9; d++) digitKeys[d].el.classList.remove('l0-dim', 'l0-hk');
+  for (const m of ['pencil', 'erase', 'undo']) keys[m].classList.remove('l0-dim', 'l0-hk');
+}
+/* the eye goes to the target: the outlined cells (or keys) ping once */
+function pingTargets(st) {
+  const hl = highlightCells(st);
+  hl.forEach((i, k) => animPing(i, k * 40, .6));
+  if (!hl.length && expectType(st) === 'press') keyPing(keys[st.expect.press]);
+}
+function keyPing(el) {
+  el.animate([{ opacity: 1 }, { opacity: .55, offset: .3 }, { opacity: 1 }], { duration: 300, easing: 'ease-out' });
+}
+
+/* ---- steps ------------------------------------------------------------ */
+function enterStep(k) {
+  L.k = k; L.wrong = 0; L.tapped.clear(); L.pressed = false;
+  const st = step(), prev = L.script.steps[k - 1], prevType = prev && expectType(prev);
+  // keep a selection only when it is where this step acts; keep a loaded digit only after loadDigit
+  let changed = false;
+  if (S.selected >= 0 && !highlightCells(st).includes(S.selected)) { S.selected = -1; changed = true; }
+  if (S.loaded && prevType !== 'loadDigit') { S.loaded = 0; S.loadedNote = false; changed = true; }
+  if (changed) refresh();
+  clearTimeout(L.nudgeTimer);
+  setText(st.say);
+  renderDots(); showKeys(); applyVisuals(st);
+}
+function stepComplete(st) {
+  const e = st.expect;
+  switch (expectType(st)) {
+    case 'tap': return e.mode === 'all' ? e.tap.every(c => L.tapped.has(c)) : L.tapped.has(S.selected);
+    case 'place': return S.values[e.place.cell] === e.place.digit;
+    case 'note': return !S.values[e.note.cell] && !!(S.notes[e.note.cell] & bit(e.note.digit));
+    case 'eliminate': return e.eliminate.every(([c, d]) => !(S.notes[c] & bit(d)));
+    case 'loadDigit': return S.loaded === e.loadDigit;
+    default: return L.pressed;            // press, continue
+  }
+}
+function queueCheck() {
+  if (L.checkQueued) return;
+  L.checkQueued = true;
+  later(() => { L.checkQueued = false; check(); }, 0);
+}
+function check() {
+  if (!L.active || L.demo || L.advancing || L.done || S.pending) return;
+  if (stepComplete(step())) stepDone();
+}
+function stepDone() {
+  const st = step(), last = L.k === L.script.steps.length - 1;
+  L.advancing = true;
+  clearTimeout(L.nudgeTimer);
+  renderDots();
+  if (!(last && S.solved)) sfx.noteTick(0.09, L.k);   // soft, climbs the ladder step by step
+  const t = expectType(st), fast = t === 'place' && L.script.steps[L.k + 1] && expectType(L.script.steps[L.k + 1]) === 'place';
+  later(() => {
+    L.advancing = false;
+    if (last) finish(); else enterStep(L.k + 1);
+  }, last ? 0 : pace(fast ? 300 : 420));
+}
+function finish() {
+  // a complete board runs the normal solve cascade; its toast becomes the outro (toastHooks.before)
+  if (!S.solved) showOutro();
+  else { applyVisuals(null); renderDots(); }   // input is already closed (S.solved)
+}
+function showOutro() {
+  L.done = true; S.solved = true;
+  S.selected = -1; S.loaded = 0; S.loadedNote = false;
+  clearTimeout(L.nudgeTimer);
+  setText(L.script.outro, 'outro');
+  applyVisuals(null); renderDots(); showKeys(); refresh();
+  if (L.opts.onDone) L.opts.onDone();
+}
+
+/* ---- judging an input action ------------------------------------------ */
+const NEUTRAL_MOVES = ['select', 'deselect', 'load', 'unload', 'loadNote'];
+function judge(st, a) {
+  const t = expectType(st), e = st.expect;
+  const isPencil = a.type === 'press' && a.key === 'pencil';
+  switch (t) {
+    case 'continue':
+      return { r: 'wrong', count: false, text: 'Tap Got it when you’re ready.' };
+    case 'tap':
+      if (a.type === 'select' && e.tap.includes(a.cell)) return { r: 'ok' };
+      if (a.type === 'deselect') return { r: 'neutral' };
+      return { r: 'wrong', text: st.nudge || 'Tap the outlined cell.' };
+    case 'place': {
+      const { cell, digit } = e.place;
+      if (NEUTRAL_MOVES.includes(a.type) || isPencil) return { r: 'neutral' };
+      if (a.type === 'place' && a.cell === cell && a.digit === digit) return { r: 'ok' };
+      if (a.type === 'convert') return { r: 'wrong', count: false, silent: true };
+      if (a.type === 'note') return { r: 'wrong', text: 'Pencil is on, so that would be a note. Tap Pencil to write answers.' };
+      if (a.type === 'place' && a.cell !== cell) return { r: 'wrong', text: 'Use the outlined cell.' };
+      return { r: 'wrong', text: st.nudge || 'Not that one. Which number is missing?' };
+    }
+    case 'note': {
+      const { cell, digit } = e.note;
+      if (NEUTRAL_MOVES.includes(a.type) || isPencil) return { r: 'neutral' };
+      if (a.type === 'note' && a.on && a.cell === cell && a.digit === digit) return { r: 'ok' };
+      if (a.type === 'convert' && a.cell === cell && a.digit === digit) return { r: 'ok' };
+      if (a.type === 'place' && !S.pencil) return { r: 'wrong', text: `Turn Pencil on first, then press ${digit}.` };
+      if ((a.type === 'note' || a.type === 'place') && a.cell !== cell) return { r: 'wrong', text: 'Use the outlined cell.' };
+      return { r: 'wrong', text: st.nudge || `Write a small ${digit} in the outlined cell.` };
+    }
+    case 'eliminate': {
+      const left = e.eliminate.filter(([c, d]) => S.notes[c] & bit(d));
+      if (NEUTRAL_MOVES.includes(a.type) || isPencil) return { r: 'neutral' };
+      if (a.type === 'note' && !a.on && left.some(([c, d]) => c === a.cell && d === a.digit)) return { r: 'ok' };
+      if (a.type === 'press' && a.key === 'erase') {
+        const c = a.cell, mine = left.filter(x => x[0] === c);
+        if (c >= 0 && !S.values[c] && mine.length && mine.reduce((m, x) => m | bit(x[1]), 0) === S.notes[c]) return { r: 'ok' };
+        if (c < 0) return { r: 'wrong', text: 'Select the outlined cell first.' };
+      }
+      return { r: 'wrong', text: st.nudge || 'Rub out the outlined note.' };
+    }
+    case 'loadDigit':
+      if (a.type === 'load' && a.digit === e.loadDigit) return { r: 'ok' };
+      if (a.type === 'unload' || isPencil) return { r: 'neutral' };
+      if (a.type === 'select' || a.type === 'deselect') return { r: 'wrong', text: `Press ${e.loadDigit} first, before any cell.` };
+      return { r: 'wrong', text: st.nudge || `Press the ${e.loadDigit} key.` };
+    case 'press':
+      if (a.type === 'press' && a.key === e.press) return { r: 'ok' };
+      if (NEUTRAL_MOVES.includes(a.type)) return { r: 'neutral' };
+      return { r: 'wrong', text: st.nudge || `Tap ${KEY_NAMES[e.press]}.` };
+  }
+  return { r: 'neutral' };
+}
+
+function guard(a) {
+  if (!L.active) return true;
+  if (L.done) return false;
+  if (L.demo) { if (a.type !== 'convert') sfx.blocked(); return false; }
+  if (L.advancing) {
+    if (a.type === 'select' || a.type === 'deselect') return true;
+    if (a.type !== 'convert') sfx.blocked();
+    return false;
+  }
+  const st = step(), j = judge(st, a);
+  if (j.r === 'ok') {
+    const t = expectType(st);
+    if (t === 'tap') L.tapped.add(a.cell);
+    if (t === 'press') L.pressed = true;
+    L.wrong = 0;
+    queueCheck();
+    return true;
+  }
+  if (j.r === 'neutral') return true;
+  if (!j.silent) wrong(st, j.text, j.count !== false);
+  return false;
+}
+function wrong(st, text, counted) {
+  sfx.blocked();
+  L.nudges++;
+  if (counted) L.wrong++;
+  if (counted && L.wrong >= 3 && hasShow(st)) {
+    L.demo = true;                       // input waits from now on; the demo starts after the nudge is read
+    clearTimeout(L.nudgeTimer);
+    setText(text, 'nudge');
+    later(showMe, pace(650));
+    return;
+  }
+  setText(text, 'nudge');
+  pingTargets(st);
+  clearTimeout(L.nudgeTimer);
+  L.nudgeTimer = later(() => { if (L.active && !L.demo && !L.done && step() === st) setText(st.say); }, 3400);
+}
+
+/* ---- "show me": perform the move slowly with the real actions, then undo it */
+function keyTap(el, sound) {
+  el.classList.add('down');
+  if (sound) sound();
+  later(() => { el.classList.remove('down'); sfx.release(); }, 140);
+}
+function demoSelect(c) {
+  S.selected = c; S.loaded = 0; S.loadedNote = false;
+  sfx.select(); refresh();
+  animReach(c); FX.ring(c, null, null);
+}
+function showMe() {
+  if (!L.active || L.done) return;
+  const st = step(), t = expectType(st), e = st.expect;
+  cancelAllPresses();
+  L.demo = true; L.wrong = 0; L.shows++;
+  clearTimeout(L.nudgeTimer);
+  setText('Watch.', 'demo');
+  const snap = { v: S.values.slice(), n: S.notes.slice(), undo: S.undo.length, pencil: S.pencil };
+  S.mode = 'l0demo';                     // a demo placement never "solves" the board
+  if (S.selected >= 0 || S.loaded) { S.selected = -1; S.loaded = 0; S.loadedNote = false; refresh(); }
+  const seq = [];                        // [ms, fn]
+  let at = 350;
+  const add = (gap, fn) => { at += gap; seq.push([at, fn]); };
+  const pencilTo = on => { if (S.pencil !== on) add(500, () => keyTap(keys.pencil, () => togglePencil())); };
+  if (t === 'tap') {
+    add(0, () => demoSelect(e.tap[0]));
+    add(1100, () => { S.selected = -1; sfx.select(); refresh(); });
+  } else if (t === 'place') {
+    const { cell, digit } = e.place;
+    pencilTo(false);
+    add(0, () => demoSelect(cell));
+    add(800, () => keyTap(digitKeys[digit].el, () => { sfx.pen(); placeProvisional(cell, digit, 'l0demo'); }));
+    add(140, () => finalizePending());
+    add(1100, () => { S.selected = cell; refresh(); keyTap(keys.erase, () => { sfx.mod(); clearCell(cell); }); });
+  } else if (t === 'note') {
+    const { cell, digit } = e.note;
+    pencilTo(true);
+    add(0, () => demoSelect(cell));
+    add(800, () => keyTap(digitKeys[digit].el, () => { if (toggleNote(cell, digit)) sfx.pencil(); }));
+    add(1200, () => keyTap(digitKeys[digit].el, () => { if (toggleNote(cell, digit)) sfx.pencil(); }));
+  } else if (t === 'eliminate') {
+    const byCell = new Map();
+    for (const [c, d] of e.eliminate) if (S.notes[c] & bit(d)) (byCell.get(c) || byCell.set(c, []).get(c)).push(d);
+    for (const [c, ds] of byCell) {
+      add(0, () => demoSelect(c));
+      if (ds.reduce((m, d) => m | bit(d), 0) === S.notes[c]) add(800, () => keyTap(keys.erase, () => { sfx.mod(); clearCell(c); }));
+      else {
+        pencilTo(true);
+        ds.forEach((d, k) => add(k ? 450 : 800, () => keyTap(digitKeys[d].el, () => { if (toggleNote(c, d)) sfx.pencil(); })));
+      }
+      add(700, () => {});
+    }
+  } else if (t === 'loadDigit') {
+    const d = e.loadDigit;
+    add(0, () => keyTap(digitKeys[d].el, () => { S.loaded = d; S.loadedNote = false; S.selected = -1; S.pencil ? sfx.pencil() : sfx.pen(); refresh(); FX.loadPulse(d); }));
+    add(1200, () => { S.loaded = 0; S.pencil ? sfx.pencil() : sfx.pen(); refresh(); });
+  } else if (t === 'press') {
+    const el = keys[e.press];
+    if (e.press === 'pencil') {
+      add(0, () => keyTap(el, () => togglePencil()));
+      add(1100, () => keyTap(el, () => togglePencil()));
+    } else add(0, () => keyTap(el, () => { sfx.mod(); keyPing(el); }));
+  }
+  add(900, () => endShow(st, snap));
+  for (const [ms, fn] of seq) later(() => { if (L.active && L.demo) fn(); }, pace(ms));
+}
+function endShow(st, snap) {
+  // put the board back exactly as it was before the demo (notes that return are drawn back in)
+  for (let i = 0; i < 81; i++) {
+    const shown = S.values[i] ? 0 : S.notes[i], back = snap.v[i] ? 0 : snap.n[i] & ~shown;
+    if (S.values[i] !== snap.v[i] || S.notes[i] !== snap.n[i]) {
+      S.values[i] = snap.v[i]; S.notes[i] = snap.n[i];
+      renderCell(i);
+      for (let d = 1; d <= 9; d++) if (back & bit(d)) animNoteIn(cells[i].n[d - 1]);
+    }
+  }
+  S.undo.length = Math.min(S.undo.length, snap.undo);
+  S.mode = 'l0'; S.solved = false; S.pending = null;
+  S.selected = -1; S.loaded = 0; S.loadedNote = false;
+  // the demo may have switched Pencil; leave it where this step needs it (note/eliminate: on)
+  const t = expectType(st);
+  if (t === 'press' && st.expect.press === 'pencil') { if (S.pencil !== snap.pencil) togglePencil(); }
+  refresh();
+  L.demo = false; L.wrong = 0;
+  setText(st.say, '');
+  pingTargets(st);
+}
+
+/* ---- coach keys --------------------------------------------------------- */
+function onGot() {
+  sfx.mod();
+  if (!L.active) return;
+  if (L.done) {
+    if (L.opts.onNext) L.opts.onNext();
+    else startLevel0(L.script, L.opts);
+    return;
+  }
+  if (L.demo || L.advancing) return;
+  if (expectType(step()) === 'continue') { L.pressed = true; check(); }
+}
+function onSkip() {
+  sfx.mod();
+  if (!L.active || !L.opts.canSkip) return;
+  const next = L.opts.onSkip || L.opts.onNext;
+  if (next) next();
+}
+
+/* ---- public ------------------------------------------------------------- */
+/** Start a script. opts: { onNext(), onDone(), onSkip(), canSkip } */
+function startLevel0(script, opts = {}) {
+  const v = validateScript(script);
+  if (!v.ok) { console.error('level0: invalid script ' + (script && script.id) + ':\n  ' + v.errors.join('\n  ')); return false; }
+  cancelAllPresses();
+  L.starting = true;
+  try { for (const f of gameHooks.start) f(script.id); } finally { L.starting = false; }
+  if (S.id && S.id !== script.id) flushSave();
+  stopTimers();
+  const values = Int8Array.from(parseGrid(script.board));
+  S.id = script.id; S.mode = 'l0'; S.kind = 'level0'; S.world = script.world;
+  S.given.set(values); S.sol.set(scriptSolution(script.board)); S.startNotes.set(startNotes(script, values));
+  S.spot = null;
+  markGivens();
+  resetGame();
+  Object.assign(L, { active: true, script, opts, k: 0, wrong: 0, demo: false, advancing: false, done: false, shows: 0, nudges: 0 });
+  if (!sayEl) buildCoach();
+  ensureOverlays();
+  appEl.classList.add('l0');
+  inputGuard.fn = guard;
+  inputGuard.reset = () => { if (!L.active) return false; startLevel0(L.script, L.opts); return true; };
+  enterStep(0);
+  updatePid();
+  return true;
+}
+function stopTimers() {
+  for (const t of L.timers) clearTimeout(t);
+  L.timers.clear(); clearTimeout(L.nudgeTimer); L.checkQueued = false;
+}
+function stopLevel0() {
+  if (!L.active) return;
+  stopTimers();
+  L.active = false; L.demo = false;
+  if (S.mode === 'l0demo') S.mode = 'l0';
+  inputGuard.fn = null; inputGuard.reset = null;
+  clearVisuals();
+  appEl.classList.remove('l0');
+}
+const level0Active = () => L.active;
+const level0Scripts = SCRIPTS;
+
+function initLevel0() {
+  const prev = hooks.afterRefresh;
+  hooks.afterRefresh = () => { if (prev) prev(); if (L.active) queueCheck(); };
+  // any other puzzle starting ends the script
+  gameHooks.start.push(() => { if (L.active && !L.starting) stopLevel0(); });
+  // the solve cascade's toast becomes the outro
+  toastHooks.before = () => {
+    if (!L.active || S.mode !== 'l0') return false;
+    showOutro();
+    return true;
+  };
+}
+
+/* Test / DEV view of the engine (exposed on window.__debug.L0 with ?debug=1). */
+const L0 = {
+  state: () => ({ active: L.active, id: L.script && L.script.id, k: L.k, n: L.script ? L.script.steps.length : 0,
+    wrong: L.wrong, demo: L.demo, advancing: L.advancing, done: L.done, shows: L.shows, nudges: L.nudges,
+    say: sayEl ? sayEl.textContent : '', sayClass: sayEl ? sayEl.className : '',
+    got: !!(gotKey && gotKey.classList.contains('show')), skip: !!(skipKey && skipKey.classList.contains('show')) }),
+  step: () => (L.script ? step() : null),
+  validate: validateScript, scripts: SCRIPTS, start: startLevel0, stop: stopLevel0
+};
+return Object.freeze({ startLevel0, stopLevel0, level0Active, level0Scripts, initLevel0, L0 });
+})();
+
+/* ---- src/campaign.js ---- */
+const __m_campaign = (() => {
+const { $ } = __m_util;
+const { sfx } = __m_audio;
+const { S } = __m_state;
+const { worlds } = __m_puzzles;
+const { startPuzzle, gameHooks, updatePid } = __m_game;
+const { toastHooks, hideToast } = __m_actions;
+const { toastEl, toastMsg } = __m_board;
+const { startLevel0, level0Scripts } = __m_level0;
+// campaign.js — minimal WORLD RUNNER. A world is 14 levels played in order:
+// Level 0 (guided script) → Spot it 1-6 → Use it 1-6 → Master 1. Next goes to
+// the following level; after Master, an end-of-world toast. Every level is
+// selectable (DEV menu row). Units, unlock gates and the keyboard map come
+// later (step 7).
+//
+// Stored in localStorage 'sudoku.camp.v1' (best effort):
+//   { done: { <level id>: true }, clean: { <level id>: true }, skip: { <world>: true } }
+// skip[w] is set when Spot it 1 of world w is cleared with no mistakes: from
+// then on Level 0 of that world shows a Skip keycap.
+//
+// Boot: #camp=<world> or #camp=<world>.<index 0-13> starts the runner,
+// #l0=w<world> opens that Level 0 on its own.
+
+
+
+
+
+
+
+
+
+const KEY = 'sudoku.camp.v1';
+const LEVELS_PER_WORLD = 14;
+const toastTitle = $('toastTitle'), againLbl = document.querySelector('#againKey .lbl');
+
+function loadStore() {
+  try {
+    const o = JSON.parse(localStorage.getItem(KEY) || 'null');
+    if (o && typeof o === 'object') return { done: o.done || {}, clean: o.clean || {}, skip: o.skip || {} };
+  } catch (e) {}
+  return { done: {}, clean: {}, skip: {} };
+}
+const store = loadStore();
+function saveStore() { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) {} }
+
+/** Level ids of world w, in play order (14). */
+function worldLevels(w) {
+  const W = worlds.find(x => x.world === w);
+  if (!W) return [];
+  return [`w${w}-l0`, ...W.spotIt.slice(0, 6).map(x => x.id), ...W.useIt.slice(0, 6).map(x => x.id), W.master[0].id];
+}
+const levelName = k => (k === 0 ? 'Level 0' : k <= 6 ? `Spot it ${k}` : k <= 12 ? `Use it ${k - 6}` : 'Master');
+const hasLevel0 = w => !!level0Scripts['w' + w];
+
+let cur = null;          // { world, ids, k }
+let starting = false;    // the runner itself is starting a level
+let worldToast = false;  // the end-of-world toast is showing
+
+/** Start the runner on world w at level index k (0 = Level 0). */
+function startCampaign(w = 0, k = 0) {
+  const ids = worldLevels(w);
+  if (!ids.length || !hasLevel0(w)) return false;
+  cur = { world: w, ids, k: 0 };
+  play(Math.max(0, Math.min(LEVELS_PER_WORLD - 1, k)));
+  return true;
+}
+function play(k) {
+  cur.k = k; worldToast = false;
+  hideToast();
+  const id = cur.ids[k];
+  starting = true;
+  try {
+    if (k === 0) startLevel0(level0Scripts['w' + cur.world], { canSkip: !!store.skip[cur.world], onNext: next, onSkip: next, onDone: () => markDone(id, true) });
+    else startPuzzle(id, false);
+  } finally { starting = false; }
+  updatePid();
+}
+function next() {
+  if (!cur) return;
+  if (cur.k < LEVELS_PER_WORLD - 1) play(cur.k + 1);
+  else showWorldToast();
+}
+function markDone(id, clean) {
+  store.done[id] = true;
+  if (clean) store.clean[id] = true;
+  saveStore();
+}
+function showWorldToast() {
+  worldToast = true;
+  toastTitle.textContent = `World ${cur.world} complete`;
+  toastMsg.textContent = `All ${LEVELS_PER_WORLD} levels done.`;
+  againLbl.textContent = 'Done';
+  toastEl.classList.remove('show');
+  void toastEl.offsetWidth;                       // replay the toast's entrance
+  toastEl.classList.add('show');
+  sfx.latch(0, 0); sfx.latch(0.18, 1); sfx.latch(0.36, 2);
+}
+/** Open a world's Level 0 on its own (outside the runner). */
+function startLevel0Alone(w = 0) {
+  cur = null;
+  return startLevel0(level0Scripts['w' + w], { canSkip: !!store.skip[w] });
+}
+
+function initCampaign() {
+  // leaving the runner: any puzzle the runner did not start
+  gameHooks.start.push(() => { if (cur && !starting) { cur = null; worldToast = false; } });
+  gameHooks.label = () => {
+    if (cur) return `<b>DEV</b> · World ${cur.world} · Level ${cur.k + 1}/${LEVELS_PER_WORLD}`;
+    if (S.mode === 'l0' || S.mode === 'l0demo') return `<b>DEV</b> · ${S.id} · W${S.world} Level 0`;
+    return null;
+  };
+  // a solved / spotted level: record it, the keycap says Next (Finish after Master)
+  toastHooks.after = () => {
+    if (!cur || S.id !== cur.ids[cur.k] || worldToast) return;
+    const clean = S.mistakes === 0;
+    markDone(S.id, clean);
+    if (cur.k === 1 && clean) { store.skip[cur.world] = true; saveStore(); }
+    againLbl.textContent = cur.k < LEVELS_PER_WORLD - 1 ? 'Next' : 'Finish';
+  };
+  gameHooks.next = () => {
+    if (!cur) return false;
+    if (worldToast) { hideToast(); worldToast = false; cur = null; updatePid(); return true; }
+    if (!S.solved) return false;
+    next();
+    return true;
+  };
+  const m = /[#&]camp=(\d)(?:\.(\d+))?/.exec(location.hash), l = /[#&]l0=w(\d)/.exec(location.hash);
+  if (m) startCampaign(+m[1], m[2] ? +m[2] : 0);
+  else if (l && hasLevel0(+l[1])) startLevel0Alone(+l[1]);
+}
+
+/* DEV menu rows (devmenu.js passes its own el/chip helpers and close()). */
+function devEntries(sheet, el, chip, close) {
+  el('div', 'grp', 'Campaign runner', sheet);
+  for (const W of worlds) {
+    if (!hasLevel0(W.world)) continue;
+    const row = el('div', 'wrow', null, sheet);
+    const c = chip(row, `Campaign: World ${W.world}`);
+    c.dataset.camp = String(W.world);
+    c.addEventListener('click', () => { close(); startCampaign(W.world, 0); });
+    const l0 = chip(row, `W${W.world} Level 0`);
+    l0.dataset.l0 = 'w' + W.world;
+    if (S.id === `w${W.world}-l0`) l0.classList.add('cur');
+    l0.addEventListener('click', () => { close(); startLevel0Alone(W.world); });
+    const lv = el('div', 'wrow', null, sheet);
+    el('span', 'tag', `W${W.world} levels`, lv);
+    worldLevels(W.world).forEach((id, k) => {
+      const b = chip(lv, k === 0 ? 'L0' : k <= 6 ? `S${k}` : k <= 12 ? `U${k - 6}` : 'M');
+      b.dataset.campLevel = `${W.world}.${k}`;
+      b.title = `${levelName(k)} (${id})`;
+      if (store.done[id]) b.classList.add('done');
+      if (cur && cur.world === W.world && cur.k === k) b.classList.add('cur');
+      b.addEventListener('click', () => { close(); startCampaign(W.world, k); });
+    });
+  }
+}
+
+/* Test view (window.__debug.camp with ?debug=1). */
+const camp = {
+  state: () => ({ active: !!cur, world: cur ? cur.world : -1, k: cur ? cur.k : -1, id: cur ? cur.ids[cur.k] : null, worldToast,
+    store: JSON.parse(JSON.stringify(store)) }),
+  levels: worldLevels, start: startCampaign, startLevel0Alone
+};
+return Object.freeze({ LEVELS_PER_WORLD, worldLevels, levelName, hasLevel0, startCampaign, startLevel0Alone, initCampaign, devEntries, camp });
 })();
 
 /* ---- src/devmenu.js ---- */
@@ -3493,6 +4686,7 @@ const { openSheet } = __m_token;
 const { startPuzzle } = __m_game;
 const { worlds, quick, daily, todayDailyId, modeLabel, entry } = __m_puzzles;
 const { BANDS, dailyIndex, DAILY_EPOCH } = __m_shared;
+const { devEntries } = __m_campaign;
 // devmenu.js — TEMPORARY developer menu (clearly marked DEV). A sheet that
 // reuses the token sheet styling: campaign worlds 0-4 (Spot it 1-12, Use it
 // 1-12, Master 1-4), Quick Play bands, today's Daily, the progress token.
@@ -3506,6 +4700,9 @@ const { BANDS, dailyIndex, DAILY_EPOCH } = __m_shared;
 
 
 
+/* --- level0: campaign runner entries --- */
+
+/* --- end level0 --- */
 
 const sheet = $('devSheet'), bg = $('devBg');
 
@@ -3531,6 +4728,9 @@ function render() {
   sheet.textContent = '';
   const h = el('h2', null, null, sheet); h.innerHTML = '<b>DEV</b> · Puzzles';
   el('p', 'sub', `Current: ${S.id} · ${modeLabel(S.id)}${S.mode === 'spot' ? ' · target: ' + S.spot.label : ''}`, sheet);
+  /* --- level0: campaign runner + Level 0 entries (no data-id, so the chip handler below skips them) --- */
+  devEntries(sheet, el, chip, closeDev);
+  /* --- end level0 --- */
 
   el('div', 'grp', 'Campaign', sheet);
   for (const w of worlds) {
@@ -3593,6 +4793,803 @@ function initDevMenu() {
 return Object.freeze({ openDev, closeDev, initDevMenu });
 })();
 
+/* ---- src/hintlogic.js ---- */
+const __m_hintlogic = (() => {
+const { TECHNIQUES, TECH_INFO, computeCands, nextStep, allSteps, applyStep, checkClaim, cellName, unitName, bit, digitsOf, BOXES, boxOf } = __m_solver;
+const { ALLOW } = __m_shared;
+// hintlogic.js — the hint ladder and "check my thinking", logic only (no DOM).
+// Runs in Node too (tools/test-hints.mjs imports it).
+//
+// The `unlocked` rule: a hint may only use (and name) techniques in `unlocked`.
+// Default: ALLOW[w] for campaign items (ids w<w>-spot/use/master-..), ALLOW[4]
+// for everything else (Quick Play, Daily, the prototype puzzle, dev).
+
+
+
+/** Techniques a hint may use for a puzzle id. */
+function unlockedFor(id) {
+  const m = /^w(\d)-/.exec(id || '');
+  const w = m ? Math.min(+m[1], ALLOW.length - 1) : ALLOW.length - 1;
+  return ALLOW[w].slice();
+}
+
+/** Display names used in hint text (the solver's names carry box/line detail). */
+const HINT_NAME = {
+  'full-house': 'Full House',
+  'hidden-single-box': 'Hidden Single',
+  'hidden-single-line': 'Hidden Single',
+  'naked-single': 'Naked Single',
+  pointing: 'Pointing pattern',
+  claiming: 'Claiming pattern',
+  'naked-pair': 'Naked Pair',
+  'hidden-pair': 'Hidden Pair'
+};
+
+/**
+ * Candidates as the player sees the board: in a cell with notes, the notes
+ * intersected with the computed candidates; in a cell without notes, the
+ * computed candidates. Filled cells are 0.
+ */
+function hintCands(values, notes) {
+  const comp = computeCands(values);
+  const c = new Uint16Array(81);
+  for (let i = 0; i < 81; i++) {
+    if (values[i]) continue;
+    c[i] = notes[i] ? (notes[i] & comp[i]) : comp[i];
+  }
+  return c;
+}
+
+/** First placed (non-given) digit that differs from the solution, or -1. */
+function firstWrong(values, given, sol) {
+  for (let i = 0; i < 81; i++) if (values[i] && !given[i] && values[i] !== sol[i]) return i;
+  return -1;
+}
+
+/** First cell whose notes are missing its solution digit: {cell, digit} or null. */
+function firstMissingNote(values, notes, sol) {
+  for (let i = 0; i < 81; i++) {
+    if (values[i] || !notes[i]) continue;
+    if (!(notes[i] & bit(sol[i]))) return { cell: i, digit: sol[i] };
+  }
+  return null;
+}
+
+const sameStep = (a, b) => a && b && a.tech === b.tech &&
+  JSON.stringify(a.place) === JSON.stringify(b.place) &&
+  JSON.stringify(a.pattern) === JSON.stringify(b.pattern) &&
+  JSON.stringify(a.eliminate) === JSON.stringify(b.eliminate);
+
+/**
+ * What the next hint is about. ctx = { values, notes, given, sol, unlocked,
+ * mode ('free'|'spot'), solved, spot: {steps, step} }.
+ * Returns one of:
+ *   {kind:'solved'}
+ *   {kind:'wrong', cell, digit}             a placed digit that doesn't match the solution
+ *   {kind:'missing', cell, digit}           notes lack the cell's solution digit
+ *   {kind:'step', step, cands}              the easiest step within `unlocked`
+ *   {kind:'none'}                           nothing within `unlocked`
+ */
+function findHint(ctx) {
+  const { values, notes, given, sol, mode, solved } = ctx;
+  const unlocked = ctx.unlocked || ALLOW[ALLOW.length - 1];
+  if (solved) return { kind: 'solved' };
+  let full = true;
+  for (let i = 0; i < 81; i++) if (!values[i]) { full = false; break; }
+  const w = firstWrong(values, given, sol);
+  if (w >= 0) return { kind: 'wrong', cell: w, digit: values[w] };
+  if (full) return { kind: 'solved' };
+  const miss = firstMissingNote(values, notes, sol);
+  if (miss) return { kind: 'missing', ...miss };
+  const cands = hintCands(values, notes);
+  if (mode === 'spot' && ctx.spot && ctx.spot.steps && ctx.spot.steps.length) {
+    // Spot it: straight to the target technique (the stored step if it is valid)
+    const allowed = new Set(unlocked);
+    const valid = ctx.spot.steps.filter(st => allowed.has(st.tech));
+    const st = valid.find(s => sameStep(s, ctx.spot.step)) || valid[0];
+    if (st) return { kind: 'step', step: st, cands };
+  }
+  const step = nextStep(values, cands, unlocked);
+  if (!step) return { kind: 'none' };
+  return { kind: 'step', step, cands };
+}
+
+/** Max ladder level per hint kind. */
+function maxLevel(h) {
+  switch (h.kind) {
+    case 'step': return 4;
+    case 'wrong': return 4;
+    case 'missing': return 3;
+    default: return 1;
+  }
+}
+/** Levels that cost the "no hints" unit. */
+const isPaid = (h, level) => (h.kind === 'step' || h.kind === 'wrong' || h.kind === 'missing') && level >= 3;
+
+/** Unit cells a hint tints at level 2 (and keeps tinted after). */
+function hintUnit(h) {
+  if (h.kind === 'step') {
+    const st = h.step;
+    if (st.unit) return { ...st.unit, cells: unitCells(st.unit) };
+    const c = st.place ? st.place.cell : st.pattern[0];
+    return { type: 'box', index: boxOf(c), cells: BOXES[boxOf(c)].slice() };
+  }
+  if (h.kind === 'wrong' || h.kind === 'missing') {
+    const b = boxOf(h.cell);
+    return { type: 'box', index: b, cells: BOXES[b].slice() };
+  }
+  return null;
+}
+function unitCells(u) {
+  const out = [];
+  for (let k = 0; k < 9; k++) {
+    if (u.type === 'row') out.push(u.index * 9 + k);
+    else if (u.type === 'col') out.push(k * 9 + u.index);
+    else out.push(BOXES[u.index][k]);
+  }
+  return out;
+}
+
+/** Coach text for a hint at a level. Plain text plus <b> for the key term. */
+function hintText(h, level) {
+  const esc = s => String(s);
+  switch (h.kind) {
+    case 'solved': return 'Nothing left to hint: the puzzle is solved.';
+    case 'none': return "No move with the techniques you've learned. Check your notes or try a guess-free scan.";
+    case 'missing':
+      if (level === 1) return `Your notes are missing a <b>${h.digit}</b> in ${cellName(h.cell)}.`;
+      if (level === 2) return `Here: ${cellName(h.cell)} can still be ${h.digit}.`;
+      return `Put back: ${h.digit} is a candidate in ${cellName(h.cell)} again.`;
+    case 'wrong':
+      if (level === 1) return 'One of your digits doesn\'t match the solution.';
+      if (level === 2) return `It's in <b>box ${boxOf(h.cell) + 1}</b>.`;
+      if (level === 3) return `It's the ${h.digit} in <b>${cellName(h.cell)}</b>.`;
+      return `Erased the ${h.digit} in ${cellName(h.cell)}: it doesn't match the solution.`;
+    case 'step': {
+      const st = h.step, name = HINT_NAME[st.tech] || TECH_INFO[st.tech].name;
+      if (level === 1) return `There's a <b>${esc(name)}</b> you can use.`;
+      if (level === 2) {
+        const u = hintUnit(h);
+        return `Look in <b>${unitName(u)}</b>.`;
+      }
+      if (level === 3) {
+        if (st.place) return `Look at <b>${cellName(st.place.cell)}</b>: only one digit fits there.`;
+        const ds = [...new Set(st.eliminate.map(e => e[1]))].sort((a, b) => a - b);
+        const n = st.eliminate.length;
+        return `The outlined cells make the pattern. ${n === 1 ? 'The red candidate goes' : `The red ${ds.length === 1 ? ds[0] + 's' : 'candidates'} go`}.`;
+      }
+      return esc(st.text);
+    }
+  }
+  return '';
+}
+
+/** Copy of the board with the step applied (for checks and tests). */
+function applied(values, cands, step) {
+  const v = Int8Array.from(values), c = Uint16Array.from(cands);
+  applyStep(v, c, step);
+  return { values: v, cands: c };
+}
+
+/** Does a step agree with the solution? (placement correct, no solution digit removed) */
+function stepAgrees(step, sol) {
+  if (step.place && sol[step.place.cell] !== step.place.digit) return false;
+  for (const [c, d] of step.eliminate || []) if (sol[c] === d) return false;
+  return true;
+}
+
+/** Rank of a technique (lower = easier). */
+const techRank = t => TECHNIQUES.indexOf(t);
+
+/** Is `step` the easiest available within `unlocked`? (used by tests) */
+function isEasiest(values, cands, unlocked, step) {
+  const first = allSteps(values, cands, unlocked).next();
+  return !first.done && techRank(first.value.tech) === techRank(step.tech);
+}
+
+/* =========================================================================
+   CHECK MY THINKING
+   ========================================================================= */
+/** Claim types. `cells`: [min, max]; `digits`: how many digits the keypad asks for;
+    `needs`: offered only when one of these techniques is unlocked (none = always). */
+const CLAIMS = [
+  { id: 'place', label: 'This digit goes here', cells: [1, 1], digits: 1, needs: null },
+  { id: 'eliminate', label: 'This candidate can go', cells: [1, 1], digits: 1, needs: null },
+  { id: 'naked-single', label: 'Naked single', cells: [1, 1], digits: 0, needs: ['naked-single'] },
+  { id: 'hidden-single', label: 'Hidden single', cells: [1, 1], digits: 1, needs: ['hidden-single-box', 'hidden-single-line'] },
+  { id: 'locked', label: 'Pointing / Claiming', cells: [2, 3], digits: 1, needs: ['pointing', 'claiming'] },
+  { id: 'naked-pair', label: 'Naked pair', cells: [2, 2], digits: 0, needs: ['naked-pair'] },
+  { id: 'hidden-pair', label: 'Hidden pair', cells: [2, 2], digits: 2, needs: ['hidden-pair'] }
+];
+
+/** Claim types the player may use (same `unlocked` rule as hints). */
+function claimsFor(unlocked) {
+  const set = new Set(unlocked);
+  return CLAIMS.filter(c => !c.needs || c.needs.some(t => set.has(t)));
+}
+
+/** Candidates for a check: what the player sees, with each cell's solution
+    digit put back where the notes lost it (so a claim is judged soundly). */
+function checkCands(values, notes, sol) {
+  const c = hintCands(values, notes);
+  for (let i = 0; i < 81; i++) if (!values[i] && sol && sol[i]) c[i] |= bit(sol[i]);
+  return c;
+}
+
+/**
+ * Run a claim. claimId from CLAIMS, cells = [cell...], digits = [d...].
+ * Returns {ok, text}. Never changes anything.
+ */
+function runClaim({ values, notes, sol }, claimId, cells, digits = []) {
+  const cands = checkCands(values, notes, sol);
+  let r;
+  if (claimId === 'place' || claimId === 'eliminate') {
+    r = checkClaim(values, cands, { type: claimId, cell: cells[0], digit: digits[0] }, sol);
+  } else if (claimId === 'locked') {
+    const a = checkClaim(values, cands, { type: 'pattern', tech: 'pointing', cells, digits }, sol);
+    const b = a.ok ? a : checkClaim(values, cands, { type: 'pattern', tech: 'claiming', cells, digits }, sol);
+    r = a.ok ? a : b.ok ? b : a;
+  } else {
+    r = checkClaim(values, cands, { type: 'pattern', tech: claimId, cells, digits: digits.length ? digits : undefined }, sol);
+  }
+  // the player's notes lost a candidate that is still the answer in a selected cell
+  const lost = cells.filter(i => !values[i] && notes[i] && sol && !(notes[i] & bit(sol[i])));
+  if (lost.length) r = { ok: r.ok, text: `${r.text} (Careful: your notes in ${lost.map(cellName).join(' and ')} are missing a candidate.)` };
+  return r;
+}
+return Object.freeze({ unlockedFor, HINT_NAME, hintCands, firstWrong, firstMissingNote, findHint, maxLevel, isPaid, hintUnit, hintText, applied, stepAgrees, techRank, isEasiest, CLAIMS, claimsFor, checkCands, runClaim });
+})();
+
+/* ---- src/hintui.js ---- */
+const __m_hintui = (() => {
+const { $, div, bit, reducedMotion, dist, haptic, rowOf, colOf, boxOf } = __m_util;
+const { sfx } = __m_audio;
+const { S, UI, hintHooks, pushUndo } = __m_state;
+const { boardEl, cells, renderCell, refresh, animNoteIn, animNoteFlick, animPing } = __m_board;
+const { makeKey } = __m_pad;
+const { FX } = __m_particles;
+const { placeProvisional, finalizePending, clearCell, notesRemoved } = __m_actions;
+const { bindPress, pressStart, cancelAllPresses } = __m_input;
+const { findHint, maxLevel, isPaid, hintUnit, hintText, unlockedFor, claimsFor, runClaim } = __m_hintlogic;
+const { cellName } = __m_solver;
+// hintui.js — the HINT LADDER and CHECK MY THINKING (DOM, effects, sounds).
+// Logic lives in hintlogic.js. See docs/hints.md.
+//
+// Hint ladder: each tap of Hint goes one level deeper on the SAME hint:
+//   1 Name it (free) · 2 Where: tint the unit (free) · 3 Show it: pattern +
+//   removed candidates / target cell (paid) · 4 Do it: apply + reason (paid).
+// Any change of the board (values or notes) resets the ladder.
+// Check my thinking: pick cells, then what you think; solver.checkClaim answers.
+// Free, never changes the board, never a mistake.
+
+
+
+
+
+
+
+
+
+
+
+const ICON_HINT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.3 1.1 2.2h5c0-.9.4-1.6 1.1-2.2A6 6 0 0 0 12 3z"/></svg>';
+const ICON_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/><path d="m8 11 2 2 4-4"/></svg>';
+
+/** Options. `unlocked`: techniques a hint may use; null = from the puzzle id
+    (ALLOW[w] for campaign items, ALLOW[4] for Quick Play / Daily / dev). */
+const hintOpts = { unlocked: null };
+const currentUnlocked = () => hintOpts.unlocked || unlockedFor(S.id);
+
+let app, wrap, bar, coach, ctext, pipsEl, ctEl, keysBar, hdrSlot, hintKey, checkKey, ckBg, ckSheet;
+const HL = new Array(81), HX = new Array(81);
+
+/* ---- ladder state ------------------------------------------------------ */
+let L = null;             // { h, level, sig, faded }
+let seenSig = '', seenId = '', busy = false, fadeTimer = 0;
+const sig = () => S.values.join('') + '|' + S.notes.join(',');
+
+/* ---- check mode state -------------------------------------------------- */
+const CK = { on: false, cells: [], claim: null, digits: [] };
+
+/* =========================================================================
+   COACH TEXT
+   ========================================================================= */
+function setCoach(html, opts = {}) {
+  coach.classList.toggle('show', !!html);
+  coach.classList.toggle('ck', !!opts.check);
+  coach.classList.toggle('ok', opts.ok === true);
+  coach.classList.toggle('no', opts.ok === false);
+  ctEl.innerHTML = html || '';
+  const lv = opts.level || 0;
+  pipsEl.querySelectorAll('i').forEach((p, k) => p.classList.toggle('on', k < lv));
+  if (html && !reducedMotion()) ctext.animate([{ opacity: 0, transform: coachShift(4) }, { opacity: 1, transform: coachShift(0) }], { duration: 160, easing: 'ease-out' });
+  fitCoach();
+}
+const coachShift = y => (coach.classList.contains('over') || app.classList.contains('hb-hdr') ? `translateY(${y}px)` : `translateY(calc(-50% + ${y}px))`);
+/* Fit the text in the space between board and pad: shrink a little, then
+   (still too long) let it grow upward as a bubble over the board's edge. */
+function fitCoach() {
+  coach.classList.remove('over', 'top'); ctext.style.top = '';
+  if (app.classList.contains('hb-hdr')) { ctext.style.fontSize = ''; bar.classList.toggle('top', focusLow()); return; }
+  bar.classList.remove('top');
+  for (const fs of [12, 11.5, 11, 10.5]) {
+    ctext.style.fontSize = fs + 'px';
+    if (ctext.scrollHeight <= coach.clientHeight + 1) return;
+  }
+  ctext.style.fontSize = '';
+  coach.classList.add('over');
+  // the bubble covers the board's bottom edge: if the hint is about the bottom
+  // half, float it at the top of the board instead
+  const low = focusLow();
+  coach.classList.toggle('top', low);
+  ctext.style.top = low ? `${-(wrap.clientHeight - bar.clientHeight) + 3}px` : '';
+}
+function focusLow() {
+  const f = focusCells();
+  return f.length > 0 && f.reduce((a, c) => a + rowOf(c), 0) / f.length >= 4.5;
+}
+function focusCells() {
+  const v = visuals(), out = [...v.pattern, ...v.elim.keys()];
+  if (v.target >= 0) out.push(v.target);
+  if (v.fill >= 0) out.push(v.fill);
+  if (!out.length) out.push(...v.unit);
+  if (CK.on) out.push(...CK.cells);
+  return out;
+}
+
+/* =========================================================================
+   BOARD VISUALS (derived from the ladder state + check selection)
+   ========================================================================= */
+function visuals() {
+  const v = { unit: new Set(), pattern: new Set(), target: -1, fill: -1, elim: new Map(), keep: new Map() };
+  if (L && !L.faded) {
+    const { h, level } = L;
+    if (h.kind === 'step') {
+      const st = h.step;
+      if (level >= 2 && level <= 3) hintUnit(h).cells.forEach(c => v.unit.add(c));
+      if (level === 3) {
+        if (st.place) v.target = st.place.cell;
+        else {
+          st.pattern.forEach(c => v.pattern.add(c));
+          for (const [c, d] of st.eliminate) v.elim.set(c, (v.elim.get(c) || 0) | bit(d));
+          // the pattern's own digits, shown in accent in the pattern cells (the "cause")
+          for (const c of st.pattern) for (const d of st.digits) if (h.cands[c] & bit(d)) v.keep.set(c, (v.keep.get(c) || 0) | bit(d));
+        }
+      }
+      if (level === 4) {
+        if (st.place) v.fill = st.place.cell;
+        else st.pattern.forEach(c => v.pattern.add(c));
+      }
+    } else if (h.kind === 'wrong') {
+      if (level === 2 || level === 3) hintUnit(h).cells.forEach(c => v.unit.add(c));
+      if (level === 3) v.target = h.cell;
+    } else if (h.kind === 'missing') {
+      if (level >= 2) v.target = h.cell;
+    }
+  }
+  return v;
+}
+function paint(anim = null) {
+  const v = visuals();
+  for (let i = 0; i < 81; i++) {
+    let cls = 'hl';
+    if (v.unit.has(i)) cls += ' u';
+    if (v.pattern.has(i)) cls += ' p';
+    if (v.target === i) cls += ' t';
+    if (v.fill === i) cls += ' f';
+    if (CK.on && CK.cells.includes(i)) cls += ' ck';
+    if (HL[i].className !== cls) HL[i].className = cls;
+    const m = v.elim.get(i) || 0, kp = v.keep.get(i) || 0;
+    for (let d = 1; d <= 9; d++) {
+      const on = !!(m & bit(d)), keep = !on && !!(kp & bit(d)), sp = HX[i].children[d - 1];
+      sp.classList.toggle('on', on);
+      sp.classList.toggle('keep', keep);
+      cells[i].n[d - 1].classList.toggle('hxk', on || keep);
+    }
+  }
+  if (anim) anim(v);
+}
+function clearCellAnims() { for (let i = 0; i < 81; i++) { HL[i].getAnimations().forEach(a => a.cancel()); for (const s of HX[i].children) s.getAnimations().forEach(a => a.cancel()); } }
+
+/* Level 2: the unit's tint sweeps in along the unit (the "where"). */
+function animUnit(v) {
+  if (reducedMotion() || !v.unit.size) return;
+  const list = [...v.unit].sort((a, b) => a - b);
+  list.forEach((c, k) => HL[c].animate([{ opacity: 0 }, { opacity: 1 }], { duration: 180, delay: k * 18, easing: 'ease-out', fill: 'backwards' }));
+}
+/* Traces FROM the pattern cells TO what they decide (cause -> effect). */
+function traceLinks(st) {
+  const links = [];
+  if (st.place) {
+    for (const c of st.pattern) if (c !== st.place.cell) links.push({ from: c, to: st.place.cell, d: 0 });
+    return links;
+  }
+  const shares = (a, b) => rowOf(a) === rowOf(b) || colOf(a) === colOf(b) || boxOf(a) === boxOf(b);
+  for (const [c, d] of st.eliminate) {
+    let src = st.pattern.filter(p => p !== c && shares(p, c));
+    if (!src.length) src = st.pattern.filter(p => p !== c);
+    for (const p of src) links.push({ from: p, to: c, d });
+  }
+  return links.sort((a, b) => dist(a.from, a.to) - dist(b.from, b.to)).slice(0, 32);
+}
+/* Level 3: pattern outlines pop in, motes travel to each removed candidate,
+   which turns red and struck through as its mote lands. */
+function animShow(v) {
+  if (reducedMotion()) return;
+  const st = L.h.step;
+  const pats = st ? (st.place ? [st.place.cell] : st.pattern) : [L.h.cell];
+  pats.forEach((c, k) => {
+    HL[c].animate([{ opacity: 0 }, { opacity: 1 }], { duration: 160, delay: k * 40, easing: 'ease-out', fill: 'backwards' });
+    for (const sp of HX[c].children) if (sp.classList.contains('keep')) sp.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 160, delay: k * 40, easing: 'ease-out', fill: 'backwards' });
+  });
+  if (!st) return;
+  const links = traceLinks(st);
+  if (st.place) { if (links.length) FX.hintTrace(links, 120); else FX.ring(st.place.cell); return; }
+  const far = FX.hintTrace(links, 120);
+  const land = Math.max(200, far * 0.85);
+  for (const [c, m] of v.elim) for (let d = 1; d <= 9; d++) {
+    if (m & bit(d)) HX[c].children[d - 1].animate([{ opacity: 0, transform: 'scale(1.4)' }, { opacity: 1, transform: 'none' }], { duration: 160, delay: land, easing: 'ease-out', fill: 'backwards' });
+  }
+}
+
+/* =========================================================================
+   HINT LADDER
+   ========================================================================= */
+function ctx() {
+  return {
+    values: S.values, notes: S.notes, given: S.given, sol: S.sol, mode: S.mode, solved: S.solved,
+    unlocked: currentUnlocked(), spot: S.spot ? { steps: S.spot.steps, step: S.spot.step } : null
+  };
+}
+
+/** One tap of the Hint key. Exposed for tests: returns {kind, level, paid}. */
+function hintTap() {
+  if (S.mode === 'l0') return { kind: 'none', level: 0, paid: false };
+  if (CK.on) exitCheck(false);
+  const s = sig();
+  if (!L || L.sig !== s || L.level >= maxLevel(L.h)) L = { h: findHint(ctx()), level: 0, sig: s, faded: false };
+  clearTimeout(fadeTimer);
+  L.level++; L.faded = false;
+  const { h, level } = L;
+  const paid = isPaid(h, level);
+  if (paid) S.paidHints++;
+  clearCellAnims();
+  setCoach(hintText(h, level), { level });
+  if (level === 4 && h.kind === 'step') doStep(h);
+  else if (level === 4 && h.kind === 'wrong') doErase(h);
+  else if (level === 3 && h.kind === 'missing') doRestore(h);
+  else {
+    paint(level === 2 ? animUnit : level === 3 ? animShow : null);
+    sfx.hint(Math.min(level, 3));
+    if (level === 2 && h.kind === 'missing' && !reducedMotion()) HL[h.cell].animate([{ opacity: 0 }, { opacity: 1 }], { duration: 160, easing: 'ease-out' });
+  }
+  haptic(4);
+  refresh();                      // paidHints is saved with the meta (autosave hook)
+  return { kind: h.kind, level, paid };
+}
+
+function fadeLater() {
+  clearTimeout(fadeTimer);
+  const mine = L;
+  fadeTimer = setTimeout(() => {
+    if (L !== mine) return;
+    L.faded = true;
+    const done = () => { if (L === mine && L.faded) paint(); };
+    if (reducedMotion()) { done(); return; }
+    let n = 0;
+    for (let i = 0; i < 81; i++) if (HL[i].className !== 'hl' && !HL[i].classList.contains('ck')) {
+      n++; HL[i].animate([{ opacity: 1 }, { opacity: 0 }], { duration: 260, easing: 'ease-out' });
+    }
+    setTimeout(done, n ? 250 : 0);
+  }, 1500);
+}
+
+/* Level 4, step: apply the move with the normal placement / elimination
+   sounds and effects; the reason stays in the coach line. */
+function doStep(h) {
+  const st = h.step;
+  busy = true;
+  S.selected = -1; S.loaded = 0; S.loadedNote = false;
+  if (st.place) {
+    const { cell, digit } = st.place;
+    const links = traceLinks(st);
+    if (links.length) FX.hintTrace(links);
+    sfx.pen();
+    placeProvisional(cell, digit, 'hint');
+    finalizePending();
+    paint();
+  } else {
+    pushUndo();
+    const byCell = new Map();
+    for (const [c, d] of st.eliminate) byCell.set(c, (byCell.get(c) || 0) | bit(d));
+    const list = [];
+    let k = 0, wrote = false;
+    // positions are read for the traces before any note re-renders
+    FX.hintTrace(traceLinks(st));
+    for (const [c, m] of byCell) {
+      if (S.values[c]) continue;
+      const had = S.notes[c];
+      if (had) {
+        S.notes[c] = had & ~m;
+        renderCell(c);
+        for (let d = 1; d <= 9; d++) if ((had & m) & bit(d)) {
+          const dir = (c + d) % 2 ? 1 : -1;
+          animNoteFlick(cells[c].n[d - 1], dir); FX.flickOff(c, d, dir);
+          sfx.flick(0.01 + Math.min(k, 8) * 0.03); k++;
+          list.push([c, d]);
+        }
+      } else {
+        // no notes in this cell: write the candidates that survive, so the
+        // elimination becomes visible and sticks
+        S.notes[c] = h.cands[c] & ~m;
+        renderCell(c);
+        for (let d = 1; d <= 9; d++) if (S.notes[c] & bit(d)) animNoteIn(cells[c].n[d - 1]);
+        wrote = true;
+        for (let d = 1; d <= 9; d++) if (m & bit(d)) list.push([c, d]);
+      }
+    }
+    if (wrote) sfx.scratch(0.01);
+    paint();
+    refresh();
+    if (S.mode === 'spot' && list.length) notesRemoved(list, st.pattern[0]);
+  }
+  busy = false; seenSig = sig();
+  fadeLater();
+}
+
+/* Level 4, wrong digit: erase it (the normal erase). */
+function doErase(h) {
+  busy = true;
+  S.selected = -1; S.loaded = 0; S.loadedNote = false;
+  clearCell(h.cell);
+  paint();
+  busy = false; seenSig = sig();
+}
+
+/* Level 3, missing note: the note is written back with the pencil effect. */
+function doRestore(h) {
+  busy = true;
+  pushUndo();
+  S.notes[h.cell] |= bit(h.digit);
+  renderCell(h.cell);
+  animNoteIn(cells[h.cell].n[h.digit - 1]); FX.flecks(h.cell, h.digit);
+  sfx.scratch(0.01); sfx.hint(3);
+  paint();
+  refresh();
+  busy = false; seenSig = sig();
+  fadeLater();
+}
+
+/* Board changed (any placement / note / erase / undo / new puzzle). */
+function onRefresh() {
+  if (S.id !== seenId) { seenId = S.id; seenSig = sig(); L = null; if (CK.on) exitCheck(false); setCoach(''); clearCellAnims(); paint(); return; }
+  if (CK.on && S.solved) exitCheck(false);
+  if (busy) return;
+  const s = sig();
+  if (s === seenSig) return;
+  seenSig = s;
+  clearTimeout(fadeTimer);
+  if (L) { L = null; clearCellAnims(); if (!CK.on) setCoach(''); }
+  if (CK.on) {
+    CK.cells = CK.cells.filter(i => !S.values[i]);
+    if (!CK.claim) checkPrompt();
+  }
+  paint();
+}
+
+/* =========================================================================
+   CHECK MY THINKING
+   ========================================================================= */
+function checkPrompt() {
+  const n = CK.cells.length;
+  if (CK.claim) {
+    const need = CK.claim.digits - CK.digits.length;
+    const got = CK.digits.length ? ` (${CK.digits.join(', ')})` : '';
+    setCoach(`<b>${CK.claim.label}</b>: press ${need === 2 ? 'the two digits' : CK.claim.digits === 2 ? 'the second digit' : 'the digit'} on the keypad${got}.`, { check: true });
+  } else if (!n) setCoach('<b>Check</b>: tap the cells you\'re thinking about, then press Check.', { check: true });
+  else setCoach(`<b>${CK.cells.map(cellName).join(', ')}</b> · press Check to say what you see.`, { check: true });
+}
+function enterCheck() {
+  if (S.mode === 'l0') return;
+  if (CK.on) return;
+  cancelAllPresses();
+  CK.on = true; CK.cells = []; CK.claim = null; CK.digits = [];
+  S.selected = -1; S.loaded = 0; S.loadedNote = false;
+  if (L) { L.faded = true; }
+  checkKey.classList.add('latched');
+  clearCellAnims(); paint(); checkPrompt();
+  refresh();
+}
+function exitCheck(clearText = true) {
+  if (!CK.on) return;
+  CK.on = false; CK.cells = []; CK.claim = null; CK.digits = [];
+  checkKey.classList.remove('latched');
+  closeSheet();
+  if (clearText) setCoach('');
+  paint();
+}
+function onCheckKey() {
+  sfx.mod();
+  if (S.solved && !CK.on) { sfx.blocked(); return; }
+  if (!CK.on) { enterCheck(); return; }
+  if (CK.claim) { CK.claim = null; CK.digits = []; checkPrompt(); return; }
+  if (CK.cells.length) openSheet();
+  else exitCheck();
+}
+function onCheckCell(i) {
+  if (!CK.on) return false;
+  if (S.values[i]) { sfx.blocked(); return true; }
+  const k = CK.cells.indexOf(i);
+  if (k >= 0) CK.cells.splice(k, 1); else { CK.cells.push(i); if (CK.cells.length > 4) CK.cells.shift(); }
+  sfx.select();
+  paint();
+  if (k < 0 && !reducedMotion()) HL[i].animate([{ opacity: 0 }, { opacity: 1 }], { duration: 120, easing: 'ease-out' });
+  if (CK.claim && (CK.cells.length < CK.claim.cells[0] || CK.cells.length > CK.claim.cells[1])) { CK.claim = null; CK.digits = []; }
+  checkPrompt();
+  return true;
+}
+function onCheckDigit(d) {
+  if (!CK.on) return false;
+  if (!CK.claim) {
+    sfx.blocked();
+    setCoach(CK.cells.length ? 'Press Check first, then say what you see.' : '<b>Check</b>: tap the cells you\'re thinking about first.', { check: true });
+    return true;
+  }
+  sfx.pencil();
+  if (!CK.digits.includes(d)) CK.digits.push(d);
+  if (CK.digits.length >= CK.claim.digits) evaluate();
+  else checkPrompt();
+  return true;
+}
+
+/** Run the current claim (exposed for tests through checkClaimNow). */
+function evaluate() {
+  const claim = CK.claim, cells_ = CK.cells.slice().sort((a, b) => a - b), digits = CK.digits.slice();
+  CK.claim = null; CK.digits = [];
+  const r = runClaim({ values: S.values, notes: S.notes, sol: S.sol }, claim.id, cells_, digits);
+  CK.last = { claim: claim.id, cells: cells_, digits, ...r };
+  setCoach(escapeHtml(r.text), { check: true, ok: r.ok });
+  if (r.ok) {
+    sfx.checkYes(); haptic(8);
+    cells_.forEach((c, k) => { animPing(c, k * 40, .5); FX.ring(c); });
+  } else {
+    sfx.checkNo();
+    if (!reducedMotion()) cells_.forEach(c => cells[c].el.animate([{ transform: 'none' }, { transform: 'translateX(-1.5px)' }, { transform: 'translateX(1.5px)' }, { transform: 'none' }], { duration: 220, easing: 'ease-out' }));
+  }
+  return r;
+}
+const escapeHtml = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+
+/* ---- the claim sheet (token sheet styling) ---------------------------- */
+function openSheet() {
+  cancelAllPresses();
+  const n = CK.cells.length;
+  ckSheet.textContent = '';
+  const h = document.createElement('h2'); h.textContent = 'Check my thinking'; ckSheet.appendChild(h);
+  const sub = document.createElement('p'); sub.className = 'sub';
+  sub.textContent = `${CK.cells.map(cellName).join(', ')} · What do you see? Checking is free and never changes the board.`;
+  ckSheet.appendChild(sub);
+  const grid = div('ckgrid', ckSheet);
+  for (const c of claimsFor(currentUnlocked())) {
+    const fits = n >= c.cells[0] && n <= c.cells[1];
+    const req = `${c.cells[0] === c.cells[1] ? c.cells[0] : c.cells[0] + '-' + c.cells[1]} cell${c.cells[1] > 1 ? 's' : ''}${c.digits ? ` + ${c.digits === 2 ? '2 digits' : 'digit'}` : ''}`;
+    const k = makeKey('mod', `<span class="lbl">${c.label}</span><span class="req">${req}</span>`, grid);
+    k.dataset.claim = c.id;
+    k.classList.toggle('off', !fits);
+    bindPress(k, () => {
+      if (!fits) { sfx.blocked(); return; }
+      sfx.mod();
+      closeSheet();
+      CK.claim = c; CK.digits = [];
+      if (c.digits) checkPrompt(); else evaluate();
+    });
+  }
+  const row = div('row', ckSheet);
+  const stop = makeKey('mod', '<span class="lbl">Stop checking</span>', row);
+  stop.dataset.act = 'stop';
+  bindPress(stop, () => { sfx.mod(); exitCheck(); });
+  const cancel = makeKey('mod', '<span class="lbl">Back</span>', row);
+  cancel.dataset.act = 'back';
+  bindPress(cancel, () => { sfx.mod(); closeSheet(); });
+  UI.sheetOpen = true;
+  ckSheet.classList.add('show'); ckBg.classList.add('show');
+}
+function closeSheet() {
+  if (!ckSheet.classList.contains('show')) return;
+  UI.sheetOpen = false;
+  ckSheet.classList.remove('show'); ckBg.classList.remove('show');
+}
+
+/* =========================================================================
+   LAYOUT: Hint / Check live in the free band between board and pad (the
+   board never moves). If that band is too thin (wide or short screens),
+   the keys move into the header and the coach floats over the board's edge.
+   ========================================================================= */
+function layout() {
+  const wr = wrap.getBoundingClientRect(), br = boardEl.getBoundingClientRect();
+  const slack = Math.floor((wr.height - br.height) / 2);
+  const inBar = slack >= 30;
+  app.classList.toggle('hb-hdr', !inBar);
+  const target = inBar ? keysBar : hdrSlot;
+  if (hintKey.parentNode !== target) target.append(hintKey, checkKey);
+  bar.style.height = inBar ? slack + 'px' : '';
+  bar.style.setProperty('--hkh', Math.min(40, Math.max(28, slack - 4)) + 'px');
+  fitCoach();
+}
+
+/* =========================================================================
+   INIT
+   ========================================================================= */
+function initHints() {
+  app = $('app'); wrap = document.querySelector('.board-wrap');
+  bar = div('hintbar', wrap);
+  coach = div('hcoach', bar);
+  coach.setAttribute('role', 'status'); coach.setAttribute('aria-live', 'polite');
+  ctext = div('ctext', coach);
+  pipsEl = document.createElement('span'); pipsEl.className = 'pips'; pipsEl.innerHTML = '<i></i><i></i><i></i><i></i>';
+  pipsEl.setAttribute('aria-hidden', 'true');
+  ctEl = document.createElement('span'); ctEl.className = 'ct';
+  ctext.append(pipsEl, ctEl);
+  keysBar = div('hkeys', bar);
+  hdrSlot = div('hkeys hdr-slot');
+  const hdr = document.querySelector('.hdr');
+  hdr.insertBefore(hdrSlot, hdr.querySelector('.hbtns'));
+  hintKey = makeKey('mod hk', `${ICON_HINT}<span class="lbl">Hint</span>`, keysBar);
+  hintKey.setAttribute('aria-label', 'Hint'); hintKey.title = 'Hint (H)';
+  checkKey = makeKey('mod ckk', `${ICON_CHECK}<span class="lbl">Check</span><i class="led"></i>`, keysBar);
+  checkKey.setAttribute('aria-label', 'Check my thinking'); checkKey.title = 'Check my thinking (C)';
+  bindPress(hintKey, () => { sfx.mod(); hintTap(); });
+  bindPress(checkKey, onCheckKey);
+
+  for (let i = 0; i < 81; i++) {
+    const c = cells[i];
+    const hl = document.createElement('div'); hl.className = 'hl';
+    c.el.insertBefore(hl, c.el.querySelector('.notes'));
+    const hx = div('hx', c.el);
+    for (let d = 1; d <= 9; d++) { const s = document.createElement('span'); s.textContent = d; hx.appendChild(s); }
+    HL[i] = hl; HX[i] = hx;
+  }
+
+  ckBg = div('sheet-bg ckbg', document.body);
+  ckSheet = div('sheet ck', document.body);
+  ckSheet.setAttribute('role', 'dialog'); ckSheet.setAttribute('aria-label', 'Check my thinking');
+  ckBg.addEventListener('pointerdown', e => { e.preventDefault(); closeSheet(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && ckSheet.classList.contains('show')) closeSheet(); });
+
+  hintHooks.cell = onCheckCell;
+  hintHooks.digit = onCheckDigit;
+  hintHooks.refresh = onRefresh;
+  hintHooks.key = (k, id) => {
+    if (k === 'h' || k === 'H') { pressStart(id, hintKey, () => { sfx.mod(); hintTap(); }, null); return true; }
+    if (k === 'c' || k === 'C') { pressStart(id, checkKey, onCheckKey, null); return true; }
+    if (k === 'Escape' && CK.on) { sfx.mod(); exitCheck(); return true; }
+    return false;
+  };
+
+  seenId = S.id; seenSig = sig();
+  const ro = new ResizeObserver(layout);
+  ro.observe(wrap); ro.observe(boardEl);
+  window.addEventListener('resize', layout);
+  layout();
+}
+
+/** For tests and step 7 scoring. */
+function hintState() {
+  return {
+    paidHints: S.paidHints,
+    level: L ? L.level : 0,
+    kind: L ? L.h.kind : null,
+    step: L && L.h.step ? { tech: L.h.step.tech, place: L.h.step.place, eliminate: L.h.step.eliminate, pattern: L.h.step.pattern, unit: L.h.step.unit } : null,
+    cell: L && L.h.cell != null ? L.h.cell : null,
+    coach: ctEl ? ctEl.textContent : '',
+    check: { on: CK.on, cells: CK.cells.slice(), claim: CK.claim ? CK.claim.id : null, last: CK.last || null },
+    unlocked: currentUnlocked(),
+    layout: app && app.classList.contains('hb-hdr') ? 'header' : 'bar'
+  };
+}
+return Object.freeze({ hintOpts, currentUnlocked, hintTap, enterCheck, exitCheck, initHints, hintState });
+})();
+
 /* ---- src/main.js ---- */
 const __m_main = (() => {
 const { $, DEBUG } = __m_util;
@@ -3609,6 +5606,10 @@ const { startPuzzle, initialId, initGame } = __m_game;
 const { initDevMenu, openDev, closeDev } = __m_devmenu;
 const { boardFor, allIds, entry, solutionOf } = __m_puzzles;
 const { ALLOW, WORLD_TECHS, decodeCands } = __m_shared;
+const { initLevel0, L0 } = __m_level0;
+const { initCampaign, camp } = __m_campaign;
+const { initHints, hintTap, enterCheck, exitCheck, hintState, hintOpts } = __m_hintui;
+const hintlogic = __m_hintlogic;
 // main.js — boot. Same order as the feel prototype: build, first render,
 // then the token/autosave hook, then restore the saved board.
 
@@ -3625,6 +5626,14 @@ const { ALLOW, WORLD_TECHS, decodeCands } = __m_shared;
 
 
 
+/* --- level0: Level 0 engine + campaign runner --- */
+
+
+/* --- end level0 --- */
+/* --- hints --- */
+
+
+/* --- end hints --- */
 
 const REWIND_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 18 4 12l7-6z"/><path d="M20 18l-7-6 7-6z"/></svg>';
 
@@ -3641,6 +5650,10 @@ bindPress(shell.rewindKey, () => { doRewind(); });
 initToken();
 initGame();
 initDevMenu();
+/* --- level0 --- */
+initLevel0();     // after initToken: wraps the autosave refresh hook
+/* --- end level0 --- */
+/* --- hints --- */ initHints(); /* --- end hints --- */
 
 /* PWA: offline cache + install (needs https; skipped in sandboxed frames) */
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
@@ -3650,13 +5663,18 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
 }
 
 loadSaved();
+/* --- level0: after loadSaved; may start the runner / a Level 0 from the URL (#camp=0, #l0=w0) --- */
+initCampaign();
+/* --- end level0 --- */
 
 /* Test hooks, only with ?debug=1 */
 if (DEBUG) {
   window.__debug = {
     S, UI, sfx, FX, cells, solver, ALLOW, WORLD_TECHS, decodeCands, Token, packState,
     refresh, saveNow, isSolvedBoard, checkDeadEnd, openDev, closeDev,
-    startPuzzle, boardFor, allIds, entry, solutionOf
+    startPuzzle, boardFor, allIds, entry, solutionOf,
+    /* --- level0 --- */ L0, camp, /* --- end level0 --- */
+    /* --- hints --- */ hintTap, enterCheck, exitCheck, hintState, hintOpts, hintlogic /* --- end hints --- */
   };
 }
 return Object.freeze({  });

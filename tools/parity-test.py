@@ -272,11 +272,15 @@ async def script(P):
     P.sfx = await P.pg.evaluate("() => window.__sfxLog")
 
 
-def pixel_diff(a, b, tag):
+def pixel_diff(a, b, tag, masks=()):
     A, B = Image.open(a).convert('RGB'), Image.open(b).convert('RGB')
     if A.size != B.size: return 100.0, None
     W, H = A.size
     d = ImageChops.difference(A, B).point(lambda v: 255 if v > PIXEL_TOL else 0)
+    # --- hints: extra masked areas (the build's Hint / Check band, see docs/hints.md) ---
+    for (x0, y0, x1, y1) in masks:
+        d.paste((0, 0, 0), (max(0, int(x0)), max(0, int(y0)), min(W, int(x1 + 0.999)), min(H, int(y1 + 0.999))))
+    # --- end hints ---
     body = d.crop((0, HEADER_PX, W, H)).convert('L')
     hist = body.histogram()
     bad = sum(hist[1:])
@@ -295,6 +299,10 @@ async def run_parity(browser):
                           ('build', f'http://127.0.0.1:{P_BUILD}/?debug=1#p=proto')]:
             ctx, P = await open_page(browser, name, url, scheme, motion)
             P.run = run
+            # --- hints: the band between board and pad holds the Hint / Check keys and the coach line (build only) ---
+            if name == 'build':
+                hint_mask = await P.pg.evaluate("() => { const e = document.querySelector('.hintbar'); if (!e) return null; const r = e.getBoundingClientRect(); return [r.left, r.top, r.right, r.bottom]; }")
+            # --- end hints ---
             t0 = time.time()
             await script(P)
             P.secs = time.time() - t0
@@ -314,7 +322,7 @@ async def run_parity(browser):
         # (c) screenshots
         diffs = []
         for (tag, pa), (tag2, pb) in zip(a.shots, b.shots):
-            pct, head = pixel_diff(pa, pb, f'{run}-{tag}')
+            pct, head = pixel_diff(pa, pb, f'{run}-{tag}', [hint_mask] if hint_mask else [])  # hints: band mask
             diffs.append((tag, pct, head))
             if pct > SHOT_LIMIT: failures.append(f'[{run}] screenshot "{tag}" differs: {pct:.3f}% of board/pad pixels (see {OUT}/diff-{run}-{tag}.png)')
         # (d) errors
@@ -325,7 +333,8 @@ async def run_parity(browser):
         report.append({'run': run, 'steps': len(a.states), 'state_equal': st_ok, 'sfx_calls': (len(a.sfx), len(b.sfx)), 'sfx_equal': sfx_ok,
                        'shots': len(diffs), 'max_diff_pct': round(worst[1], 4), 'max_diff_at': worst[0],
                        'header_diff_pct_max': round(max(d[2] for d in diffs), 2),
-                       'errors': len(a.errors) + len(b.errors), 'final_mistakes': final['mistakes'], 'secs': round(a.secs + b.secs, 1)})
+                       'errors': len(a.errors) + len(b.errors), 'final_mistakes': final['mistakes'], 'secs': round(a.secs + b.secs, 1),
+                       'hint_band_mask': [round(v) for v in hint_mask] if hint_mask else None})  # hints
         await c1.close(); await c2.close()
     return failures, report
 
