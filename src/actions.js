@@ -196,6 +196,10 @@ function afterErase(list, i) {
   if (hit) { spotSuccess(hit, i); refresh(); }
 }
 
+/* --- hints: the hint ladder removes notes through the same rules path --- */
+export function notesRemoved(list, i) { afterErase(list, i); }
+/* --- end hints --- */
+
 /* =========================================================================
    rules: Spot it success — the latch/sweep language of a closed unit, then
    the toast with a Next keycap
@@ -308,6 +312,7 @@ export function resetGame() {
   S.selected = -1; S.loaded = 0; S.loadedNote = false; S.pencil = false;
   S.mistakes = 0; S.solved = false; S.undo = [];
   S.silentWrong = 0; if (S.spot) S.spot.erased.clear();
+  /* --- hints: a restart is a fresh attempt --- */ S.paidHints = 0; /* --- end hints --- */
   UI.mistHeld = 0; UI.mistGen++;
   hideToast(); hideDeadEnd(); FX.clear();
   renderAll(); refresh();

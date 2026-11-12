@@ -14,6 +14,10 @@ import { startPuzzle, initialId, initGame } from './game.js';
 import { initDevMenu, openDev, closeDev } from './devmenu.js';
 import { boardFor, allIds, entry, solutionOf } from './puzzles.js';
 import { ALLOW, WORLD_TECHS, decodeCands } from './shared.js';
+/* --- hints --- */
+import { initHints, hintTap, enterCheck, exitCheck, hintState, hintOpts } from './hintui.js';
+import * as hintlogic from './hintlogic.js';
+/* --- end hints --- */
 
 const REWIND_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 18 4 12l7-6z"/><path d="M20 18l-7-6 7-6z"/></svg>';
 
@@ -30,6 +34,7 @@ bindPress(shell.rewindKey, () => { doRewind(); });
 initToken();
 initGame();
 initDevMenu();
+/* --- hints --- */ initHints(); /* --- end hints --- */
 
 /* PWA: offline cache + install (needs https; skipped in sandboxed frames) */
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
@@ -45,6 +50,7 @@ if (DEBUG) {
   window.__debug = {
     S, UI, sfx, FX, cells, solver, ALLOW, WORLD_TECHS, decodeCands, Token, packState,
     refresh, saveNow, isSolvedBoard, checkDeadEnd, openDev, closeDev,
-    startPuzzle, boardFor, allIds, entry, solutionOf
+    startPuzzle, boardFor, allIds, entry, solutionOf,
+    /* --- hints --- */ hintTap, enterCheck, exitCheck, hintState, hintOpts, hintlogic /* --- end hints --- */
   };
 }

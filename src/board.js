@@ -2,7 +2,7 @@
 // Moved verbatim from the feel prototype (sections 5 buildBoard, 6 RENDERING,
 // 7 MOTION). Only change: givens come from S.given (per puzzle).
 import { $, div, rowOf, colOf, BOXES, PEERS, PEERFLAG, bit, reducedMotion, dist } from './util.js';
-import { S, UI, conflictAt, countOf, wrongAt } from './state.js';
+import { S, UI, conflictAt, countOf, wrongAt, hintHooks } from './state.js';
 import { digitKeys, keys } from './pad.js';
 
 export const boardEl = $('board');
@@ -98,6 +98,9 @@ export function refresh() {
   else msg = `Tap a cell or a number · ${mode}`;
   statusEl.innerHTML = msg;
   if (hooks.afterRefresh) hooks.afterRefresh();   // autosave (token.js)
+  /* --- hints: board changed -> the hint ladder resets --- */
+  if (hintHooks.refresh) hintHooks.refresh();
+  /* --- end hints --- */
 }
 
 /* =========================================================================

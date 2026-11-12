@@ -42,7 +42,10 @@ export const S = {
   startNotes: new Uint16Array(81),
   silentWrong: 0,      // wrong digits without a visible clash (never shown)
   deadEnd: false,      // dead-end banner showing
-  spot: null           // Spot it: { steps: [...], erased: Set<cell*10+digit> }
+  spot: null,          // Spot it: { steps: [...], erased: Set<cell*10+digit> }
+  /* --- hints: paid hint levels (3-4) used on this puzzle, saved in the meta --- */
+  paidHints: 0
+  /* --- end hints --- */
 };
 
 /* Transient UI flags shared across modules (not saved). */
@@ -51,6 +54,11 @@ export const UI = {
   mistGen: 0,
   sheetOpen: false     // token sheet or dev sheet open: keyboard goes to the sheet
 };
+
+/* --- hints: input hooks set by hintui.js (check mode takes over cell taps and
+   digits; H / C / Esc on the keyboard). Each returns true when it handled the input. --- */
+export const hintHooks = { cell: null, digit: null, key: null, refresh: null };
+/* --- end hints --- */
 
 export function snapshot() { return { v: S.values.slice(), n: S.notes.slice(), solved: S.solved }; }
 export function pushUndo() { S.undo.push(snapshot()); if (S.undo.length > 400) S.undo.shift(); }

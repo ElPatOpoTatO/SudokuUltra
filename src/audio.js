@@ -207,6 +207,31 @@ const engine = (() => {
       src.connect(bp); bp.connect(g); g.connect(master);
       src.start(t, Math.random() * 0.8); src.stop(t + d + 0.05);
     },
+    /* --- hints: sounds for the hint ladder and check my thinking --- */
+    /* HINT — a soft glassy "ding", no click transient (so it never reads as a
+       key). Each ladder level sits one step higher on the pentatonic ladder. */
+    hint(level = 1) {
+      if (!ready()) return; const t = now() + 0.008, p = pj(), v = jit(0.1);
+      const f = pent(880, Math.max(0, level - 1)) * p;
+      burst(t, { type: 'lowpass', f: 2400 * p, q: 0.6, gain: 0.018 * v, dur: 0.05, attack: 0.012 });
+      tone(t, { f0: f, dur: 0.42, gain: 0.05 * v, attack: 0.008 });
+      tone(t + 0.006, { f0: f * 2, dur: 0.22, gain: 0.014 * v, attack: 0.006 });
+      tone(t + 0.07, { f0: f * 1.5, dur: 0.34, gain: 0.022 * v, attack: 0.01 });
+    },
+    /* CHECK, right — latch-ish: one soft ratchet tick, then a small rising chime */
+    checkYes() {
+      if (!ready()) return; const t = now() + 0.006, p = pj();
+      burst(t, { type: 'bandpass', f: 2900 * p, q: 3, gain: 0.09, dur: 0.01 });
+      tone(t + 0.04, { f0: pent(1046.5, 0) * p, dur: 0.3, gain: 0.04, attack: 0.004 });
+      tone(t + 0.11, { f0: pent(1046.5, 2) * p, dur: 0.42, gain: 0.04, attack: 0.004 });
+    },
+    /* CHECK, not quite — gentle low two-note fall (not the error clunk: it's not a mistake) */
+    checkNo() {
+      if (!ready()) return; const t = now() + 0.006, p = pj();
+      tone(t, { type: 'triangle', f0: 392 * p, dur: 0.16, gain: 0.04, attack: 0.006 });
+      tone(t + 0.12, { type: 'triangle', f0: 330 * p, f1: 311 * p, dur: 0.26, gain: 0.035, attack: 0.006 });
+    },
+    /* --- end hints --- */
     /* Puzzle complete: rising mechanical cascade + chord */
     complete() {
       if (!ready()) return; const t0 = now() + 0.05, p = pj();
