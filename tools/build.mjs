@@ -130,7 +130,10 @@ load(ENTRY, ENTRY);
 let js = order.map((m) => m.code).join('\n\n');
 if (/<\/script/i.test(js)) js = js.replace(/<\/script/gi, '<\\/script');
 
-const css = fs.readFileSync(path.join(SRC, 'style.css'), 'utf8').trim();
+let css = fs.readFileSync(path.join(SRC, 'style.css'), 'utf8').trim();
+/* --- keys: keycap styles + Settings sheet CSS, appended after style.css --- */
+css += '\n' + fs.readFileSync(path.join(SRC, 'keys.css'), 'utf8').trim();
+/* --- end keys --- */
 const tpl = fs.readFileSync(path.join(SRC, 'index.html'), 'utf8');
 if (!tpl.includes('/*__STYLE__*/') || !tpl.includes('//__SCRIPT__')) fail(path.join(SRC, 'index.html'), 'template placeholders missing');
 const html = tpl.replace('/*__STYLE__*/', () => css).replace('//__SCRIPT__', () => js);

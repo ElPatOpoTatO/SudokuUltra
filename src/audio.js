@@ -67,6 +67,12 @@ const engine = (() => {
   return {
     unlock,
     get muted() { return muted; },
+    /* --- keys: switch sounds (switches.js). keyStyle = active keycap style, or
+       null for the original clicks; prims = engine internals for new voices
+       (data properties, so the parity test's sfx wrapper leaves them alone) --- */
+    keyStyle: null,
+    prims: { get ctx() { return ctx; }, get master() { return master; }, get noise() { return noise; }, ready, now, jit, pj },
+    /* --- end keys --- */
     setMuted(m) {
       muted = m;
       if (master) master.gain.setTargetAtTime(m ? 0 : 0.9, ctx.currentTime, 0.01);
@@ -75,6 +81,7 @@ const engine = (() => {
     /* Clicky switch: sharp high transient + bandpassed leaf click + low thock,
        then a soft low "seat" ~15ms later (the cap bottoming out on the plate) */
     pen() {
+      /* --- keys --- */ if (engine.keyStyle) return engine.sw('pen'); /* --- end keys --- */
       if (!ready()) return; const t = now(), p = pj(), v = jit(0.15);
       burst(t,          { type: 'highpass', f: 7800 * p, q: 0.7, gain: 0.27 * v, dur: 0.0035, attack: 0.0002 });
       burst(t,          { type: 'bandpass', f: 3700 * p, q: 3.4, gain: 0.55 * v, dur: 0.018, attack: 0.00025 });
@@ -88,12 +95,14 @@ const engine = (() => {
     },
     /* Silent switch: muted, lowpassed thock */
     pencil() {
+      /* --- keys --- */ if (engine.keyStyle) return engine.sw('pencil'); /* --- end keys --- */
       if (!ready()) return; const t = now(), p = pj(), v = jit(0.15);
       burst(t,         { type: 'lowpass', f: 1150 * p, q: 0.8, gain: 0.32 * v, dur: 0.034, attack: 0.002 });
       tone(t + 0.002,  { f0: 175 * p, f1: 96 * p, dur: 0.056, gain: 0.28 * v, attack: 0.002, glide: 0.035 });
     },
     /* Modifier key: a slightly deeper, broader clack */
     mod() {
+      /* --- keys --- */ if (engine.keyStyle) return engine.sw('mod'); /* --- end keys --- */
       if (!ready()) return; const t = now(), p = pj(), v = jit(0.12);
       burst(t,         { type: 'highpass', f: 6000 * p, q: 0.7, gain: 0.12 * v, dur: 0.004 });
       burst(t,         { type: 'bandpass', f: 2500 * p, q: 2.2, gain: 0.40 * v, dur: 0.024 });
@@ -101,6 +110,7 @@ const engine = (() => {
     },
     /* Upstroke: barely there */
     release() {
+      /* --- keys --- */ if (engine.keyStyle) return engine.sw('up'); /* --- end keys --- */
       if (!ready()) return; const t = now(), p = pj(), v = jit(0.2);
       burst(t, { type: 'highpass', f: 4600 * p, q: 0.9, gain: 0.045 * v, dur: 0.007 });
       tone(t,  { f0: 950 * p, f1: 800 * p, dur: 0.010, gain: 0.014 * v });

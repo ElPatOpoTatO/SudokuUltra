@@ -1,0 +1,382 @@
+/* =========================================================================
+   KEYCAP STYLES + COLORWAYS (keys.css, appended after style.css by the build)
+   Everything here is scoped under :root.kx, which settings.js sets for every
+   style except the debug-only 'classic' look (= style.css alone, untouched).
+
+   Classes on <html>:  .kx  .ks-<style>  .cw-<preset>  .cl-<layout>
+   DOM added to every .key by settings.js (dressKey):
+     .key > .shadow .wall .sw(.hs .st .pl) .cap > .sk .tf + the legends
+       .sk  cap body / skirt: front face + ::before left facet + ::after right facet
+       .tf  top face: dish shading + gloss (::before) + press shade (::after)
+       .sw  bare switch (housing + cross stem + plate legend): low-profile "cap pulled"
+     .sk/.tf sit at z-index -1 inside the cap (a stacking context), so the
+     legends stay direct children of .cap and every existing layout rule
+     (.hkeys / .dead / .sheet keys) keeps working.
+   A style is ONLY custom properties on .ks-<style> (so a preview tile can
+   carry another style than the page); geometry is in fractions of --kh and
+   resolved per key, so compact keys (Hint/Check, sheet buttons) scale.
+   ========================================================================= */
+
+/* the extra parts only exist on dressed keys; hidden unless a style is on */
+.key .sk, .key .tf, .key .sw { display: none; }
+.kx .key .sk, .kx .key .tf, .kx .key .sw { display: block; }
+
+/* ---------------- style: SA / retro (default) ---------------- */
+.ks-sa {
+  --Sk: .083; --Bk: .036; --Fk: .165; --Fk1: .165; --Fk2: .165; --Fk3: .165; --Bk1: .036; --Bk2: .036; --Bk3: .036;
+  --Rk: .19; --TRk: .16; --Gk: .05; --travel: 3.5px; --latch: 2.6px; --lock-y: 1.2px;
+  --lf: .40; --rf: .18; --fr0: .06; --fr1: .26; --back: .55;
+  --dish:
+    radial-gradient(70% 75% at 62% 66%, rgba(255,255,255,.40) 0%, rgba(255,255,255,0) 60%),
+    radial-gradient(120% 120% at 70% 75%, rgba(0,0,0,0) 45%, rgba(0,0,0,.11) 100%);
+  --rim: inset 1.5px 1.5px 0 -.5px rgba(255,255,255,.9), inset 0 -1px 0 rgba(0,0,0,.05), 0 .5px 0 rgba(0,0,0,.12);
+  --sk-sh: inset 0 -1.5px 0 rgba(0,0,0,.25), inset 0 0 0 .5px rgba(0,0,0,.2), inset 2px 2px 1px -1px rgba(255,255,255,.6);
+  --gloss: 1; --press-shade: .07;
+  --lgk: .41; --lgw: 760; --lbl-tt: uppercase; --lbl-w: 760; --lbl-ls: .06em; --lblk: .15;
+  --mod-align: center; --mod-justify: center; --mod-pad: 0px;
+  --lock-cap: 1; --lock-sw: 0;
+  --sh-contact: rgba(60,40,10,.30); --sh-amb: rgba(60,40,10,.28);
+}
+/* ---------------- style: Cherry / OEM ---------------- */
+.ks-cherry {
+  --Sk: .075; --Bk: .024; --Fk: .1; --Fk1: .135; --Fk2: .112; --Fk3: .092; --Bk1: .018; --Bk2: .024; --Bk3: .038;
+  --Rk: .1; --TRk: .085; --Gk: .04; --travel: 3px; --latch: 2.1px; --lock-y: 1px;
+  --lf: .34; --rf: .16; --fr0: .10; --fr1: .22; --back: .45;
+  --dish:
+    linear-gradient(90deg, rgba(0,0,0,.10) 0%, rgba(0,0,0,.03) 14%, rgba(0,0,0,0) 30%, rgba(255,255,255,0) 62%, rgba(255,255,255,.26) 88%, rgba(255,255,255,.1) 100%),
+    linear-gradient(180deg, rgba(255,255,255,.26), rgba(255,255,255,0) 55%, rgba(0,0,0,.04)),
+    var(--grain);
+  --rim: inset 0 1px 0 rgba(255,255,255,.7), inset 1px 0 0 rgba(255,255,255,.3), inset 0 -1px 0 rgba(0,0,0,.06), 0 .5px 0 rgba(0,0,0,.10);
+  --sk-sh: inset 0 -1px 0 rgba(0,0,0,.25), inset 0 0 0 .5px rgba(0,0,0,.18);
+  --gloss: 0; --press-shade: .07;
+  --lgk: .42; --lgw: 620; --lbl-tt: lowercase; --lbl-w: 600; --lbl-ls: .02em; --lblk: .165;
+  --mod-align: start; --mod-justify: start; --mod-pad: 4px;
+  --lock-cap: 1; --lock-sw: 0;
+  --sh-contact: rgba(40,30,15,.30); --sh-amb: rgba(40,30,15,.26);
+}
+/* ---------------- style: Low-profile flat ---------------- */
+.ks-lp {
+  --Sk: .032; --Bk: .02; --Fk: .06; --Fk1: .06; --Fk2: .06; --Fk3: .06; --Bk1: .02; --Bk2: .02; --Bk3: .02;
+  --Rk: .12; --TRk: .1; --Gk: .03; --travel: 2px; --latch: 1.4px; --lock-y: 0px;
+  --lf: .30; --rf: .10; --fr0: .06; --fr1: .16; --back: .6;
+  --dish:
+    linear-gradient(180deg, rgba(255,255,255,.34), rgba(255,255,255,0) 40%, rgba(0,0,0,.03)),
+    var(--grain);
+  --rim: inset 0 1px 0 rgba(255,255,255,.75), inset 0 0 0 .5px rgba(0,0,0,.05);
+  --sk-sh: inset 0 -1px 0 rgba(0,0,0,.14), inset 0 0 0 .5px rgba(0,0,0,.14);
+  --gloss: 0; --press-shade: .045;
+  --lgk: .45; --lgw: 480; --lbl-tt: none; --lbl-w: 560; --lbl-ls: .02em; --lblk: .17;
+  --mod-align: center; --mod-justify: center; --mod-pad: 0px;
+  --lock-cap: 0; --lock-sw: 1;
+  --sh-contact: rgba(20,24,30,.20); --sh-amb: rgba(20,24,30,.18);
+}
+@media (prefers-color-scheme: dark) {
+  .ks-sa {
+    --lf: .12; --rf: .32; --fr0: .14; --fr1: .42; --back: .14;
+    --dish:
+      radial-gradient(70% 75% at 62% 66%, rgba(255,255,255,.10) 0%, rgba(255,255,255,0) 60%),
+      radial-gradient(120% 120% at 70% 75%, rgba(0,0,0,0) 45%, rgba(0,0,0,.24) 100%);
+    --rim: inset 1.5px 1.5px 0 -.5px rgba(255,255,255,.22), inset 0 -1px 0 rgba(0,0,0,.25), 0 .5px 0 rgba(0,0,0,.4);
+    --sk-sh: inset 0 -1.5px 0 rgba(0,0,0,.5), inset 0 0 0 .5px rgba(0,0,0,.4), inset 2px 2px 1px -1px rgba(255,255,255,.14);
+    --gloss: .22; --sh-contact: rgba(0,0,0,.6); --sh-amb: rgba(0,0,0,.55);
+  }
+  .ks-cherry {
+    --lf: .10; --rf: .30; --fr0: .18; --fr1: .40; --back: .12;
+    --dish:
+      linear-gradient(90deg, rgba(0,0,0,.24) 0%, rgba(0,0,0,.06) 16%, rgba(0,0,0,0) 30%, rgba(255,255,255,0) 62%, rgba(255,255,255,.08) 88%, rgba(255,255,255,.03) 100%),
+      linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,0) 55%, rgba(0,0,0,.08)),
+      var(--grain);
+    --rim: inset 0 1px 0 rgba(255,255,255,.12), inset 1px 0 0 rgba(255,255,255,.05), inset 0 -1px 0 rgba(0,0,0,.25), 0 .5px 0 rgba(0,0,0,.4);
+    --sk-sh: inset 0 -1px 0 rgba(0,0,0,.5), inset 0 0 0 .5px rgba(0,0,0,.4);
+    --sh-contact: rgba(0,0,0,.6); --sh-amb: rgba(0,0,0,.55);
+  }
+  .ks-lp {
+    --lf: .08; --rf: .26; --fr0: .14; --fr1: .34; --back: .16;
+    --dish:
+      linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,0) 40%, rgba(0,0,0,.06)),
+      var(--grain);
+    --rim: inset 0 1px 0 rgba(255,255,255,.13), inset 0 0 0 .5px rgba(255,255,255,.03);
+    --sk-sh: inset 0 -1px 0 rgba(0,0,0,.45), inset 0 0 0 .5px rgba(0,0,0,.5);
+    --sh-contact: rgba(0,0,0,.55); --sh-amb: rgba(0,0,0,.5);
+  }
+}
+:root.kx {
+  /* PBT grain: static fractal noise, alpha only */
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .12 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ---------------- shared keycap geometry ---------------- */
+.kx .key {
+  --kS: calc(var(--kh) * var(--Sk)); --kB: calc(var(--kh) * var(--Bk)); --kF: calc(var(--kh) * var(--Fk));
+  --kR: calc(var(--kh) * var(--Rk)); --kT: calc(var(--kh) * var(--TRk)); --kG: calc(var(--kh) * var(--Gk));
+  /* colorway → this key (digits A, even digits B in checkerboard, mods, accent) */
+  --base: var(--cap-a); --lg: var(--legend-a); --lgl: var(--latch-a); --deb: var(--deboss-a); --veil: var(--veil-a); --glf: var(--glf-a);
+  /* the shell's own legend colours, redirected to the colorway inside a key */
+  --cap-ink: var(--lg); --ink-2: var(--lg); --ink-3: var(--lg); --accent-ink: var(--lgl);
+}
+.kx.cl-checker .key.digit.ev { --base: var(--cap-b); --lg: var(--legend-b); --lgl: var(--latch-b); --deb: var(--deboss-b); --veil: var(--veil-b); --glf: var(--glf-b); }
+.kx .key.mod { --base: var(--cap-mod); --lg: var(--legend-mod); --lgl: var(--latch-mod); --veil: var(--veil-mod); --glf: var(--glf-mod); }
+.kx .key.hk { --base: var(--cap-accent); --lg: var(--legend-accent); --lgl: var(--legend-accent); --veil: var(--veil-accent); --glf: var(--glf-accent); }
+.kx .key.digit.ev.pin-plain { --base: var(--cap-a); --lg: var(--legend-a); --lgl: var(--latch-a); --deb: var(--deboss-a); --veil: var(--veil-a); --glf: var(--glf-a); }
+.kx .key.digit.ev.pin-checker { --base: var(--cap-b); --lg: var(--legend-b); --lgl: var(--latch-b); --deb: var(--deboss-b); --veil: var(--veil-b); --glf: var(--glf-b); }
+.kx .key.r1 { --Fk: var(--Fk1); --Bk: var(--Bk1); }
+.kx .key.r2 { --Fk: var(--Fk2); --Bk: var(--Bk2); }
+.kx .key.r3 { --Fk: var(--Fk3); --Bk: var(--Bk3); }
+
+.kx .key .shadow {
+  left: 2px; right: 0; top: 6px; bottom: -1px; border-radius: var(--kR);
+  box-shadow: 1.5px 2.5px 2px -.5px var(--sh-contact), 4px 9px 14px -5px var(--sh-amb);
+}
+.kx .key .wall {
+  left: 1px; right: 1px; top: 40%; bottom: 0; border-radius: var(--kR);
+  background: var(--well); box-shadow: inset 0 -1px 0 rgba(255,255,255,.08);
+}
+.kx .key .cap {
+  bottom: var(--kG); border-radius: var(--kR);
+  background: none; box-shadow: none; color: var(--lg);
+  padding: var(--kB) var(--kS) var(--kF);
+}
+.kx .key .cap::after { display: none; }
+.kx .key .sk, .kx .key .tf, .kx .key .sw { position: absolute; pointer-events: none; }
+.kx .key .sk {
+  inset: 0; z-index: -1; border-radius: var(--kR); overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,var(--back)) 0, rgba(255,255,255,var(--back)) var(--kB), rgba(0,0,0,0) var(--kB)),
+    linear-gradient(180deg, rgba(0,0,0,var(--fr0)) 0%, rgba(0,0,0,var(--fr1)) 100%),
+    var(--base);
+  box-shadow: var(--sk-sh);
+}
+.kx .key .sk::before, .kx .key .sk::after { content: ""; position: absolute; inset: 0; }
+.kx .key .sk::before {
+  background: linear-gradient(180deg, rgba(255,255,255,var(--lf)), rgba(255,255,255,calc(var(--lf) * .35)));
+  clip-path: polygon(0 0, var(--kS) var(--kB), var(--kS) calc(100% - var(--kF)), 0 100%);
+}
+.kx .key .sk::after {
+  background: linear-gradient(180deg, rgba(0,0,0,calc(var(--rf) * .6)), rgba(0,0,0,var(--rf)));
+  clip-path: polygon(100% 0, calc(100% - var(--kS)) var(--kB), calc(100% - var(--kS)) calc(100% - var(--kF)), 100% 100%);
+}
+.kx .key .tf {
+  left: var(--kS); right: var(--kS); top: var(--kB); bottom: var(--kF); z-index: -1;
+  border-radius: var(--kT); overflow: hidden;
+  background: linear-gradient(var(--veil), var(--veil)), var(--dish), var(--base);
+  box-shadow: var(--rim);
+}
+/* ABS gloss streak (SA) */
+.kx .key .tf::before {
+  content: ""; position: absolute; left: 10%; top: 6%; width: 38%; height: 22%; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255,255,255,.5), rgba(255,255,255,0));
+  opacity: calc(var(--gloss) * var(--glf));
+}
+/* press shade: opacity only, on the top face */
+.kx .key .tf::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit;
+  background: rgba(0,0,0,var(--press-shade)); opacity: 0; transition: opacity var(--release);
+}
+.kx .key.down .tf::after { opacity: 1; transition-duration: 0s; }
+.kx .key.down .shadow { opacity: .3; }
+.kx .key.latched .shadow { opacity: .55; }
+@media (hover: hover) {
+  .kx .key:hover .tf::after { opacity: .45; }
+  .kx .key.down:hover .tf::after { opacity: 1; }
+}
+
+/* legends */
+.kx .key .lg { font-size: calc(var(--kh) * var(--lgk)); font-weight: var(--lgw); letter-spacing: -.01em; }
+.kx .key .lbl { text-transform: var(--lbl-tt); font-weight: var(--lbl-w); letter-spacing: var(--lbl-ls); }
+.kx .key .cnt {
+  top: calc(var(--kB) + var(--kh) * .055); right: calc(var(--kS) + var(--kh) * .065);
+  font-size: clamp(9px, calc(var(--kh) * .165), 10.5px); opacity: .62;
+}
+.kx .kp .key.mod svg { width: calc(var(--kh) * .3); height: calc(var(--kh) * .3); justify-self: var(--mod-justify); }
+.kx .kp .key.mod .lbl { font-size: clamp(8.5px, calc(var(--kh) * var(--lblk)), 11.5px); }
+.kx .kp .key.mod .cap {
+  align-content: var(--mod-align); justify-items: var(--mod-justify);
+  padding: calc(var(--kB) + var(--mod-pad) * 1.3) calc(var(--kS) + var(--mod-pad) * 1.6) var(--kF);
+}
+/* LED: lit when latched; toggle keys (Pencil, Check) show the unlit LED too */
+.kx .key .led {
+  top: calc(var(--kB) + var(--kh) * .08); left: calc(var(--kS) + var(--kh) * .085);
+  width: 6px; height: 6px; background: var(--led); box-shadow: 0 0 5px 1px var(--led);
+}
+.kx.ks-cherry .kp .key.mod .led { left: auto; right: calc(var(--kS) + var(--kh) * .09); }
+.kx .key.tg .led { opacity: 1; background: rgba(0,0,0,.2); box-shadow: inset 0 .5px 1px rgba(0,0,0,.4), 0 .5px 0 rgba(255,255,255,.18); transition: background 120ms, box-shadow 120ms; }
+.kx .key.tg.latched .led { background: var(--led); box-shadow: 0 0 5px 1px var(--led); }
+.kx .hkeys .key .led { width: 5px; height: 5px; top: calc(var(--kB) + 3px); left: auto; right: calc(var(--kS) + 4px); }
+.kx .hkeys .key.tg:not(.latched) .led { opacity: 0; }
+
+/* LOCKED (digit used up): blank cap, legend debossed, badge gone.
+   Low-profile: the cap is pulled — bare switch + cross stem, digit printed on the plate. */
+.kx .key.digit.locked .cnt { opacity: 0; }
+.kx .key.digit.locked .lg { opacity: 1; color: transparent; text-shadow: var(--deb); }
+.kx .key.digit.locked .cap { transform: translate3d(0, var(--lock-y), 0); opacity: var(--lock-cap); transition: transform var(--release) var(--spring), opacity 180ms ease-out; }
+.kx .key.digit.locked.down .cap { transform: translate3d(0, var(--travel), 0); }
+.kx .key .sw { inset: 0; opacity: 0; transition: opacity 180ms ease-out; }
+.kx .key.digit.locked .sw { opacity: var(--lock-sw); }
+.kx .key.digit.locked .shadow { opacity: calc(var(--lock-cap) * .8); }
+.kx .key .sw .hs {
+  position: absolute; left: 26%; right: 26%; top: 13%; bottom: 33%; border-radius: 5px;
+  background: linear-gradient(180deg, #4a4e55, #33363c);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 1px 0 rgba(255,255,255,.35);
+}
+.kx .key .sw .st {
+  position: absolute; left: 50%; top: 40%; width: 13px; height: 13px; margin: -6.5px 0 0 -6.5px;
+  background:
+    linear-gradient(#e8e4dc, #e8e4dc) center / 3.5px 13px no-repeat,
+    linear-gradient(#e8e4dc, #e8e4dc) center / 13px 3.5px no-repeat;
+  filter: drop-shadow(0 1.5px 0 rgba(0,0,0,.45));
+  transform: translate3d(0, 0, 0); transition: transform var(--release) var(--spring);
+}
+.kx .key.digit.locked.down .sw .st { transform: translate3d(0, 2px, 0); transition-duration: 0s; }
+.kx .key .sw .pl {
+  position: absolute; left: 0; right: 0; bottom: 4%; text-align: center;
+  font-size: 10px; font-weight: 700; letter-spacing: .04em; line-height: 1; color: var(--plate-ink); opacity: .7;
+}
+.kx.ks-lp .kp .key.digit.locked .wall { top: 0; background: var(--plate); box-shadow: inset 0 1px 3px rgba(0,0,0,.28), inset 0 0 0 1px rgba(0,0,0,.06); }
+
+/* the plate under the pad (drawn outside the pad box: layout unchanged) */
+.kx .pad { position: relative; isolation: isolate; }
+.kx .pad::before {
+  content: ""; position: absolute; left: -7px; right: -7px; top: -7px; bottom: -7px; z-index: -1;
+  border-radius: 17px;
+  background: linear-gradient(165deg, rgba(255,255,255,.14), rgba(0,0,0,.06)), var(--plate);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.35), inset 0 -2px 0 rgba(0,0,0,.08), 0 1px 0 rgba(255,255,255,.4);
+}
+@media (prefers-color-scheme: dark) {
+  .kx .pad::before { box-shadow: inset 0 1px 0 rgba(255,255,255,.05), inset 0 -2px 0 rgba(0,0,0,.4), 0 0 0 1px rgba(255,255,255,.03); }
+}
+
+/* keys in other places: sheet / toast / coach / dead-end / claim sheet */
+.kx .sheet.ck .ckgrid .key .cap { padding: var(--kB) calc(var(--kS) + 4px) var(--kF); }
+.kx .sheet.ck .ckgrid .key.off .cap > .sk, .kx .sheet.ck .ckgrid .key.off .cap > .tf { opacity: 1; }
+.kx .sheet.ck .ckgrid .key .lbl { text-transform: none; letter-spacing: .01em; line-height: 1.1; }
+
+/* Level 0 "not now" keys: flat outlined slots on the plate, in every style */
+.kx .app.l0 .pad .key.l0-dim { --lg: var(--plate-ink); }
+.kx .app.l0 .pad .key.l0-dim .sk, .kx .app.l0 .pad .key.l0-dim .tf, .kx .app.l0 .pad .key.l0-dim .sw { opacity: 0; transition: opacity 200ms ease-out; }
+.kx .app.l0 .pad .key.l0-dim .cap { box-shadow: inset 0 0 0 1.5px var(--plate-line); opacity: 1; }
+.kx .app.l0 .pad .key.l0-dim .led { opacity: 0; }
+.kx .app.l0 .pad .key .sk, .kx .app.l0 .pad .key .tf { transition: opacity 200ms ease-out; }
+
+/* settings take the mute button's place in the header (sound on/off lives in Settings) */
+.kx #muteBtn { display: none; }
+
+/* =========================================================================
+   SETTINGS SHEET (reuses .sheet / .sheet-bg)
+   ========================================================================= */
+.sheet.set {
+  max-height: 90dvh; overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y;
+  padding-top: 0; -webkit-overflow-scrolling: touch;
+}
+.sheet.set:not(.show) { transform: translate(-50%, calc(105% + 64px)); }
+.set-top {
+  position: sticky; top: 0; z-index: 3; margin: 0 -18px; padding: 14px 18px 12px;
+  background: var(--surface); box-shadow: 0 1px 0 var(--line);
+}
+.set-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.set-head h2 { margin: 0; }
+.set-x {
+  appearance: none; border: 0; background: var(--bg); color: var(--ink-2);
+  width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; cursor: pointer; padding: 0;
+}
+.set-x svg { width: 17px; height: 17px; }
+.set-x:active { transform: scale(.9); }
+/* the preview strip: a slice of the real pad on its plate */
+.set-prev {
+  position: relative; isolation: isolate;
+  display: grid; grid-template-columns: 1fr 1fr 1fr 1.28fr 1.28fr; gap: 7px 6px;
+  padding: 7px; border-radius: 15px;
+  background: linear-gradient(165deg, rgba(255,255,255,.14), rgba(0,0,0,.06)), var(--plate);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.35), inset 0 -2px 0 rgba(0,0,0,.08);
+}
+.set-prev .key { --kh: clamp(44px, 6.6dvh, 54px); }
+.set-sec { margin-top: 16px; }
+.set-sec h3 { margin: 0 0 8px; font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-3); }
+.set-tile, .set-swatch {
+  appearance: none; font: inherit; color: var(--ink); cursor: pointer; text-align: left;
+  border: 0; border-radius: 14px; padding: 7px 7px 8px; background: var(--bg);
+  box-shadow: inset 0 0 0 1px var(--line);
+  transition: box-shadow 160ms ease-out, transform 160ms var(--spring);
+  touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+}
+.set-tile:active, .set-swatch:active { transform: scale(.97); transition-duration: 60ms; }
+.set-tile[aria-pressed="true"], .set-swatch[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--accent), 0 0 0 3px var(--accent-soft); }
+.set-tile:focus-visible, .set-swatch:focus-visible, .set-seg button:focus-visible, .set-toggle:focus-visible, .set-x:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.set-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.set-mk, .set-mini {
+  position: relative; isolation: isolate; display: grid; gap: 5px; padding: 6px; border-radius: 11px;
+  background: linear-gradient(165deg, rgba(255,255,255,.14), rgba(0,0,0,.06)), var(--plate);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.3), inset 0 -1px 0 rgba(0,0,0,.08);
+}
+.set-mk { grid-template-columns: 1fr 1.25fr; }
+.set-mk .key { --kh: 40px; }
+.set-mk .key.mod .lbl { display: none; }
+.set-mk .key.mod svg { width: 15px !important; height: 15px !important; }
+.set-mini { grid-template-columns: repeat(4, 1fr); gap: 3px; padding: 4px; border-radius: 9px; }
+.set-mini .key { --kh: 24px; }
+.set-mini .key .lg { font-size: 12px; }
+.set-mini .key .lbl, .set-mini .key .cnt, .set-mini .key .led { display: none; }
+.set-mini .key svg { width: 10px; height: 10px; }
+.set-mini .key .shadow { display: none; }
+.set-lab { margin-top: 7px; padding: 0 2px; line-height: 1.2; }
+.set-lab b { font-size: 13.5px; font-weight: 700; }
+.set-lab span { font-size: 12px; color: var(--ink-2); font-weight: 560; }
+.set-lab small { display: block; margin-top: 1px; font-size: 10.5px; color: var(--ink-3); font-weight: 560; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.set-swatch .set-lab b { font-size: 12.5px; }
+.set-sw { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
+/* segmented control */
+.set-seg {
+  position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 2px;
+  padding: 3px; border-radius: 12px; background: var(--line);
+}
+.set-seg button {
+  appearance: none; border: 0; background: transparent; color: var(--ink-2); font: inherit;
+  font-size: 13px; font-weight: 640; height: 34px; border-radius: 9px; cursor: pointer;
+  position: relative; z-index: 1; touch-action: manipulation;
+}
+.set-seg button[aria-pressed="true"] { color: var(--ink); }
+.set-seg .thumb {
+  position: absolute; top: 3px; bottom: 3px; left: 3px; width: calc((100% - 8px) / 2);
+  border-radius: 9px; background: var(--surface);
+  box-shadow: 0 1px 2px rgba(0,0,0,.12), 0 2px 8px -2px rgba(0,0,0,.14);
+  transform: translateX(calc(var(--i, 0) * (100% + 2px)));
+  transition: transform 260ms cubic-bezier(.3,1.25,.5,1);
+}
+/* sound */
+.set-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; min-height: 42px; }
+.set-row > span, .set-row > label { font-size: 14px; font-weight: 600; color: var(--ink); margin: 0; letter-spacing: 0; text-transform: none; }
+.sheet.set .set-row > label { display: block; font-size: 14px; font-weight: 600; color: var(--ink); margin: 0; letter-spacing: 0; text-transform: none; }
+.sheet.set.mute .set-row:last-child { opacity: .45; }
+.set-toggle {
+  appearance: none; border: 0; padding: 0; cursor: pointer; position: relative;
+  width: 50px; height: 30px; border-radius: 15px; background: var(--line-strong);
+  transition: background 180ms ease-out; touch-action: manipulation; flex: none;
+}
+.set-toggle[aria-checked="true"] { background: var(--accent); }
+.set-toggle i {
+  position: absolute; left: 3px; top: 3px; width: 24px; height: 24px; border-radius: 50%;
+  background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.3);
+  transition: transform 220ms var(--spring);
+}
+.set-toggle[aria-checked="true"] i { transform: translateX(20px); }
+.set-row input[type="range"] {
+  -webkit-appearance: none; appearance: none; flex: 1; max-width: 210px; height: 30px; margin: 0;
+  background: transparent; cursor: pointer; touch-action: none;
+  --v: 80%;
+}
+.set-row input[type="range"]::-webkit-slider-runnable-track {
+  height: 6px; border-radius: 3px;
+  background: linear-gradient(90deg, var(--accent) var(--v), var(--line) var(--v));
+}
+.set-row input[type="range"]::-moz-range-track { height: 6px; border-radius: 3px; background: var(--line); }
+.set-row input[type="range"]::-moz-range-progress { height: 6px; border-radius: 3px; background: var(--accent); }
+.set-row input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none; width: 24px; height: 24px; margin-top: -9px; border-radius: 50%;
+  background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.35), 0 0 0 .5px rgba(0,0,0,.1);
+}
+.set-row input[type="range"]::-moz-range-thumb { width: 24px; height: 24px; border: 0; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.35); }
+.set-row input[type="range"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
+.sheet.set .set-done { margin-top: 16px; }
+@media (prefers-reduced-motion: reduce) {
+  .set-tile, .set-swatch, .set-seg .thumb, .set-toggle i { transition-duration: 80ms; }
+}
+/* --- end keys styles --- */

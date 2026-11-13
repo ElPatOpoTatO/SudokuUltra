@@ -22,6 +22,9 @@ import { initCampaign, camp } from './campaign.js';
 import { initHints, hintTap, enterCheck, exitCheck, hintState, hintOpts } from './hintui.js';
 import * as hintlogic from './hintlogic.js';
 /* --- end hints --- */
+/* --- keys: keycap styles, colorways, switch sounds, Settings sheet --- */
+import { initKeys } from './settingsui.js';
+/* --- end keys --- */
 
 const REWIND_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 18 4 12l7-6z"/><path d="M20 18l-7-6 7-6z"/></svg>';
 
@@ -42,6 +45,7 @@ initDevMenu();
 initLevel0();     // after initToken: wraps the autosave refresh hook
 /* --- end level0 --- */
 /* --- hints --- */ initHints(); /* --- end hints --- */
+/* --- keys --- */ initKeys(); /* --- end keys --- */
 
 /* PWA: offline cache + install (needs https; skipped in sandboxed frames) */
 if ('serviceWorker' in navigator && location.protocol === 'https:') {

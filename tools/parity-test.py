@@ -296,7 +296,7 @@ async def run_parity(browser):
     for run, scheme, motion in [('light', 'light', 'no-preference'), ('dark', 'dark', 'no-preference'), ('reduced', 'light', 'reduce')]:
         pages = []
         for name, url in [('proto', f'http://127.0.0.1:{P_PROTO}/index.html?debug=1'),
-                          ('build', f'http://127.0.0.1:{P_BUILD}/?debug=1#p=proto')]:
+                          ('build', f'http://127.0.0.1:{P_BUILD}/?debug=1&keys=classic#p=proto')]:   # keys=classic: the prototype's keycaps + clicks
             ctx, P = await open_page(browser, name, url, scheme, motion)
             P.run = run
             # --- hints: the band between board and pad holds the Hint / Check keys and the coach line (build only) ---
