@@ -225,7 +225,7 @@ async def t3_runner(browser):
     ids = await page.evaluate('() => __debug.camp.levels(0)')
     check(len(ids) == 14 and ids[0] == 'w0-l0', f'T3 levels: {ids}')
     pid = await page.locator('#pid').text_content()
-    check('World 0' in pid and 'Level 1/14' in pid, f'T3 header label: {pid!r}')
+    check('World 0' in pid and 'Level 0/13' in pid, f'T3 header label: {pid!r}')
     await play_l0(page)
     await coach_key(page)                      # outro Next
     await page.wait_for_timeout(150)

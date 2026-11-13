@@ -363,7 +363,14 @@ html, body {
 .key.l0-hk::after { left: -3px; right: -3px; top: -3px; bottom: 1px; border-radius: 14px; box-shadow: 0 0 0 2px var(--accent); }
 @keyframes l0pulse { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
 .app.l0 .pad .key { transition: opacity 260ms ease-out; }
-.app.l0 .pad .key.l0-dim { opacity: .3; }
+/* "Not now" keys in Level 0: flat outlined slots, clearly unlike a used-up (locked) digit */
+.app.l0 .pad .key.l0-dim { opacity: 1; }
+.app.l0 .pad .key.l0-dim .wall, .app.l0 .pad .key.l0-dim .shadow { opacity: 0; transition: opacity 200ms ease-out; }
+.app.l0 .pad .key.l0-dim .cap {
+  background: transparent; box-shadow: inset 0 0 0 1.5px var(--line);
+  transform: translate3d(0, var(--travel), 0); transition: transform 200ms ease-out, background 200ms ease-out;
+}
+.app.l0 .pad .key.l0-dim .lg, .app.l0 .pad .key.l0-dim .cnt, .app.l0 .pad .key.l0-dim .lbl, .app.l0 .pad .key.l0-dim svg { opacity: .32; }
 .app.l0 .stat { opacity: .35; }
 @media (prefers-reduced-motion: reduce) {
   .cell.l0-hl::after, .key.l0-hk::after { animation: none; }
@@ -4616,7 +4623,7 @@ function initCampaign() {
   // leaving the runner: any puzzle the runner did not start
   gameHooks.start.push(() => { if (cur && !starting) { cur = null; worldToast = false; } });
   gameHooks.label = () => {
-    if (cur) return `<b>DEV</b> · World ${cur.world} · Level ${cur.k + 1}/${LEVELS_PER_WORLD}`;
+    if (cur) return `<b>DEV</b> · World ${cur.world} · Level ${cur.k}/${LEVELS_PER_WORLD - 1}`;
     if (S.mode === 'l0' || S.mode === 'l0demo') return `<b>DEV</b> · ${S.id} · W${S.world} Level 0`;
     return null;
   };

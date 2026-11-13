@@ -96,7 +96,7 @@ export function initCampaign() {
   // leaving the runner: any puzzle the runner did not start
   gameHooks.start.push(() => { if (cur && !starting) { cur = null; worldToast = false; } });
   gameHooks.label = () => {
-    if (cur) return `<b>DEV</b> · World ${cur.world} · Level ${cur.k + 1}/${LEVELS_PER_WORLD}`;
+    if (cur) return `<b>DEV</b> · World ${cur.world} · Level ${cur.k}/${LEVELS_PER_WORLD - 1}`;
     if (S.mode === 'l0' || S.mode === 'l0demo') return `<b>DEV</b> · ${S.id} · W${S.world} Level 0`;
     return null;
   };
