@@ -1,0 +1,77 @@
+{
+  "id": "w2-l0",
+  "world": 2,
+  "title": "Last candidate",
+  "board": "496718235700246981812593674970382046600974023240651097327169458189435762564827319",
+  "showCands": false,
+  "steps": [
+    {
+      "say": "Sometimes no number has just one spot. Then ask a cell instead: what can go here?",
+      "dim": "none",
+      "expect": { "continue": true }
+    },
+    {
+      "say": "Notes help with that. Turn Pencil on.",
+      "expect": { "press": "pencil" },
+      "nudge": "Pencil is the key at the bottom right."
+    },
+    {
+      "say": "This cell's row, column and box hold seven different numbers. Tap the cell.",
+      "focus": { "row": 3, "col": 2, "box": 3 },
+      "highlight": { "cells": [29] },
+      "expect": { "tap": [29] },
+      "nudge": "Tap the outlined cell."
+    },
+    {
+      "say": "Note the two numbers none of them has. Those are its candidates.",
+      "focus": { "row": 3, "col": 2, "box": 3 },
+      "highlight": { "cells": [29] },
+      "expect": { "notes": { "cell": 29, "digits": [1, 5] } },
+      "nudge": "Check 1 to 9. Which two are missing from the bright row, column and box?"
+    },
+    {
+      "say": "Now this cell. Which numbers can it still be?",
+      "focus": { "row": 4, "col": 1, "box": 3 },
+      "highlight": { "cells": [37] },
+      "expect": { "notes": { "cell": 37, "digits": [5] } },
+      "nudge": "Check 1 to 9 against the bright row, column and box."
+    },
+    {
+      "say": "Only one note, so it's the answer. Turn Pencil off.",
+      "expect": { "press": "pencil" },
+      "nudge": "Tap Pencil to go back to writing answers."
+    },
+    {
+      "say": "Write the 5 in.",
+      "focus": { "cells": [37] },
+      "expect": { "place": { "cell": 37, "digit": 5 } },
+      "nudge": "Tap the outlined cell, then press 5."
+    },
+    {
+      "say": "That 5 cleared a note here too. Place the number that's left.",
+      "focus": { "cells": [37, 29] },
+      "highlight": { "cells": [29] },
+      "expect": { "place": { "cell": 29, "digit": 1 } },
+      "nudge": "Read the note that's left in the outlined cell."
+    },
+    {
+      "say": "When a cell has just one candidate left, that's its number. That's a naked single.",
+      "dim": "none",
+      "expect": { "continue": true }
+    },
+    {
+      "say": "This cell has one candidate too. Find it and place it.",
+      "focus": { "row": 4, "col": 2, "box": 3 },
+      "dim": "none",
+      "highlight": { "cells": [38] },
+      "expect": { "place": { "cell": 38, "digit": 8 } },
+      "nudge": "Which number is missing from its row, column and box together?"
+    },
+    {
+      "say": "Six gaps left. Finish the board!",
+      "expect": { "fill": [10, 11, 33, 42, 47, 51] },
+      "nudge": "For each gap, ask: what can still go here?"
+    }
+  ],
+  "outro": "Solved! When a cell's row, column and box leave just one number, that number goes there."
+}
