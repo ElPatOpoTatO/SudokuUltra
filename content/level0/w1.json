@@ -1,0 +1,94 @@
+{
+  "id": "w1-l0",
+  "world": 1,
+  "title": "Cross-hatch",
+  "board": "325479186791006354648530792457198023900300478830704915563987241189243567274615839",
+  "showCands": false,
+  "steps": [
+    {
+      "say": "Now rows and boxes have a few gaps each. Here's a new way in: follow one number.",
+      "dim": "none",
+      "expect": { "continue": true }
+    },
+    {
+      "say": "This box still needs a 5. Tap the 5 in this row.",
+      "focus": { "box": 4, "row": 5, "cells": [53] },
+      "highlight": { "cells": [53] },
+      "expect": { "tap": [53] },
+      "nudge": "Look along the bright row for a 5."
+    },
+    {
+      "say": "That 5 blocks its whole row, even inside the box. Now tap the 5 in this column.",
+      "focus": { "box": 4, "col": 5, "cells": [77] },
+      "highlight": { "cells": [77] },
+      "expect": { "tap": [77] },
+      "nudge": "Look along the bright column for a 5."
+    },
+    {
+      "say": "Here's a shortcut: press 5 with no cell selected. Every 5 lights up.",
+      "focus": { "box": 4, "row": 5, "col": 5 },
+      "highlight": { "digits": [5] },
+      "expect": { "loadDigit": 5 },
+      "nudge": "Press the 5 key."
+    },
+    {
+      "say": "Each 5 blocks its row and column. Tap the one cell in the box no 5 can see.",
+      "focus": { "box": 4, "row": 5, "col": 5 },
+      "highlight": { "cells": [40, 41, 49] },
+      "expect": { "place": { "cell": 40, "digit": 5 } },
+      "nudge": "A 5 already sees that cell. Find the one no 5 can see."
+    },
+    {
+      "say": "When a number has only one open cell in a box, it goes there. That's a hidden single.",
+      "dim": "none",
+      "expect": { "continue": true }
+    },
+    {
+      "say": "Your turn. Load 2.",
+      "highlight": { "digits": [2] },
+      "expect": { "loadDigit": 2 },
+      "nudge": "Press the 2 key, with no cell selected."
+    },
+    {
+      "say": "Where can 2 go in this box?",
+      "focus": { "box": 1 },
+      "dim": "none",
+      "highlight": { "cells": [] },
+      "expect": { "place": { "cell": 13, "digit": 2 } },
+      "nudge": "Check each gap in the box: does a 2 already see it?"
+    },
+    {
+      "say": "Rows work the same way. Load 6.",
+      "highlight": { "digits": [6] },
+      "expect": { "loadDigit": 6 },
+      "nudge": "Press the 6 key, with no cell selected."
+    },
+    {
+      "say": "This row needs a 6. Which of its gaps can take it?",
+      "focus": { "row": 4, "cells": [55, 14] },
+      "highlight": { "cells": [37, 38, 41] },
+      "expect": { "place": { "cell": 38, "digit": 6 } },
+      "nudge": "A 6 above or below blocks that gap. Try another."
+    },
+    {
+      "say": "Keep 6 loaded. Where does 6 go in this box?",
+      "focus": { "box": 4 },
+      "dim": "none",
+      "highlight": { "cells": [] },
+      "expect": { "place": { "cell": 49, "digit": 6 } },
+      "nudge": "The box has two gaps. Which one can a 6 still reach?"
+    },
+    {
+      "say": "One more 6, for this row.",
+      "focus": { "row": 3 },
+      "highlight": { "cells": [33] },
+      "expect": { "place": { "cell": 33, "digit": 6 } }
+    },
+    {
+      "say": "Five gaps left. Finish the board!",
+      "expect": { "fill": [12, 23, 37, 41, 47] },
+      "nudge": "Pick a number and look for its one open spot."
+    }
+  ],
+  "outro": "Solved! When a number has only one open spot in a box, row or column, it goes there."
+}

@@ -19,7 +19,7 @@
      steps, every coach text fits) + screenshots in /tmp/level0/.
 Exit code 1 on any failure.
 """
-import asyncio, json, subprocess, sys, time
+import asyncio, json, os, subprocess, sys, time
 from pathlib import Path
 from playwright.async_api import async_playwright
 
@@ -27,7 +27,7 @@ ROOT = Path(__file__).resolve().parent.parent
 DIST = ROOT / 'dist'
 OUT = Path('/tmp/level0'); OUT.mkdir(exist_ok=True)
 CHROME = '/usr/bin/google-chrome'
-PORT = 8771             # not the parity test's ports, so both can run side by side
+PORT = int(os.environ.get('L0_PORT', 8771))   # not the parity test's ports; L0_PORT overrides (another checkout may use 8771)
 
 WRAP_SFX = """() => {
   const o = window.__debug.sfx; window.__sfxLog = [];
@@ -251,12 +251,13 @@ async def t3_runner(browser):
     await page.wait_for_timeout(300)
     end = await page.evaluate("() => ({ title: document.getElementById('toastTitle').textContent, show: document.getElementById('toast').classList.contains('show'), lbl: document.querySelector('#againKey .lbl').textContent, st: __debug.camp.state(), raw: localStorage.getItem('sudoku.camp.v1') })")
     store = end['st']['store']
-    check(end['show'] and end['title'] == 'World 0 complete' and end['lbl'] == 'Done' and end['st']['worldToast'], f'T3 end of world: {end}')
+    check(end['show'] and end['title'] == 'World 0 complete' and end['lbl'] == 'Next world' and end['st']['worldToast'], f'T3 end of world: {end}')
     check(all(store['done'].get(i) for i in ids) and store['skip'].get('0') and json.loads(end['raw'])['done'] == store['done'], f'T3 store: {store}')
     await page.screenshot(path=str(OUT / 't3-world-toast.png'))
-    notes.append(f'T3 runner: L0 -> {", ".join(labels[:2])} … {labels[-1]} -> toast "{end["title"]}"; {len(store["done"])} levels stored done, skip[0]={store["skip"].get("0")}')
+    notes.append(f'T3 runner: L0 -> {", ".join(labels[:2])} … {labels[-1]} -> toast "{end["title"]}" [{end["lbl"]}] -> World 1; {len(store["done"])} levels stored done, skip[0]={store["skip"].get("0")}')
     await tap(page, '#againKey'); await page.wait_for_timeout(150)
-    check(not (await page.evaluate('() => __debug.camp.state()'))['active'], 'T3 Done should leave the runner')
+    nxt = await page.evaluate('() => __debug.camp.state()')
+    check(nxt['active'] and nxt['world'] == 1 and nxt['k'] == 0, f'T3 "Next world" should start World 1 at Level 0: {nxt}')
     raw = end['raw']
     check(not errs, f'T3 errors: {errs}')
     await ctx.close()
@@ -270,15 +271,15 @@ async def t3_runner(browser):
     check(st['k'] == 1 and st['id'] == ids[1], f'T3 Skip -> {st}')
     # the DEV menu lists the runner, Level 0 and the 14 levels with done marks
     await tap(page, '#pid'); await page.wait_for_timeout(450)
-    n_lv = await page.locator('#devSheet .chip[data-camp-level]').count()
-    n_done = await page.locator('#devSheet .chip[data-camp-level].done').count()
+    n_lv = await page.locator('#devSheet .chip[data-camp-level^="0."]').count()
+    n_done = await page.locator('#devSheet .chip[data-camp-level^="0."].done').count()
     n_old = await page.locator('#devSheet .chip[data-id^="w"]').count()
     await page.screenshot(path=str(OUT / 't3-devmenu.png'))
     await page.locator('#devSheet .chip[data-l0="w0"]').click(); await page.wait_for_timeout(200)
     s = await l0(page); st = await page.evaluate('() => __debug.camp.state()')
     check(n_lv == 14 and n_done == 14 and n_old == 140 and s['active'] and s['k'] == 0 and not st['active'],
           f'T3 dev menu: level chips {n_lv} (done {n_done}), campaign chips {n_old}, L0 alone {s}, runner {st}')
-    notes.append(f'T3 Skip keycap shown after a clean Spot it 1 and jumps to Spot it 1; DEV menu: runner row + {n_lv} level chips ({n_done} done), old 140 chips unchanged')
+    notes.append(f'T3 Skip keycap shown after a clean Spot it 1 and jumps to Spot it 1; DEV menu: World 0 runner row + {n_lv} level chips ({n_done} done), old 140 chips unchanged')
     check(not errs, f'T3 skip errors: {errs}')
     await ctx.close()
 

@@ -32,7 +32,8 @@ import {
 import { inputGuard, bindPress, cancelAllPresses } from './input.js';
 import { flushSave } from './token.js';
 import { gameHooks, updatePid } from './game.js';
-import { parseGrid } from './solver.js';
+import { parseGrid, computeCands, allSteps, peers as PEER_LIST } from './solver.js';
+import { ALLOW } from './shared.js';
 import {
   validateScript, expectType, focusCells, focusUnitCells, highlightCells, dimMode, hasShow,
   startNotes, scriptSolution
@@ -108,8 +109,9 @@ function relevantKeys(st) {
   const digits = new Set(), mods = new Set(), ring = new Set(hd || []), ringMods = new Set();
   const all = () => { for (let d = 1; d <= 9; d++) digits.add(d); };
   if (t === 'place') all();
-  if (t === 'note' || t === 'eliminate' || t === 'loadDigit') { if (hd) hd.forEach(d => digits.add(d)); else all(); }
-  if (t === 'note') mods.add('pencil');
+  if (t === 'note' || t === 'notes' || t === 'eliminate' || t === 'loadDigit') { if (hd) hd.forEach(d => digits.add(d)); else all(); }
+  if (t === 'fill') all();                                       /* step6 */
+  if (t === 'note' || t === 'notes') mods.add('pencil');
   if (t === 'eliminate') { mods.add('pencil'); mods.add('erase'); }
   if (t === 'press') { mods.add(e.press); ringMods.add(e.press); }
   return { digits, mods, ring, ringMods };
@@ -158,18 +160,33 @@ function enterStep(k) {
   // keep a selection only when it is where this step acts; keep a loaded digit only after loadDigit
   let changed = false;
   if (S.selected >= 0 && !highlightCells(st).includes(S.selected)) { S.selected = -1; changed = true; }
-  if (S.loaded && prevType !== 'loadDigit') { S.loaded = 0; S.loadedNote = false; changed = true; }
+  /* --- step6: a loaded digit also carries into a step that uses only that digit (number-first chains) --- */
+  if (S.loaded && prevType !== 'loadDigit' && !usesOnly(st, S.loaded)) { S.loaded = 0; S.loadedNote = false; changed = true; }
+  /* --- end step6 --- */
   if (changed) refresh();
   clearTimeout(L.nudgeTimer);
   setText(st.say);
   renderDots(); showKeys(); applyVisuals(st);
 }
+/* --- step6 --- */
+function usesOnly(st, d) {
+  const e = st.expect;
+  if (e.place) return e.place.digit === d;
+  if (e.note) return e.note.digit === d;
+  if (e.eliminate) return e.eliminate.every(x => x[1] === d);
+  return false;
+}
+/* --- end step6 --- */
 function stepComplete(st) {
   const e = st.expect;
   switch (expectType(st)) {
     case 'tap': return e.mode === 'all' ? e.tap.every(c => L.tapped.has(c)) : L.tapped.has(S.selected);
     case 'place': return S.values[e.place.cell] === e.place.digit;
     case 'note': return !S.values[e.note.cell] && !!(S.notes[e.note.cell] & bit(e.note.digit));
+    /* --- step6 --- */
+    case 'notes': return !S.values[e.notes.cell] && e.notes.digits.every(d => S.notes[e.notes.cell] & bit(d));
+    case 'fill': return e.fill.every(c => S.values[c] === S.sol[c]);
+    /* --- end step6 --- */
     case 'eliminate': return e.eliminate.every(([c, d]) => !(S.notes[c] & bit(d)));
     case 'loadDigit': return S.loaded === e.loadDigit;
     default: return L.pressed;            // press, continue
@@ -228,9 +245,36 @@ function judge(st, a) {
       if (a.type === 'place' && a.cell === cell && a.digit === digit) return { r: 'ok' };
       if (a.type === 'convert') return { r: 'wrong', count: false, silent: true };
       if (a.type === 'note') return { r: 'wrong', text: 'Pencil is on, so that would be a note. Tap Pencil to write answers.' };
-      if (a.type === 'place' && a.cell !== cell) return { r: 'wrong', text: 'Use the outlined cell.' };
+      /* --- step6: several outlined cells (or none): say why that cell is out --- */
+      if (a.type === 'place' && a.cell !== cell) {
+        const hl = highlightCells(st);
+        if (hl.length === 1 && hl[0] === cell) return { r: 'wrong', text: 'Use the outlined cell.' };
+        return { r: 'wrong', text: seenText(a.cell, a.digit) || st.nudge || 'Not that cell. Look again.' };
+      }
+      /* --- end step6 --- */
       return { r: 'wrong', text: st.nudge || 'Not that one. Which number is missing?' };
     }
+    /* --- step6 --- */
+    case 'notes': {
+      const { cell, digits } = e.notes;
+      if (NEUTRAL_MOVES.includes(a.type) || isPencil) return { r: 'neutral' };
+      if (a.type === 'note' && a.cell === cell && digits.includes(a.digit)) return { r: a.on ? 'ok' : 'neutral' };
+      if (a.type === 'convert' && a.cell === cell && digits.includes(a.digit)) return { r: 'ok' };
+      if (a.type === 'place' && !S.pencil) return { r: 'wrong', text: 'Turn Pencil on first, then write the notes.' };
+      if ((a.type === 'note' || a.type === 'place') && a.cell !== cell) return { r: 'wrong', text: 'Use the outlined cell.' };
+      if (a.type === 'note' || a.type === 'convert') return { r: 'wrong', text: seenText(cell, a.digit) || st.nudge || 'That one can’t go here.' };
+      return { r: 'wrong', text: st.nudge || 'Write the numbers this cell can still be.' };
+    }
+    case 'fill': {
+      if (NEUTRAL_MOVES.includes(a.type) || isPencil) return { r: 'neutral' };
+      if (a.type === 'place' && e.fill.includes(a.cell) && a.digit === S.sol[a.cell]) return { r: 'ok' };
+      if (a.type === 'convert') return { r: 'wrong', count: false, silent: true };
+      if (a.type === 'note') return { r: 'neutral' };            // the player's own notes are fine here
+      if (a.type === 'place' && !e.fill.includes(a.cell)) return { r: 'wrong', text: 'Use one of the outlined cells.' };
+      if (a.type === 'place') return { r: 'wrong', text: seenText(a.cell, a.digit) || st.nudge || 'Not that one. Look at its notes.' };
+      return { r: 'wrong', text: st.nudge || 'Fill the outlined cells.' };
+    }
+    /* --- end step6 --- */
     case 'note': {
       const { cell, digit } = e.note;
       if (NEUTRAL_MOVES.includes(a.type) || isPencil) return { r: 'neutral' };
@@ -244,6 +288,7 @@ function judge(st, a) {
       const left = e.eliminate.filter(([c, d]) => S.notes[c] & bit(d));
       if (NEUTRAL_MOVES.includes(a.type) || isPencil) return { r: 'neutral' };
       if (a.type === 'note' && !a.on && left.some(([c, d]) => c === a.cell && d === a.digit)) return { r: 'ok' };
+      /* --- step6 --- */ if (a.type === 'place' && !S.pencil && left.some(([c, d]) => c === a.cell && d === a.digit)) return { r: 'wrong', text: `Turn Pencil on first, then press ${a.digit} to rub it out.` }; /* --- end step6 --- */
       if (a.type === 'press' && a.key === 'erase') {
         const c = a.cell, mine = left.filter(x => x[0] === c);
         if (c >= 0 && !S.values[c] && mine.length && mine.reduce((m, x) => m | bit(x[1]), 0) === S.notes[c]) return { r: 'ok' };
@@ -264,6 +309,18 @@ function judge(st, a) {
   return { r: 'neutral' };
 }
 
+/* --- step6: "This row already has a 6." for a digit a peer already holds --- */
+function seenText(cell, d) {
+  const r = (cell / 9) | 0, c = cell % 9, b = ((r / 3) | 0) * 3 + ((c / 3) | 0);
+  for (const j of PEER_LIST[cell]) {
+    if (S.values[j] !== d) continue;
+    const jr = (j / 9) | 0, jc = j % 9;
+    const where = jr === r ? 'row' : jc === c ? 'column' : 'box';
+    return `This ${where} already has a ${d}.`;
+  }
+  return '';
+}
+/* --- end step6 --- */
 function guard(a) {
   if (!L.active) return true;
   if (L.done) return false;
@@ -356,6 +413,24 @@ function showMe() {
       }
       add(700, () => {});
     }
+  /* --- step6 --- */
+  } else if (t === 'notes') {
+    const { cell, digits } = e.notes, todo = digits.filter(d => !(S.notes[cell] & bit(d)));
+    pencilTo(true);
+    add(0, () => demoSelect(cell));
+    todo.forEach((d, k) => add(k ? 450 : 800, () => keyTap(digitKeys[d].el, () => { if (toggleNote(cell, d)) sfx.pencil(); })));
+    add(1100, () => {});
+  } else if (t === 'fill') {
+    // play the next cell that follows from the board (endShow puts it back)
+    const c = nextFillCell(e.fill);
+    if (c >= 0) {
+      pencilTo(false);
+      add(0, () => demoSelect(c));
+      add(800, () => keyTap(digitKeys[S.sol[c]].el, () => { sfx.pen(); placeProvisional(c, S.sol[c], 'l0demo'); }));
+      add(140, () => finalizePending());
+      add(1100, () => { S.selected = c; refresh(); keyTap(keys.erase, () => { sfx.mod(); clearCell(c); }); });
+    }
+  /* --- end step6 --- */
   } else if (t === 'loadDigit') {
     const d = e.loadDigit;
     add(0, () => keyTap(digitKeys[d].el, () => { S.loaded = d; S.loadedNote = false; S.selected = -1; S.pencil ? sfx.pencil() : sfx.pen(); refresh(); FX.loadPulse(d); }));
@@ -370,6 +445,16 @@ function showMe() {
   add(900, () => endShow(st, snap));
   for (const [ms, fn] of seq) later(() => { if (L.active && L.demo) fn(); }, pace(ms));
 }
+/* --- step6: the first listed empty cell the solver can fill right now (else the first empty one) --- */
+function nextFillCell(list) {
+  const left = list.filter(c => !S.values[c]);
+  if (!left.length) return -1;
+  const cands = computeCands(S.values);
+  if (L.script.showCands) for (let i = 0; i < 81; i++) if (!S.values[i] && S.notes[i]) cands[i] &= S.notes[i];
+  for (const s of allSteps(S.values, cands, ALLOW[S.world])) if (s.place && left.includes(s.place.cell) && s.place.digit === S.sol[s.place.cell]) return s.place.cell;
+  return left[0];
+}
+/* --- end step6 --- */
 function endShow(st, snap) {
   // put the board back exactly as it was before the demo (notes that return are drawn back in)
   for (let i = 0; i < 81; i++) {
@@ -386,6 +471,9 @@ function endShow(st, snap) {
   // the demo may have switched Pencil; leave it where this step needs it (note/eliminate: on)
   const t = expectType(st);
   if (t === 'press' && st.expect.press === 'pencil') { if (S.pencil !== snap.pencil) togglePencil(); }
+  /* --- step6: a fill demo leaves Pencil off, as the step needs --- */
+  if (t === 'fill' && S.pencil) togglePencil();
+  /* --- end step6 --- */
   refresh();
   L.demo = false; L.wrong = 0;
   setText(st.say, '');

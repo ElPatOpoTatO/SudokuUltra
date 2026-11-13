@@ -58,5 +58,25 @@ if (files.length) {
   }
 }
 
+// step6: broken fixtures for the newer rules, derived from the World 2 and World 3 scripts.
+const load = (id) => { const f = path.join(DIR, `${id}.json`); return fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : null; };
+const w2 = load('w2'), w3 = load('w3');
+const stepOf = (s, t) => s.steps.findIndex((st) => st.expect && t in st.expect);
+const more = [];
+if (w2) {
+  more.push(['notes with a digit that is not a candidate', w2, (s) => { s.steps[stepOf(s, 'notes')].expect.notes.digits.push(7); }]);
+  more.push(['fill while Pencil is on', w2, (s) => { const k = s.steps.map((st) => st.expect.press).lastIndexOf('pencil'); s.steps.splice(k, 1); }]);
+}
+if (w3) {
+  more.push(['elimination no pointing/claiming step justifies', w3, (s) => { s.steps[stepOf(s, 'eliminate')].expect.eliminate = [[1, 7]]; }]);
+  more.push(['payoff placement before its elimination', w3, (s) => { const k = stepOf(s, 'eliminate'); s.steps.splice(k, 1); }]);
+}
+for (const [label, base, mutate] of more) {
+  const s = JSON.parse(JSON.stringify(base)); mutate(s);
+  const r = validateScript(s);
+  console.log(`${r.ok ? 'FAIL (accepted)' : 'PASS (rejected)'} broken: ${label}${r.ok ? '' : ' -> ' + r.errors[0]}`);
+  if (r.ok) failed++;
+}
+
 if (failed) { console.log(`\n${failed} failure(s)`); process.exit(1); }
 console.log('\nPASS');

@@ -1,0 +1,89 @@
+{
+  "id": "w3-l0",
+  "world": 3,
+  "title": "Pointing & claiming",
+  "board": "801250069950680201002149587019472850025896100080315920198564002503721098200938015",
+  "showCands": true,
+  "steps": [
+    {
+      "say": "Every note is filled in for you. Now you'll use the notes to rule numbers out.",
+      "dim": "none",
+      "expect": { "continue": true }
+    },
+    {
+      "say": "In this box, the 3 notes sit in one column. Tap both cells.",
+      "focus": { "box": 3, "col": 0 },
+      "highlight": { "cells": [27, 36], "digits": [3] },
+      "expect": { "tap": [27, 36], "mode": "all" },
+      "nudge": "Find the two cells in the box with a small 3."
+    },
+    {
+      "say": "Turn Pencil on to edit notes.",
+      "expect": { "press": "pencil" },
+      "nudge": "Pencil is the key at the bottom right."
+    },
+    {
+      "say": "This column's 3 has to be one of those two. So rub out the 3 up here.",
+      "focus": { "box": 3, "col": 0 },
+      "highlight": { "cells": [18], "digits": [3] },
+      "expect": { "eliminate": [[18, 3]] },
+      "nudge": "Select the outlined cell, then press 3."
+    },
+    {
+      "say": "When a number's notes in a box sit on one line, clear it from the rest of that line. That's pointing.",
+      "dim": "none",
+      "expect": { "continue": true }
+    },
+    {
+      "say": "Now the reverse: in this row, the 7 notes sit inside one box. Tap both cells.",
+      "focus": { "row": 6, "box": 8 },
+      "highlight": { "cells": [60, 61], "digits": [7] },
+      "expect": { "tap": [60, 61], "mode": "all" },
+      "nudge": "Find the two cells in the row with a small 7."
+    },
+    {
+      "say": "So the box's 7 must be in this row. Rub out the box's other 7.",
+      "focus": { "row": 6, "box": 8 },
+      "highlight": { "cells": [78], "digits": [7] },
+      "expect": { "eliminate": [[78, 7]] },
+      "nudge": "Select the outlined cell, then press 7."
+    },
+    {
+      "say": "When a row or column keeps a number inside one box, clear it from the rest of that box. That's claiming.",
+      "dim": "none",
+      "expect": { "continue": true }
+    },
+    {
+      "say": "Your turn: the 4 notes in this box share a column. Clear that column's other 4.",
+      "focus": { "box": 8, "col": 6 },
+      "highlight": { "cells": [], "digits": [4] },
+      "expect": { "eliminate": [[6, 4]] },
+      "nudge": "Follow the bright column up, out of the box. Which cell still has a 4?"
+    },
+    {
+      "say": "Turn Pencil off. Your clean-up left some cells with one note.",
+      "expect": { "press": "pencil" },
+      "nudge": "Tap Pencil to go back to writing answers."
+    },
+    {
+      "say": "This cell lost its 3. Place the number that's left.",
+      "focus": { "col": 0 },
+      "highlight": { "cells": [18] },
+      "expect": { "place": { "cell": 18, "digit": 6 } },
+      "nudge": "Read the one note left in the outlined cell."
+    },
+    {
+      "say": "Same here: it lost its 4.",
+      "focus": { "col": 6 },
+      "highlight": { "cells": [6] },
+      "expect": { "place": { "cell": 6, "digit": 3 } },
+      "nudge": "Read the one note left in the outlined cell."
+    },
+    {
+      "say": "Finish the board! Start with cells that have one note.",
+      "expect": { "fill": [1, 5, 11, 14, 16, 19, 27, 35, 36, 43, 44, 45, 47, 53, 60, 61, 64, 69, 73, 74, 78] },
+      "nudge": "Look for a cell with a single note, or a number with one spot."
+    }
+  ],
+  "outro": "Solved! When a number's notes line up inside a box or a line, clear it from the rest."
+}

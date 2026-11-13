@@ -5,7 +5,11 @@
 // later (step 7).
 //
 // Stored in localStorage 'sudoku.camp.v1' (best effort):
-//   { done: { <level id>: true }, clean: { <level id>: true }, skip: { <world>: true } }
+//   { done: { <level id>: true }, clean: { <level id>: true }, skip: { <world>: true },
+//     unlock: { fillNotes: true } }
+// unlock.fillNotes is set when World 2's Level 0 is finished (the player has
+// written a cell's candidates by hand once). TODO: a "fill all candidates"
+// control reads it (not built yet).
 // skip[w] is set when Spot it 1 of world w is cleared with no mistakes: from
 // then on Level 0 of that world shows a Skip keycap.
 //
@@ -27,9 +31,9 @@ const toastTitle = $('toastTitle'), againLbl = document.querySelector('#againKey
 function loadStore() {
   try {
     const o = JSON.parse(localStorage.getItem(KEY) || 'null');
-    if (o && typeof o === 'object') return { done: o.done || {}, clean: o.clean || {}, skip: o.skip || {} };
+    if (o && typeof o === 'object') return { done: o.done || {}, clean: o.clean || {}, skip: o.skip || {}, unlock: o.unlock || {} };
   } catch (e) {}
-  return { done: {}, clean: {}, skip: {} };
+  return { done: {}, clean: {}, skip: {}, unlock: {} };
 }
 const store = loadStore();
 function saveStore() { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) {} }
@@ -61,7 +65,8 @@ function play(k) {
   const id = cur.ids[k];
   starting = true;
   try {
-    if (k === 0) startLevel0(level0Scripts['w' + cur.world], { canSkip: !!store.skip[cur.world], onNext: next, onSkip: next, onDone: () => markDone(id, true) });
+    const w = cur.world;
+    if (k === 0) startLevel0(level0Scripts['w' + w], { canSkip: !!store.skip[w], onNext: next, onSkip: next, onDone: () => { markDone(id, true); level0Unlocks(w); } });
     else startPuzzle(id, false);
   } finally { starting = false; }
   updatePid();
@@ -76,11 +81,18 @@ function markDone(id, clean) {
   if (clean) store.clean[id] = true;
   saveStore();
 }
+/* --- step6: what finishing a world's Level 0 unlocks --- */
+function level0Unlocks(w) {
+  if (w === 2 && !store.unlock.fillNotes) { store.unlock.fillNotes = true; saveStore(); }
+}
+/** The next world that has a Level 0 and levels, or -1. */
+const nextWorld = w => (hasLevel0(w + 1) && worldLevels(w + 1).length ? w + 1 : -1);
+/* --- end step6 --- */
 function showWorldToast() {
   worldToast = true;
   toastTitle.textContent = `World ${cur.world} complete`;
   toastMsg.textContent = `All ${LEVELS_PER_WORLD} levels done.`;
-  againLbl.textContent = 'Done';
+  againLbl.textContent = nextWorld(cur.world) >= 0 ? 'Next world' : 'Done';   /* step6 */
   toastEl.classList.remove('show');
   void toastEl.offsetWidth;                       // replay the toast's entrance
   toastEl.classList.add('show');
@@ -89,7 +101,7 @@ function showWorldToast() {
 /** Open a world's Level 0 on its own (outside the runner). */
 export function startLevel0Alone(w = 0) {
   cur = null;
-  return startLevel0(level0Scripts['w' + w], { canSkip: !!store.skip[w] });
+  return startLevel0(level0Scripts['w' + w], { canSkip: !!store.skip[w], onDone: () => level0Unlocks(w) });
 }
 
 export function initCampaign() {
@@ -110,7 +122,14 @@ export function initCampaign() {
   };
   gameHooks.next = () => {
     if (!cur) return false;
-    if (worldToast) { hideToast(); worldToast = false; cur = null; updatePid(); return true; }
+    if (worldToast) {
+      /* --- step6: "Next world" starts the following world's runner --- */
+      const nw = nextWorld(cur.world);
+      hideToast(); worldToast = false; cur = null;
+      if (nw >= 0) startCampaign(nw, 0); else updatePid();
+      /* --- end step6 --- */
+      return true;
+    }
     if (!S.solved) return false;
     next();
     return true;

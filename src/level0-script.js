@@ -11,18 +11,24 @@
 //     {note: {cell, digit}}                {eliminate: [[cell, digit], …]}
 //     {loadDigit: d}                       {press: 'pencil'|'erase'|'undo'}
 //     {continue: true}
+//     {notes: {cell, digits: [..]}}        {fill: [cells]}        (step6)
 // validateScript() rejects unknown fields and simulates the whole script on
 // the board: every expected action must be legal at its step (placements must
 // match the unique solution AND be found by the solver with the techniques of
 // worlds 0..script.world; notes need Pencil on; erased notes must not be the
-// cell's answer; …).
+// cell's answer; …). The simulation keeps "logical" candidates too: the
+// computed candidates minus every justified elimination, so a placement that
+// only follows from an earlier pointing/pair elimination is accepted. From
+// world 3 on, erasing a real candidate must be a solver elimination.
 import {
   parseGrid, computeCands, findConflicts, countSolutions, findSolution,
   allSteps, ROWS, COLS, BOXES, peers, bit
 } from './solver.js';
 import { ALLOW } from './shared.js';
 
-export const EXPECT_TYPES = ['tap', 'place', 'note', 'eliminate', 'loadDigit', 'press', 'continue'];
+/* --- step6: notes (all candidates of a cell) and fill (several placements, any order) --- */
+export const EXPECT_TYPES = ['tap', 'place', 'note', 'notes', 'eliminate', 'fill', 'loadDigit', 'press', 'continue'];
+/* --- end step6 --- */
 export const PRESS_KEYS = ['pencil', 'erase', 'undo'];
 const TOP_KEYS = ['id', 'world', 'title', 'board', 'showCands', 'steps', 'outro'];
 const STEP_KEYS = ['say', 'focus', 'dim', 'highlight', 'expect', 'nudge', 'show'];
@@ -66,6 +72,8 @@ export function expectCells(step) {
   if (e.tap) return e.tap.slice();
   if (e.place) return [e.place.cell];
   if (e.note) return [e.note.cell];
+  if (e.notes) return [e.notes.cell];      /* step6 */
+  if (e.fill) return e.fill.slice();       /* step6 */
   if (e.eliminate) return [...new Set(e.eliminate.map((x) => x[0]))];
   return [];
 }
@@ -95,8 +103,8 @@ function checkText(v, where, errors, warnings, required = true) {
     if (sentences > 2) warnings.push(`${where}: ${sentences} sentences (keep it to 2)`);
   }
 }
-function checkCells(v, where, errors) {
-  if (!Array.isArray(v) || !v.length || !v.every(isCell)) errors.push(`${where}: must be a non-empty array of cells 0-80`);
+function checkCells(v, where, errors, allowEmpty = false) {
+  if (!Array.isArray(v) || (!allowEmpty && !v.length) || !v.every(isCell)) errors.push(`${where}: must be a${allowEmpty ? 'n' : ' non-empty'} array of cells 0-80`);
 }
 function checkCellDigit(v, where, errors) {
   if (!checkKeys(v, ['cell', 'digit'], where, errors)) return;
@@ -128,7 +136,8 @@ function checkSchema(s, errors, warnings) {
       if (!Object.keys(st.focus).length) errors.push(`${w}.focus: empty`);
     }
     if (st.highlight != null && checkKeys(st.highlight, HL_KEYS, `${w}.highlight`, errors)) {
-      if (st.highlight.cells != null) checkCells(st.highlight.cells, `${w}.highlight.cells`, errors);
+      // step6: [] = no outline (a step with reduced help)
+      if (st.highlight.cells != null) checkCells(st.highlight.cells, `${w}.highlight.cells`, errors, true);
       if (st.highlight.digits != null && (!Array.isArray(st.highlight.digits) || !st.highlight.digits.length || !st.highlight.digits.every(isDigit)))
         errors.push(`${w}.highlight.digits: must be a non-empty array of digits 1-9`);
     }
@@ -143,6 +152,18 @@ function checkSchema(s, errors, warnings) {
       checkCells(e.tap, `${we}.tap`, errors);
       if (e.mode != null && e.mode !== 'any' && e.mode !== 'all') errors.push(`${we}.mode: must be "any" or "all"`);
     } else if (t === 'place' || t === 'note') checkCellDigit(e[t], `${we}.${t}`, errors);
+    /* --- step6 --- */
+    else if (t === 'notes') {
+      if (checkKeys(e.notes, ['cell', 'digits'], `${we}.notes`, errors)) {
+        if (!isCell(e.notes.cell)) errors.push(`${we}.notes.cell: must be a cell 0-80`);
+        const ds = e.notes.digits;
+        if (!Array.isArray(ds) || !ds.length || !ds.every(isDigit) || new Set(ds).size !== ds.length) errors.push(`${we}.notes.digits: must be a non-empty array of different digits 1-9`);
+      }
+    } else if (t === 'fill') {
+      checkCells(e.fill, `${we}.fill`, errors);
+      if (Array.isArray(e.fill) && new Set(e.fill).size !== e.fill.length) errors.push(`${we}.fill: a cell is listed twice`);
+    }
+    /* --- end step6 --- */
     else if (t === 'eliminate') {
       if (!Array.isArray(e.eliminate) || !e.eliminate.length) errors.push(`${we}.eliminate: must be a non-empty array of [cell, digit]`);
       else e.eliminate.forEach((x, j) => {
@@ -171,7 +192,7 @@ export function scriptSolution(board) {
 /* ---------------------------------------------------------------------------
    Validation: schema + a full simulation of the script on its board
    --------------------------------------------------------------------------- */
-export function validateScript(script) {
+export function validateScript(script, opts = {}) {
   const errors = [], warnings = [];
   checkSchema(script, errors, warnings);
   if (errors.length) return { ok: false, errors, warnings };
@@ -182,14 +203,28 @@ export function validateScript(script) {
   if (!sol) return { ok: false, errors: ['board: must have exactly one solution'], warnings };
   const notes = startNotes(script, values);
   const allow = ALLOW[script.world];
+  /* --- step6: logical candidates (computed, minus justified eliminations) --- */
+  const logic = computeCands(values);
+  const elimTechs = allow.filter((t) => ['pointing', 'claiming', 'naked-pair', 'hidden-pair'].includes(t));
+  /** The solver step (allowed techniques, logical cands) that places d in c, or null. */
+  const justify = (c, d) => {
+    for (const s of allSteps(values, logic, allow)) if (s.place && s.place.cell === c && s.place.digit === d) return s;
+    return null;
+  };
+  const placeSim = (c, d) => {
+    values[c] = d; notes[c] = 0; logic[c] = 0;
+    for (const j of peers[c]) { notes[j] &= ~bit(d); logic[j] &= ~bit(d); }
+  };
+  /* --- end step6 --- */
   const sim = { pencil: false, selected: -1, loaded: 0 };
   const history = [];
-  const snap = () => ({ v: values.slice(), n: notes.slice() });
+  const snap = () => ({ v: values.slice(), n: notes.slice(), l: logic.slice() });
   const count = (d) => values.reduce((n, x) => n + (x === d), 0);
 
   script.steps.forEach((st, k) => {
     const w = `steps[${k}]`, e = st.expect, t = expectType(st);
     const err = (m) => errors.push(`${w} (${t}): ${m}`);
+    if (opts.onStep) opts.onStep(k, st, { values: values.slice(), notes: notes.slice(), logic: logic.slice(), sol, pencil: sim.pencil, loaded: sim.loaded });
     for (const c of highlightCells(st)) if (!isCell(c)) err('bad highlight cell');
     if (t === 'tap') {
       sim.selected = e.tap.length === 1 ? e.tap[0] : -2;   // -2: some cell, not known
@@ -200,16 +235,11 @@ export function validateScript(script) {
       if (values[cell]) err(`${name(cell)} is not empty`);
       else if (sol[cell] !== digit) err(`${name(cell)} is ${sol[cell]} in the solution, not ${digit}`);
       else if (peers[cell].some((j) => values[j] === digit)) err(`${digit} clashes with a peer of ${name(cell)}`);
-      else {
-        const cands = computeCands(values);
-        let found = null;
-        for (const s of allSteps(values, cands, allow)) if (s.place && s.place.cell === cell && s.place.digit === digit) { found = s; break; }
-        if (!found) err(`the solver cannot justify ${digit} in ${name(cell)} with the techniques of worlds 0-${script.world} (${allow.join(', ')}) on this board`);
-      }
+      else if (!justify(cell, digit)) err(`the solver cannot justify ${digit} in ${name(cell)} with the techniques of worlds 0-${script.world} (${allow.join(', ')}) on this board`);
       history.push(snap());
-      values[cell] = digit; notes[cell] = 0;
-      for (const j of peers[cell]) notes[j] &= ~bit(digit);
-      sim.selected = cell;
+      placeSim(cell, digit);
+      sim.selected = sim.loaded ? -1 : cell;
+      if (sim.loaded && sim.loaded !== digit) sim.loaded = 0;
     } else if (t === 'note') {
       const { cell, digit } = e.note;
       if (!sim.pencil) err('Pencil is off here (add a press: "pencil" step first)');
@@ -219,13 +249,51 @@ export function validateScript(script) {
       history.push(snap());
       notes[cell] |= bit(digit);
       sim.selected = cell;
+    } else if (t === 'notes') {                     /* --- step6 --- */
+      const { cell, digits } = e.notes;
+      if (!sim.pencil) err('Pencil is off here (add a press: "pencil" step first)');
+      if (values[cell]) err(`${name(cell)} is not empty`);
+      else for (const d of digits) {
+        if (notes[cell] & bit(d)) err(`${name(cell)} already has the note ${d}`);
+        else if (peers[cell].some((j) => values[j] === d)) err(`${d} is already in a peer of ${name(cell)}, so it is not a candidate`);
+      }
+      history.push(snap());
+      for (const d of digits) notes[cell] |= bit(d);
+      sim.selected = cell;
+    } else if (t === 'fill') {                      /* --- step6 --- */
+      if (sim.pencil) err('Pencil is on here, so digits would become notes (add a press: "pencil" step first)');
+      history.push(snap());
+      const left = e.fill.filter((c) => {
+        if (values[c]) { err(`${name(c)} is not empty`); return false; }
+        return true;
+      });
+      // the cells must be fillable one after another, each placement justified at its moment
+      while (left.length) {
+        const k2 = left.findIndex((c) => justify(c, sol[c]));
+        if (k2 < 0) { err(`the solver cannot justify any of ${left.map(name).join(', ')} with the techniques of worlds 0-${script.world} at this point`); break; }
+        placeSim(left[k2], sol[left[k2]]);
+        left.splice(k2, 1);
+      }
+      sim.selected = -2;
     } else if (t === 'eliminate') {
       history.push(snap());
+      // step6: from world 3 on, erasing a real (logical) candidate must be one solver elimination
+      const real = e.eliminate.filter(([c, d]) => !values[c] && (logic[c] & bit(d)) && sol[c] !== d);
+      if (real.length && script.world >= 3) {
+        let found = null;
+        for (const s of allSteps(values, logic, elimTechs)) {
+          if (s.place) continue;
+          const keys = new Set(s.eliminate.map(([c, d]) => c * 10 + d));
+          if (real.every(([c, d]) => keys.has(c * 10 + d))) { found = s; break; }
+        }
+        if (!found) err(`no single ${elimTechs.join('/')} step justifies erasing ${real.map(([c, d]) => `${d} from ${name(c)}`).join(', ')}`);
+      }
       for (const [cell, digit] of e.eliminate) {
         if (values[cell]) err(`${name(cell)} is not empty`);
         else if (!(notes[cell] & bit(digit))) err(`${name(cell)} has no note ${digit} to erase`);
         else if (sol[cell] === digit) err(`${digit} is the answer of ${name(cell)}; erasing it teaches the wrong thing`);
         notes[cell] &= ~bit(digit);
+        if (script.world >= 3) logic[cell] &= ~bit(digit);
       }
     } else if (t === 'loadDigit') {
       if (count(e.loadDigit) >= 9) err(`all nine ${e.loadDigit}s are placed, the key is locked`);
@@ -240,12 +308,18 @@ export function validateScript(script) {
           if (given) err(`${name(c)} is a given and cannot be erased`);
           else if (!values[c] && !notes[c]) err(`${name(c)} is already empty`);
           history.push(snap());
+          const was = values[c];
           values[c] = 0; notes[c] = 0;
+          if (was) {   // step6: the erased digit becomes a candidate again where nothing else blocks it
+            const fresh = computeCands(values);
+            logic[c] = fresh[c];
+            for (const j of peers[c]) if (!values[j] && (fresh[j] & bit(was))) logic[j] |= bit(was);
+          }
         }
       } else if (e.press === 'undo') {
         const h = history.pop();
         if (!h) err('nothing to undo');
-        else { values.set(h.v); notes.set(h.n); }
+        else { values.set(h.v); notes.set(h.n); logic.set(h.l); }
       }
     }
   });
