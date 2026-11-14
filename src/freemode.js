@@ -516,6 +516,19 @@ function igniteSfx() {
 /* =========================================================================
    INIT (main.js, after initCampaign so the toast / Next hooks chain behind it)
    ========================================================================= */
+/* --- step 9: a backup code was loaded / undone: forget the session without
+   persisting its clock (the stored state was just replaced), re-read the feedback. --- */
+export function resetFreeSession() {
+  session = null; pendingOpen = null; lastSolve = null;
+  if (hintsSet) { hintOpts.unlocked = null; hintsSet = false; }
+}
+export const freeModeOpen = () => isOpen();
+export function flushFreeClock() { if (session) clockPause(); }
+export function syncFreeMode() {
+  fbMode = getFreeModeState().feedback;
+  if (isOpen()) render();
+}
+/* --- end step 9 --- */
 export function initFreeMode() {
   const st = getFreeModeState();
   fbMode = st.feedback;

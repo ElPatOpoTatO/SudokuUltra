@@ -31,6 +31,9 @@ import { initProgress } from './progress.js';
 /* --- step8: Free Mode (Quick Play + Daily) --- */
 import { initFreeMode } from './freemode.js';
 /* --- end step8 --- */
+/* --- step9: backup code (SDK2) + unified autosave --- */
+import { initBackup } from './backup.js';
+/* --- end step9 --- */
 
 const REWIND_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 18 4 12l7-6z"/><path d="M20 18l-7-6 7-6z"/></svg>';
 
@@ -70,6 +73,9 @@ initFreeMode();
 /* --- step7: last (wraps hooks set above; may show Home) --- */
 initProgress();
 /* --- end step7 --- */
+/* --- step9: after everything (wraps the refresh hook, adds the Settings row and the Home link) --- */
+initBackup();
+/* --- end step9 --- */
 
 /* Test hooks, only with ?debug=1 */
 if (DEBUG) {

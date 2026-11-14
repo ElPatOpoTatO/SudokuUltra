@@ -66,6 +66,9 @@ export function lastPlayed() {
 }
 let sessionPlayed = false;
 export function markSessionPlayed() { sessionPlayed = true; }
+/* --- step 9: a backup code replaced the stored state: forget this session's puzzle --- */
+export function forgetSessionPlayed() { sessionPlayed = false; }
+/* --- end step 9 --- */
 
 function contLabel(lp) {
   if (!lp) return '';

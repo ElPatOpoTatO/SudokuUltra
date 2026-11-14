@@ -26,7 +26,7 @@
     <div class="stat"><span class="lbl">Mistakes</span><span class="num" id="mist">0</span></div>
     <div class="status" id="status"></div>
     <div class="hbtns">
-      <div class="hbtn" id="tokenBtn" role="button" aria-label="Progress token">
+      <div class="hbtn" id="tokenBtn" role="button" aria-label="Backup code">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="4.5"/><path d="m10.7 12.3 9.3-9.3"/><path d="m16 7 3 3"/><path d="m18.5 4.5 2 2"/></svg>
       </div>
       <div class="hbtn" id="resetBtn" role="button" aria-label="Restart puzzle">
@@ -58,21 +58,24 @@
 </div>
 <canvas class="fxc" id="fxc" aria-hidden="true"></canvas>
 <div class="sheet-bg" id="sheetBg"></div>
-<div class="sheet" id="sheet" role="dialog" aria-label="Progress token">
-  <h2>Progress token</h2>
-  <p class="sub">Copy this code to move your progress to another browser or device. Paste a code below to load it. Your progress also saves automatically on this device.</p>
-  <label for="tokOut">Your token</label>
-  <textarea id="tokOut" readonly spellcheck="false"></textarea>
+<div class="sheet bk" id="sheet" role="dialog" aria-label="Backup code">
+  <h2><span class="bk-ic" id="bkIcon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="4.5"/><path d="m10.7 12.3 9.3-9.3"/><path d="m16 7 3 3"/><path d="m18.5 4.5 2 2"/></svg></span>Backup code</h2>
+  <p class="sub">Moves all your progress, settings and your current puzzle to another device. Not a password.</p>
+  <label for="tokOut">Your code <span class="bk-meta" id="tokMeta"></span></label>
+  <textarea id="tokOut" readonly spellcheck="false" aria-describedby="tokMeta"></textarea>
   <div class="row">
-    <div class="key mod" id="copyKey" role="button"><div class="shadow"></div><div class="wall"></div><div class="cap"><span class="lbl">Copy</span></div></div>
+    <div class="key mod" id="copyKey" role="button" aria-label="Copy code"><div class="shadow"></div><div class="wall"></div><div class="cap"><span class="lbl">Copy</span></div></div>
   </div>
-  <label for="tokIn">Load a token</label>
-  <textarea id="tokIn" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="Paste a token here"></textarea>
+  <label for="tokIn">Restore from a code</label>
+  <textarea id="tokIn" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="Paste a backup code here"></textarea>
   <div class="row">
-    <div class="key mod" id="loadKey" role="button"><div class="shadow"></div><div class="wall"></div><div class="cap"><span class="lbl">Load</span></div></div>
-    <div class="key mod" id="closeKey" role="button"><div class="shadow"></div><div class="wall"></div><div class="cap"><span class="lbl">Close</span></div></div>
+    <div class="key mod" id="loadKey" role="button" aria-label="Load code"><div class="shadow"></div><div class="wall"></div><div class="cap"><span class="lbl">Load</span></div></div>
+    <div class="key mod" id="closeKey" role="button" aria-label="Close"><div class="shadow"></div><div class="wall"></div><div class="cap"><span class="lbl">Close</span></div></div>
   </div>
-  <p class="msg" id="tokMsg"></p>
+  <p class="msg" id="tokMsg" role="status" aria-live="polite"></p>
+  <div class="row bk-undo" id="undoRow">
+    <div class="key mod" id="undoKey" role="button" aria-label="Undo load"><div class="shadow"></div><div class="wall"></div><div class="cap"><span class="lbl">Undo load</span></div></div>
+  </div>
 </div>
 <!-- DEV menu (temporary) -->
 <div class="sheet-bg" id="devBg"></div>

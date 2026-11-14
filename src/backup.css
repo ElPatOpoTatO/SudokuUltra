@@ -1,0 +1,44 @@
+/* =========================================================================
+   STEP 9: BACKUP CODE SHEET (reuses .sheet), Settings row, Home link
+   ========================================================================= */
+.sheet.bk { max-height: 100dvh; overflow-y: auto; overscroll-behavior: contain; padding-top: 14px; }
+.sheet.bk h2 { display: flex; align-items: center; gap: 8px; }
+.bk-ic { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 8px; flex: none;
+  background: var(--bg); color: var(--ink-2); box-shadow: inset 0 0 0 1px var(--line); }
+.bk-ic svg { width: 15px; height: 15px; display: block; }
+.sheet.bk h2 .bk-ic.pop { animation: bkpop 520ms cubic-bezier(.3,1.5,.5,1); color: var(--accent-ink); }
+@keyframes bkpop { 0% { transform: scale(1); } 30% { transform: scale(1.28); box-shadow: inset 0 0 0 1px var(--line), 0 0 0 6px color-mix(in srgb, var(--charge, #f5b400) 35%, transparent); } 100% { transform: scale(1); } }
+.sheet.bk .sub { margin-bottom: 6px; }
+.sheet.bk label { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-top: 8px; }
+.sheet.bk .bk-meta { font-weight: 560; letter-spacing: 0; text-transform: none; color: var(--ink-3); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sheet.bk #tokOut { height: 96px; }
+.sheet.bk #tokIn { height: 54px; }
+.sheet.bk .msg { min-height: 17px; margin-top: 6px; line-height: 1.35; }
+.sheet.bk .bk-undo { display: none; margin-top: 4px; }
+.sheet.bk .bk-undo.show { display: flex; }
+/* the load bolt flies from the Load key into the sheet's header: spark canvas above the sheet */
+body.bk-fx .sparkc { z-index: 52; }
+@media (max-height: 700px) {
+  .sheet.bk { padding-top: 12px; }
+  .sheet.bk .sub { font-size: 12px; }
+  .sheet.bk #tokOut { height: 84px; }
+  .sheet.bk #tokIn { height: 46px; }
+  .sheet.bk .row .key { --kh: 40px; }
+}
+@media (prefers-reduced-motion: reduce) { .sheet.bk h2 .bk-ic.pop { animation-duration: 1ms; } }
+
+/* Settings → Backup & restore */
+.set-bk { appearance: none; width: 100%; display: flex; align-items: center; gap: 12px; padding: 10px 12px; min-height: 48px; cursor: pointer;
+  border: 0; border-radius: 12px; background: var(--bg); color: var(--ink); box-shadow: inset 0 0 0 1px var(--line); font: inherit; text-align: left; }
+.set-bk:active { transform: translateY(1px); }
+.set-bk .bk-ic { background: var(--surface); }
+.set-bk-t { flex: 1; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.set-bk-t b { font-size: 14px; font-weight: 600; }
+.set-bk-t small { font-size: 11.5px; color: var(--ink-3); }
+.set-bk-ch { font-size: 22px; line-height: 1; color: var(--ink-3); }
+
+/* Home: a small link, top right */
+.home-bk { appearance: none; border: 0; background: transparent; cursor: pointer; padding: 4px 6px; margin-right: -6px;
+  display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 12px; font-weight: 600; color: var(--ink-3); }
+.home-bk .bk-ic { width: 22px; height: 22px; border-radius: 7px; }
+.home-bk .bk-ic svg { width: 13px; height: 13px; }

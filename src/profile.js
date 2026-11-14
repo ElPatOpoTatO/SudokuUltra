@@ -1,7 +1,7 @@
 // profile.js — the PROGRESS PROFILE (step 7): power charges per level, mastered
 // worlds, expertise, unlocks, flags. One plain JSON object, persisted under
-// localStorage 'sudoku.profile.v1' (best effort). The progress token v2 will
-// serialize getProfile() and load it back with setProfile(). See docs/progression.md.
+// localStorage 'sudoku.profile.v1' (best effort). The backup code (backup.js,
+// docs/token.md) reads getProfile() and loads with setProfile(). See docs/progression.md.
 //
 //   getProfile()        → deep copy { v, levels: {id: bestCharges}, mastered: [w],
 //                          expertise: {tier, inner, points}, unlocks: {fillNotes, items}, flags: {...} }

@@ -21,7 +21,7 @@ import {
 } from './profile.js';
 import { showResults, clearResults, RC, meter, setMeter } from './chargeui.js';
 import { showScreen, hideScreens, currentScreen } from './screens.js';
-import { buildHome, paintHome, showHome, lastPlayed, markSessionPlayed, ICON } from './home.js';
+import { buildHome, paintHome, showHome, lastPlayed, markSessionPlayed, forgetSessionPlayed, ICON } from './home.js';
 import { initCampMap, openMap, openWorld, paintMap, paintWorld, mapWorld, MAP } from './campmap.js';
 import { initUnlockUI, showReward, paintBadge } from './unlockui.js';
 import { initFillNotes, fillAll, fillVisible, fillKey } from './fillnotes.js';
@@ -53,6 +53,17 @@ function doContinue() {
   recordLast();
 }
 let sessionStarted = false;
+/* --- step 9: a backup code was loaded (or undone). The stored state is new, so
+   the puzzle underneath is stale: Continue must start the stored last puzzle.
+   When the board is showing (the sheet was opened in a game), switch now. --- */
+export function resumeAfterRestore(show) {
+  sessionStarted = false;
+  forgetSessionPlayed();
+  if (show) doContinue();
+  const c = currentScreen();
+  if (c === 'home') paintHome(); else if (c === 'campaign') paintMap(); else if (c === 'world') paintWorld(mapWorld());
+}
+/* --- end step 9 --- */
 
 /* ---- the results card and the end-of-world toast ------------------------------ */
 function onToast() {

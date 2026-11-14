@@ -14,7 +14,9 @@
 //     clock:   { <id>: ms }        elapsed play time of unfinished puzzles
 //     daily: { solved: { <day>: ms },   first-solve time per day number (days since DAILY_EPOCH, no wrap)
 //              late:   { <day>: 1 },    solved, but not on its own day (never counts for the streak)
-//              streak, lastDay },       lastDay = day number of the last streak solve (-1 = none)
+//              streak, lastDay,         lastDay = day number of the last streak solve (-1 = none)
+//              older },                 step 9: solved days known only as a count (a backup code keeps
+//                                       the last 64 days one by one); total dailies = older + keys of solved
 //     feedback: 'instant' | 'conflicts' | 'nothing',   Free Mode only; default 'conflicts'
 //     challenge: false }                "Challenge me": bands beyond the mastered worlds
 import { BANDS } from './shared.js';
@@ -30,7 +32,7 @@ export function emptyState() {
   const per = f => Object.fromEntries(BANDS.map(b => [b, f()]));
   return {
     v: 1, played: per(() => []), solved: per(() => []), best: {}, current: {}, clock: {},
-    daily: { solved: {}, late: {}, streak: 0, lastDay: -1 },
+    daily: { solved: {}, late: {}, streak: 0, lastDay: -1, older: 0 },
     feedback: 'conflicts', challenge: false
   };
 }
@@ -51,6 +53,7 @@ function clean(o) {
     if (isObj(d.late)) for (const k in d.late) if (/^\d+$/.test(k) && d.late[k]) s.daily.late[k] = 1;
     if (num(d.streak) != null) s.daily.streak = Math.floor(d.streak);
     if (typeof d.lastDay === 'number' && isFinite(d.lastDay)) s.daily.lastDay = Math.floor(d.lastDay);
+    if (num(d.older) != null) s.daily.older = Math.floor(d.older);    /* step 9 */
   }
   if (FEEDBACK.includes(o.feedback)) s.feedback = o.feedback;
   s.challenge = o.challenge === true;
@@ -68,9 +71,14 @@ export function getFreeModeState() {
   if (!cur) cur = load();
   return JSON.parse(JSON.stringify(cur));
 }
+/* --- step 9: change listeners (the unified autosave, freemode.js after a backup load) --- */
+const listeners = [];
+export function onFreeModeState(fn) { listeners.push(fn); }
+/* --- end step 9 --- */
 export function setFreeModeState(obj) {
   cur = clean(obj);
   try { localStorage.setItem(FM_KEY, JSON.stringify(cur)); } catch (e) {}
+  for (const fn of listeners) { try { fn(); } catch (e) {} }   /* step 9 */
   return getFreeModeState();
 }
 /** Read-modify-write helper: fn(state) mutates a copy, which is then stored. */

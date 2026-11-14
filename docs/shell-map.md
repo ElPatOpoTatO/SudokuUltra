@@ -36,7 +36,7 @@ and the `refresh = function(){ _refresh(); scheduleSave(); }` monkey patch becom
 | JS 9. PRESS SYSTEM (1597-1679) | `presses`, `pressStart`, `pressEnd`, `cancelAllPresses`, `bindPress`, board listener, window/document listeners, unlock hooks, zoom killers, `bindHeaderBtn`, mute/reset/again buttons | `input.js` (`againKey` handler -> `game.js`, it becomes "Next" after a Spot it) |
 | JS 10. KEYBOARD (1681-1712) | keydown/keyup | `input.js` |
 | JS 11. BOOT (1714-1720) | build + first render | `main.js` |
-| JS 12. TOKEN + AUTOSAVE (1722-1868) | `Token` codec (SDK1), `packState`, `unpackState`, `applyState`, autosave, token sheet UI | `token.js` (save key becomes `sudoku.save.v1.<puzzleId>`, byte 1 = puzzle tag) |
+| JS 12. TOKEN + AUTOSAVE (1722-1868) | `Token` codec (SDK1), `packState`, `unpackState`, `applyState`, autosave, token sheet UI | `token.js` (save key becomes `sudoku.save.v1.<puzzleId>`, byte 1 = puzzle tag). Step 9: the envelope moved to `tokencodec.js`, the sheet to `backup.js` (SDK2 backup code, `docs/token.md`) |
 | JS 13. PWA (1870-1877) | service worker registration | `main.js` |
 | `loadSaved()` (1879) | restore at boot | `game.js` `startPuzzle()` (per puzzle id) |
 | `sw.js` | offline cache | `tools/sw.template.js` -> `dist/sw.js` with hashed `VERSION` |

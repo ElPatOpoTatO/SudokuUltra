@@ -248,27 +248,10 @@ async def script(P):
     await P.pg.clock.run_for(1500); await P.settle()
     await P.moment('solved-toast', 10, 400); await P.settle(); await st('solved')
 
-    # 11. token sheet: open, copy, load (back to a mid-game board first)
-    await P.mod('Undo'); await P.mod('Undo'); await P.mod('Undo'); await P.settle()
-    await P.tap('#tokenBtn'); await P.moment('token-open', 380, 380); await P.settle()
-    await P.tap('#copyKey'); await P.settle()
-    tok = await P.pg.evaluate("() => navigator.clipboard.readText()")
-    tok_out = await P.pg.evaluate("() => document.getElementById('tokOut').value")
-    assert tok == tok_out and tok.startswith('SDK1.'), f'{P.name}: copy failed ({tok[:12]!r})'
-    await P.tap('#closeKey'); await P.settle()
-    await P.cell(0); await P.settle()                 # select something, then restart
-    await P.tap('#resetBtn'); await P.settle(); await st('reset')
-    await P.tap('#tokenBtn'); await P.settle()
-    await P.pg.fill('#tokIn', tok)
-    await P.tap('#loadKey'); await P.moment('token-loaded', 100, 100)
-    await P.pg.clock.run_for(800); await P.settle(); await st('token-loaded')
-    # a bad token
-    await P.tap('#tokenBtn'); await P.settle()
-    await P.pg.fill('#tokIn', tok[:-3] + ('A' if tok[-3] != 'A' else 'B') + tok[-2:])
-    await P.tap('#loadKey'); await P.settle()
-    msg = await P.pg.evaluate("() => document.getElementById('tokMsg').textContent")
-    P.states.append(('bad-token-msg', {'msg': msg}))
-    await P.tap('#closeKey'); await P.settle(); await st('final')
+    # 11. (step 9) the prototype's token sheet (SDK1, one board) became the Backup code
+    # sheet (SDK2, the whole profile): a deliberate difference, so it is no longer compared
+    # here. tools/token-test.py covers the sheet, Copy / Load / Undo and SDK1 codes.
+    await st('final')
     P.sfx = await P.pg.evaluate("() => window.__sfxLog")
 
 

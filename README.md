@@ -163,3 +163,12 @@ URL options for tests: `#p=<id>`, `#camp=w.k`, `#l0=wN` open the game directly (
 ```
 python3 tools/integration-test.py   # Home + campaign + Free Mode together (INTEG_PORT, default 8799)
 ```
+
+### Backup code (step 9)
+
+The key icon in the game header, Settings → **Backup & restore** and the small **Backup** link on Home open the **Backup code** sheet: a short code (`SDK2.…`, about 30-130 characters, about 250 with a puzzle in progress) that moves the whole game (charges, mastery, expertise, unlocks, settings, Free Mode, the Daily streak and the current puzzle) to another browser or device. Paste it there and press Load; **Undo load** puts the previous state back. It is scrambled and checksummed (typos and edits are rejected), not a password. Old SDK1 codes still load as a single board. Format, validation and sizes: `docs/token.md`.
+
+```
+node tools/token-test.mjs           # codec + format: round trip, edits, migration, sizes
+python3 tools/token-test.py         # browser: device A -> device B, Undo, errors (TOKEN_PORT, default 8803)
+```

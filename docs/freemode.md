@@ -28,7 +28,7 @@ Edits to shared files are fenced with `/* --- step8: … --- */ … /* --- end s
 - **Navigation.** `sudoku:nav` with `{to:'free'}` calls `openFreeMode()`. The Home keycap (and Escape) dispatch `{to:'home'}`. Any `sudoku:nav` with another `to` closes the Free Mode screen, and step 7 shows Home / the map / Settings.
 - **Solves.** The module listens to `sudoku:solved` with `{id, mode, world, mistakes, paidHints, silentWrong, ms, charges, clean}`. It recognises Free Mode puzzles by its session `id`, not by `mode`, and handles a solve once (`session.done`). The event's `ms` is this module's clock (it registers `events.clockHooks.ms`); if it were ever missing, it falls back to `elapsed()`.
 - **Mastery.** `fm-progress.js` imports `getProfile()` from `profile.js` and reads `.mastered` (an array of worlds). If reading it throws, nothing is mastered. The old `sudoku.camp.v1` fallback is gone: the profile migrates that store once. Bands re-render on `onProfile`.
-- **Data.** `fmstore.js` holds plain JSON, so the token v2 step can serialize it as is.
+- **Data.** `fmstore.js` holds plain JSON; the backup code (step 9, `docs/token.md`) carries it. Step 9 added the optional `daily.older` (solved days kept only as a count) and `onFreeModeState(fn)`.
 
 ```
 { v: 1,

@@ -102,7 +102,7 @@ getSettings();   // { style: 'sa', layout: 'plain', preset: 'retro', sound: true
 setSettings({ preset: 'ocean' });   // validates, applies at once, saves, notifies
 ```
 
-**Storage.** Settings are saved in `localStorage['sudoku.settings.v1']` as `{"v":1,"style","layout","preset","sound","switchVol"}`. Reads and writes are in try/catch. Bad or unknown values fall back to the defaults, field by field. The object is plain JSON, so the progress token v2 can carry it later.
+**Storage.** Settings are saved in `localStorage['sudoku.settings.v1']` as `{"v":1,"style","layout","preset","sound","switchVol"}`. Reads and writes are in try/catch. Bad or unknown values fall back to the defaults, field by field. The object is plain JSON; the backup code (step 9, `docs/token.md`) carries it.
 
 **Sound on/off** is the old mute: `sfx.setMuted`. In styled mode the header mute button is hidden, because the gear takes its place. It stays in the DOM, and its `muted` class is kept in sync.
 

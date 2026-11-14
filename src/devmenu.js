@@ -7,7 +7,7 @@ import { sfx } from './audio.js';
 import { S, UI } from './state.js';
 import { release } from './actions.js';
 import { cancelAllPresses, bindHeaderBtn } from './input.js';
-import { openSheet } from './token.js';
+import { sheetHooks } from './token.js';
 import { startPuzzle } from './game.js';
 import { worlds, quick, daily, todayDailyId, modeLabel, entry } from './puzzles.js';
 import { BANDS, dailyIndex, DAILY_EPOCH } from './shared.js';
@@ -81,8 +81,8 @@ function render() {
 
   el('div', 'grp', 'Other', sheet);
   const orow = el('div', 'wrow', null, sheet);
-  const tk = chip(orow, 'Progress token');
-  tk.addEventListener('click', () => { closeDev(); openSheet(); });
+  const tk = chip(orow, 'Backup code');
+  tk.addEventListener('click', () => { closeDev(); if (sheetHooks.open) sheetHooks.open(); });
   chip(orow, 'Prototype puzzle', 'proto');
   const close = chip(orow, 'Close');
   close.addEventListener('click', closeDev);

@@ -139,6 +139,8 @@ css += '\n' + fs.readFileSync(path.join(SRC, 'progress.css'), 'utf8').trim();
 /* --- end step7 --- */
 /* --- step8: Free Mode screen CSS, appended after keys.css --- */
 css += '\n' + fs.readFileSync(path.join(SRC, 'freemode.css'), 'utf8').trim();
+/* --- step9: backup code sheet + Settings row + Home link --- */
+css += '\n' + fs.readFileSync(path.join(SRC, 'backup.css'), 'utf8').trim();
 /* --- end step8 --- */
 const tpl = fs.readFileSync(path.join(SRC, 'index.html'), 'utf8');
 if (!tpl.includes('/*__STYLE__*/') || !tpl.includes('//__SCRIPT__')) fail(path.join(SRC, 'index.html'), 'template placeholders missing');
