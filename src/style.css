@@ -528,5 +528,5 @@ html, body {
 .sheet.ck .ckgrid .key.off .cap > * { opacity: .35; }
 .sheet.ck .row .key .lbl { font-size: 13.5px; }
 .sheet.ck:not(.show) { transform: translate(-50%, calc(105% + 64px)); }
-.app.l0 .hintbar, .app.l0 .key.hk, .app.l0 .key.ckk { display: none !important; }
+.app.l0 .hintbar, .app.l0 .key.hk:not(.kp .key), .app.l0 .key.ckk:not(.kp .key) { display: none !important; }
 /* --- end hints --- */

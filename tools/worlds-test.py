@@ -68,7 +68,7 @@ async def do_step(page, st):
     elif 'loadDigit' in e: await key(page, e['loadDigit'])
     elif 'press' in e: await mod(page, {'pencil': 'Pencil', 'erase': 'Erase', 'undo': 'Undo'}[e['press']])
 
-HIDDEN_JS = """() => { const vis = s => [...document.querySelectorAll(s)].some(e => e.offsetParent !== null && getComputedStyle(e).display !== 'none');
+HIDDEN_JS = """() => { const vis = s => [...document.querySelectorAll(s)].some(e => !e.closest('.kp, #setSheet') && e.offsetParent !== null && getComputedStyle(e).display !== 'none');
   return { hint: vis('.key.hk'), check: vis('.key.ckk'), bar: vis('.hintbar') }; }"""
 
 async def play_script(page, w, wrong_at=None, show_at=None):

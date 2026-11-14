@@ -545,8 +545,390 @@ html, body {
 .sheet.ck .ckgrid .key.off .cap > * { opacity: .35; }
 .sheet.ck .row .key .lbl { font-size: 13.5px; }
 .sheet.ck:not(.show) { transform: translate(-50%, calc(105% + 64px)); }
-.app.l0 .hintbar, .app.l0 .key.hk, .app.l0 .key.ckk { display: none !important; }
+.app.l0 .hintbar, .app.l0 .key.hk:not(.kp .key), .app.l0 .key.ckk:not(.kp .key) { display: none !important; }
 /* --- end hints --- */
+/* =========================================================================
+   KEYCAP STYLES + COLORWAYS (keys.css, appended after style.css by the build)
+   Everything here is scoped under :root.kx, which settings.js sets for every
+   style except the debug-only 'classic' look (= style.css alone, untouched).
+
+   Classes on <html>:  .kx  .ks-<style>  .cw-<preset>  .cl-<layout>
+   DOM added to every .key by settings.js (dressKey):
+     .key > .shadow .wall .sw(.hs .st .pl) .cap > .sk .tf + the legends
+       .sk  cap body / skirt: front face + ::before left facet + ::after right facet
+       .tf  top face: dish shading + gloss (::before) + press shade (::after)
+       .sw  bare switch (housing + cross stem + plate legend): low-profile "cap pulled"
+     .sk/.tf sit at z-index -1 inside the cap (a stacking context), so the
+     legends stay direct children of .cap and every existing layout rule
+     (.hkeys / .dead / .sheet keys) keeps working.
+   A style is ONLY custom properties on .ks-<style> (so a preview tile can
+   carry another style than the page); geometry is in fractions of --kh and
+   resolved per key, so compact keys (Hint/Check, sheet buttons) scale.
+   ========================================================================= */
+
+/* the extra parts only exist on dressed keys; hidden unless a style is on */
+.key .sk, .key .tf, .key .sw { display: none; }
+.kx .key .sk, .kx .key .tf, .kx .key .sw { display: block; }
+
+/* ---------------- style: SA / retro (default) ---------------- */
+.ks-sa {
+  --Sk: .083; --Bk: .036; --Fk: .165; --Fk1: .165; --Fk2: .165; --Fk3: .165; --Bk1: .036; --Bk2: .036; --Bk3: .036;
+  --Rk: .19; --TRk: .16; --Gk: .05; --travel: 3.5px; --latch: 2.6px; --lock-y: 1.2px;
+  --lf: .40; --rf: .18; --fr0: .06; --fr1: .26; --back: .55;
+  --dish:
+    radial-gradient(70% 75% at 62% 66%, rgba(255,255,255,.40) 0%, rgba(255,255,255,0) 60%),
+    radial-gradient(120% 120% at 70% 75%, rgba(0,0,0,0) 45%, rgba(0,0,0,.11) 100%);
+  --rim: inset 1.5px 1.5px 0 -.5px rgba(255,255,255,.9), inset 0 -1px 0 rgba(0,0,0,.05), 0 .5px 0 rgba(0,0,0,.12);
+  --sk-sh: inset 0 -1.5px 0 rgba(0,0,0,.25), inset 0 0 0 .5px rgba(0,0,0,.2), inset 2px 2px 1px -1px rgba(255,255,255,.6);
+  --gloss: 1; --press-shade: .07;
+  --lgk: .41; --lgw: 760; --lbl-tt: uppercase; --lbl-w: 760; --lbl-ls: .06em; --lblk: .15;
+  --mod-align: center; --mod-justify: center; --mod-pad: 0px;
+  --lock-cap: 1; --lock-sw: 0;
+  --sh-contact: rgba(60,40,10,.30); --sh-amb: rgba(60,40,10,.28);
+}
+/* ---------------- style: Cherry / OEM ---------------- */
+.ks-cherry {
+  --Sk: .075; --Bk: .024; --Fk: .1; --Fk1: .135; --Fk2: .112; --Fk3: .092; --Bk1: .018; --Bk2: .024; --Bk3: .038;
+  --Rk: .1; --TRk: .085; --Gk: .04; --travel: 3px; --latch: 2.1px; --lock-y: 1px;
+  --lf: .34; --rf: .16; --fr0: .10; --fr1: .22; --back: .45;
+  --dish:
+    linear-gradient(90deg, rgba(0,0,0,.10) 0%, rgba(0,0,0,.03) 14%, rgba(0,0,0,0) 30%, rgba(255,255,255,0) 62%, rgba(255,255,255,.26) 88%, rgba(255,255,255,.1) 100%),
+    linear-gradient(180deg, rgba(255,255,255,.26), rgba(255,255,255,0) 55%, rgba(0,0,0,.04)),
+    var(--grain);
+  --rim: inset 0 1px 0 rgba(255,255,255,.7), inset 1px 0 0 rgba(255,255,255,.3), inset 0 -1px 0 rgba(0,0,0,.06), 0 .5px 0 rgba(0,0,0,.10);
+  --sk-sh: inset 0 -1px 0 rgba(0,0,0,.25), inset 0 0 0 .5px rgba(0,0,0,.18);
+  --gloss: 0; --press-shade: .07;
+  --lgk: .42; --lgw: 620; --lbl-tt: lowercase; --lbl-w: 600; --lbl-ls: .02em; --lblk: .165;
+  --mod-align: start; --mod-justify: start; --mod-pad: 4px;
+  --lock-cap: 1; --lock-sw: 0;
+  --sh-contact: rgba(40,30,15,.30); --sh-amb: rgba(40,30,15,.26);
+}
+/* ---------------- style: Low-profile flat ---------------- */
+.ks-lp {
+  --Sk: .032; --Bk: .02; --Fk: .06; --Fk1: .06; --Fk2: .06; --Fk3: .06; --Bk1: .02; --Bk2: .02; --Bk3: .02;
+  --Rk: .12; --TRk: .1; --Gk: .03; --travel: 2px; --latch: 1.4px; --lock-y: 0px;
+  --lf: .30; --rf: .10; --fr0: .06; --fr1: .16; --back: .6;
+  --dish:
+    linear-gradient(180deg, rgba(255,255,255,.34), rgba(255,255,255,0) 40%, rgba(0,0,0,.03)),
+    var(--grain);
+  --rim: inset 0 1px 0 rgba(255,255,255,.75), inset 0 0 0 .5px rgba(0,0,0,.05);
+  --sk-sh: inset 0 -1px 0 rgba(0,0,0,.14), inset 0 0 0 .5px rgba(0,0,0,.14);
+  --gloss: 0; --press-shade: .045;
+  --lgk: .45; --lgw: 480; --lbl-tt: none; --lbl-w: 560; --lbl-ls: .02em; --lblk: .17;
+  --mod-align: center; --mod-justify: center; --mod-pad: 0px;
+  --lock-cap: 0; --lock-sw: 1;
+  --sh-contact: rgba(20,24,30,.20); --sh-amb: rgba(20,24,30,.18);
+}
+@media (prefers-color-scheme: dark) {
+  .ks-sa {
+    --lf: .12; --rf: .32; --fr0: .14; --fr1: .42; --back: .14;
+    --dish:
+      radial-gradient(70% 75% at 62% 66%, rgba(255,255,255,.10) 0%, rgba(255,255,255,0) 60%),
+      radial-gradient(120% 120% at 70% 75%, rgba(0,0,0,0) 45%, rgba(0,0,0,.24) 100%);
+    --rim: inset 1.5px 1.5px 0 -.5px rgba(255,255,255,.22), inset 0 -1px 0 rgba(0,0,0,.25), 0 .5px 0 rgba(0,0,0,.4);
+    --sk-sh: inset 0 -1.5px 0 rgba(0,0,0,.5), inset 0 0 0 .5px rgba(0,0,0,.4), inset 2px 2px 1px -1px rgba(255,255,255,.14);
+    --gloss: .22; --sh-contact: rgba(0,0,0,.6); --sh-amb: rgba(0,0,0,.55);
+  }
+  .ks-cherry {
+    --lf: .10; --rf: .30; --fr0: .18; --fr1: .40; --back: .12;
+    --dish:
+      linear-gradient(90deg, rgba(0,0,0,.24) 0%, rgba(0,0,0,.06) 16%, rgba(0,0,0,0) 30%, rgba(255,255,255,0) 62%, rgba(255,255,255,.08) 88%, rgba(255,255,255,.03) 100%),
+      linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,0) 55%, rgba(0,0,0,.08)),
+      var(--grain);
+    --rim: inset 0 1px 0 rgba(255,255,255,.12), inset 1px 0 0 rgba(255,255,255,.05), inset 0 -1px 0 rgba(0,0,0,.25), 0 .5px 0 rgba(0,0,0,.4);
+    --sk-sh: inset 0 -1px 0 rgba(0,0,0,.5), inset 0 0 0 .5px rgba(0,0,0,.4);
+    --sh-contact: rgba(0,0,0,.6); --sh-amb: rgba(0,0,0,.55);
+  }
+  .ks-lp {
+    --lf: .08; --rf: .26; --fr0: .14; --fr1: .34; --back: .16;
+    --dish:
+      linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,0) 40%, rgba(0,0,0,.06)),
+      var(--grain);
+    --rim: inset 0 1px 0 rgba(255,255,255,.13), inset 0 0 0 .5px rgba(255,255,255,.03);
+    --sk-sh: inset 0 -1px 0 rgba(0,0,0,.45), inset 0 0 0 .5px rgba(0,0,0,.5);
+    --sh-contact: rgba(0,0,0,.55); --sh-amb: rgba(0,0,0,.5);
+  }
+}
+:root.kx {
+  /* PBT grain: static fractal noise, alpha only */
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .12 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ---------------- shared keycap geometry ---------------- */
+.kx .key {
+  --kS: calc(var(--kh) * var(--Sk)); --kB: calc(var(--kh) * var(--Bk)); --kF: calc(var(--kh) * var(--Fk));
+  --kR: calc(var(--kh) * var(--Rk)); --kT: calc(var(--kh) * var(--TRk)); --kG: calc(var(--kh) * var(--Gk));
+  /* colorway → this key (digits A, even digits B in checkerboard, mods, accent) */
+  --base: var(--cap-a); --lg: var(--legend-a); --lgl: var(--latch-a); --deb: var(--deboss-a); --veil: var(--veil-a); --glf: var(--glf-a);
+  /* the shell's own legend colours, redirected to the colorway inside a key */
+  --cap-ink: var(--lg); --ink-2: var(--lg); --ink-3: var(--lg); --accent-ink: var(--lgl);
+}
+.kx.cl-checker .key.digit.ev { --base: var(--cap-b); --lg: var(--legend-b); --lgl: var(--latch-b); --deb: var(--deboss-b); --veil: var(--veil-b); --glf: var(--glf-b); }
+.kx .key.mod { --base: var(--cap-mod); --lg: var(--legend-mod); --lgl: var(--latch-mod); --veil: var(--veil-mod); --glf: var(--glf-mod); }
+.kx .key.hk { --base: var(--cap-accent); --lg: var(--legend-accent); --lgl: var(--legend-accent); --veil: var(--veil-accent); --glf: var(--glf-accent); }
+.kx .key.digit.ev.pin-plain { --base: var(--cap-a); --lg: var(--legend-a); --lgl: var(--latch-a); --deb: var(--deboss-a); --veil: var(--veil-a); --glf: var(--glf-a); }
+.kx .key.digit.ev.pin-checker { --base: var(--cap-b); --lg: var(--legend-b); --lgl: var(--latch-b); --deb: var(--deboss-b); --veil: var(--veil-b); --glf: var(--glf-b); }
+.kx .key.r1 { --Fk: var(--Fk1); --Bk: var(--Bk1); }
+.kx .key.r2 { --Fk: var(--Fk2); --Bk: var(--Bk2); }
+.kx .key.r3 { --Fk: var(--Fk3); --Bk: var(--Bk3); }
+
+.kx .key .shadow {
+  left: 2px; right: 0; top: 6px; bottom: -1px; border-radius: var(--kR);
+  box-shadow: 1.5px 2.5px 2px -.5px var(--sh-contact), 4px 9px 14px -5px var(--sh-amb);
+}
+.kx .key .wall {
+  left: 1px; right: 1px; top: 40%; bottom: 0; border-radius: var(--kR);
+  background: var(--well); box-shadow: inset 0 -1px 0 rgba(255,255,255,.08);
+}
+.kx .key .cap {
+  bottom: var(--kG); border-radius: var(--kR);
+  background: none; box-shadow: none; color: var(--lg);
+  padding: var(--kB) var(--kS) var(--kF);
+}
+.kx .key .cap::after { display: none; }
+.kx .key .sk, .kx .key .tf, .kx .key .sw { position: absolute; pointer-events: none; }
+.kx .key .sk {
+  inset: 0; z-index: -1; border-radius: var(--kR); overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,var(--back)) 0, rgba(255,255,255,var(--back)) var(--kB), rgba(0,0,0,0) var(--kB)),
+    linear-gradient(180deg, rgba(0,0,0,var(--fr0)) 0%, rgba(0,0,0,var(--fr1)) 100%),
+    var(--base);
+  box-shadow: var(--sk-sh);
+}
+.kx .key .sk::before, .kx .key .sk::after { content: ""; position: absolute; inset: 0; }
+.kx .key .sk::before {
+  background: linear-gradient(180deg, rgba(255,255,255,var(--lf)), rgba(255,255,255,calc(var(--lf) * .35)));
+  clip-path: polygon(0 0, var(--kS) var(--kB), var(--kS) calc(100% - var(--kF)), 0 100%);
+}
+.kx .key .sk::after {
+  background: linear-gradient(180deg, rgba(0,0,0,calc(var(--rf) * .6)), rgba(0,0,0,var(--rf)));
+  clip-path: polygon(100% 0, calc(100% - var(--kS)) var(--kB), calc(100% - var(--kS)) calc(100% - var(--kF)), 100% 100%);
+}
+.kx .key .tf {
+  left: var(--kS); right: var(--kS); top: var(--kB); bottom: var(--kF); z-index: -1;
+  border-radius: var(--kT); overflow: hidden;
+  background: linear-gradient(var(--veil), var(--veil)), var(--dish), var(--base);
+  box-shadow: var(--rim);
+}
+/* ABS gloss streak (SA) */
+.kx .key .tf::before {
+  content: ""; position: absolute; left: 10%; top: 6%; width: 38%; height: 22%; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255,255,255,.5), rgba(255,255,255,0));
+  opacity: calc(var(--gloss) * var(--glf));
+}
+/* press shade: opacity only, on the top face */
+.kx .key .tf::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit;
+  background: rgba(0,0,0,var(--press-shade)); opacity: 0; transition: opacity var(--release);
+}
+.kx .key.down .tf::after { opacity: 1; transition-duration: 0s; }
+.kx .key.down .shadow { opacity: .3; }
+.kx .key.latched .shadow { opacity: .55; }
+@media (hover: hover) {
+  .kx .key:hover .tf::after { opacity: .45; }
+  .kx .key.down:hover .tf::after { opacity: 1; }
+}
+
+/* legends */
+.kx .key .lg { font-size: calc(var(--kh) * var(--lgk)); font-weight: var(--lgw); letter-spacing: -.01em; }
+.kx .key .lbl { text-transform: var(--lbl-tt); font-weight: var(--lbl-w); letter-spacing: var(--lbl-ls); }
+.kx .key .cnt {
+  top: calc(var(--kB) + var(--kh) * .055); right: calc(var(--kS) + var(--kh) * .065);
+  font-size: clamp(9px, calc(var(--kh) * .165), 10.5px); opacity: .62;
+}
+.kx .kp .key.mod svg { width: calc(var(--kh) * .3); height: calc(var(--kh) * .3); justify-self: var(--mod-justify); }
+.kx .kp .key.mod .lbl { font-size: clamp(8.5px, calc(var(--kh) * var(--lblk)), 11.5px); }
+.kx .kp .key.mod .cap {
+  align-content: var(--mod-align); justify-items: var(--mod-justify);
+  padding: calc(var(--kB) + var(--mod-pad) * 1.3) calc(var(--kS) + var(--mod-pad) * 1.6) var(--kF);
+}
+/* LED: lit when latched; toggle keys (Pencil, Check) show the unlit LED too */
+.kx .key .led {
+  top: calc(var(--kB) + var(--kh) * .08); left: calc(var(--kS) + var(--kh) * .085);
+  width: 6px; height: 6px; background: var(--led); box-shadow: 0 0 5px 1px var(--led);
+}
+.kx.ks-cherry .kp .key.mod .led { left: auto; right: calc(var(--kS) + var(--kh) * .09); }
+.kx .key.tg .led { opacity: 1; background: rgba(0,0,0,.2); box-shadow: inset 0 .5px 1px rgba(0,0,0,.4), 0 .5px 0 rgba(255,255,255,.18); transition: background 120ms, box-shadow 120ms; }
+.kx .key.tg.latched .led { background: var(--led); box-shadow: 0 0 5px 1px var(--led); }
+.kx .hkeys .key .led { width: 5px; height: 5px; top: calc(var(--kB) + 3px); left: auto; right: calc(var(--kS) + 4px); }
+.kx .hkeys .key.tg:not(.latched) .led { opacity: 0; }
+
+/* LOCKED (digit used up): blank cap, legend debossed, badge gone.
+   Low-profile: the cap is pulled — bare switch + cross stem, digit printed on the plate. */
+.kx .key.digit.locked .cnt { opacity: 0; }
+.kx .key.digit.locked .lg { opacity: 1; color: transparent; text-shadow: var(--deb); }
+.kx .key.digit.locked .cap { transform: translate3d(0, var(--lock-y), 0); opacity: var(--lock-cap); transition: transform var(--release) var(--spring), opacity 180ms ease-out; }
+.kx .key.digit.locked.down .cap { transform: translate3d(0, var(--travel), 0); }
+.kx .key .sw { inset: 0; opacity: 0; transition: opacity 180ms ease-out; }
+.kx .key.digit.locked .sw { opacity: var(--lock-sw); }
+.kx .key.digit.locked .shadow { opacity: calc(var(--lock-cap) * .8); }
+.kx .key .sw .hs {
+  position: absolute; left: 26%; right: 26%; top: 13%; bottom: 33%; border-radius: 5px;
+  background: linear-gradient(180deg, #4a4e55, #33363c);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 1px 0 rgba(255,255,255,.35);
+}
+.kx .key .sw .st {
+  position: absolute; left: 50%; top: 40%; width: 13px; height: 13px; margin: -6.5px 0 0 -6.5px;
+  background:
+    linear-gradient(#e8e4dc, #e8e4dc) center / 3.5px 13px no-repeat,
+    linear-gradient(#e8e4dc, #e8e4dc) center / 13px 3.5px no-repeat;
+  filter: drop-shadow(0 1.5px 0 rgba(0,0,0,.45));
+  transform: translate3d(0, 0, 0); transition: transform var(--release) var(--spring);
+}
+.kx .key.digit.locked.down .sw .st { transform: translate3d(0, 2px, 0); transition-duration: 0s; }
+.kx .key .sw .pl {
+  position: absolute; left: 0; right: 0; bottom: 4%; text-align: center;
+  font-size: 10px; font-weight: 700; letter-spacing: .04em; line-height: 1; color: var(--plate-ink); opacity: .7;
+}
+.kx.ks-lp .kp .key.digit.locked .wall { top: 0; background: var(--plate); box-shadow: inset 0 1px 3px rgba(0,0,0,.28), inset 0 0 0 1px rgba(0,0,0,.06); }
+
+/* the plate under the pad (drawn outside the pad box: layout unchanged) */
+.kx .pad { position: relative; isolation: isolate; }
+.kx .pad::before {
+  content: ""; position: absolute; left: -7px; right: -7px; top: -7px; bottom: -7px; z-index: -1;
+  border-radius: 17px;
+  background: linear-gradient(165deg, rgba(255,255,255,.14), rgba(0,0,0,.06)), var(--plate);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.35), inset 0 -2px 0 rgba(0,0,0,.08), 0 1px 0 rgba(255,255,255,.4);
+}
+@media (prefers-color-scheme: dark) {
+  .kx .pad::before { box-shadow: inset 0 1px 0 rgba(255,255,255,.05), inset 0 -2px 0 rgba(0,0,0,.4), 0 0 0 1px rgba(255,255,255,.03); }
+}
+
+/* keys in other places: sheet / toast / coach / dead-end / claim sheet */
+.kx .sheet.ck .ckgrid .key .cap { padding: var(--kB) calc(var(--kS) + 4px) var(--kF); }
+.kx .sheet.ck .ckgrid .key.off .cap > .sk, .kx .sheet.ck .ckgrid .key.off .cap > .tf { opacity: 1; }
+.kx .sheet.ck .ckgrid .key .lbl { text-transform: none; letter-spacing: .01em; line-height: 1.1; }
+
+/* Level 0 "not now" keys: flat outlined slots on the plate, in every style */
+.kx .app.l0 .pad .key.l0-dim { --lg: var(--plate-ink); }
+.kx .app.l0 .pad .key.l0-dim .sk, .kx .app.l0 .pad .key.l0-dim .tf, .kx .app.l0 .pad .key.l0-dim .sw { opacity: 0; transition: opacity 200ms ease-out; }
+.kx .app.l0 .pad .key.l0-dim .cap { box-shadow: inset 0 0 0 1.5px var(--plate-line); opacity: 1; }
+.kx .app.l0 .pad .key.l0-dim .led { opacity: 0; }
+.kx .app.l0 .pad .key .sk, .kx .app.l0 .pad .key .tf { transition: opacity 200ms ease-out; }
+
+/* settings take the mute button's place in the header (sound on/off lives in Settings) */
+.kx #muteBtn { display: none; }
+
+/* =========================================================================
+   SETTINGS SHEET (reuses .sheet / .sheet-bg)
+   ========================================================================= */
+.sheet.set {
+  max-height: 90dvh; overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y;
+  padding-top: 0; -webkit-overflow-scrolling: touch;
+}
+.sheet.set:not(.show) { transform: translate(-50%, calc(105% + 64px)); }
+.set-top {
+  position: sticky; top: 0; z-index: 3; margin: 0 -18px; padding: 14px 18px 12px;
+  background: var(--surface); box-shadow: 0 1px 0 var(--line);
+}
+.set-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.set-head h2 { margin: 0; }
+.set-x {
+  appearance: none; border: 0; background: var(--bg); color: var(--ink-2);
+  width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; cursor: pointer; padding: 0;
+}
+.set-x svg { width: 17px; height: 17px; }
+.set-x:active { transform: scale(.9); }
+/* the preview strip: a slice of the real pad on its plate */
+.set-prev {
+  position: relative; isolation: isolate;
+  display: grid; grid-template-columns: 1fr 1fr 1fr 1.28fr 1.28fr; gap: 7px 6px;
+  padding: 7px; border-radius: 15px;
+  background: linear-gradient(165deg, rgba(255,255,255,.14), rgba(0,0,0,.06)), var(--plate);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.35), inset 0 -2px 0 rgba(0,0,0,.08);
+}
+.set-prev .key { --kh: clamp(44px, 6.6dvh, 54px); }
+.set-sec { margin-top: 16px; }
+.set-sec h3 { margin: 0 0 8px; font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-3); }
+.set-tile, .set-swatch {
+  appearance: none; font: inherit; color: var(--ink); cursor: pointer; text-align: left;
+  border: 0; border-radius: 14px; padding: 7px 7px 8px; background: var(--bg);
+  box-shadow: inset 0 0 0 1px var(--line);
+  transition: box-shadow 160ms ease-out, transform 160ms var(--spring);
+  touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+}
+.set-tile:active, .set-swatch:active { transform: scale(.97); transition-duration: 60ms; }
+.set-tile[aria-pressed="true"], .set-swatch[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--accent), 0 0 0 3px var(--accent-soft); }
+.set-tile:focus-visible, .set-swatch:focus-visible, .set-seg button:focus-visible, .set-toggle:focus-visible, .set-x:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.set-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.set-mk, .set-mini {
+  position: relative; isolation: isolate; display: grid; gap: 5px; padding: 6px; border-radius: 11px;
+  background: linear-gradient(165deg, rgba(255,255,255,.14), rgba(0,0,0,.06)), var(--plate);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.3), inset 0 -1px 0 rgba(0,0,0,.08);
+}
+.set-mk { grid-template-columns: 1fr 1.25fr; }
+.set-mk .key { --kh: 40px; }
+.set-mk .key.mod .lbl { display: none; }
+.set-mk .key.mod svg { width: 15px !important; height: 15px !important; }
+.set-mini { grid-template-columns: repeat(4, 1fr); gap: 3px; padding: 4px; border-radius: 9px; }
+.set-mini .key { --kh: 24px; }
+.set-mini .key .lg { font-size: 12px; }
+.set-mini .key .lbl, .set-mini .key .cnt, .set-mini .key .led { display: none; }
+.set-mini .key svg { width: 10px; height: 10px; }
+.set-mini .key .shadow { display: none; }
+.set-lab { margin-top: 7px; padding: 0 2px; line-height: 1.2; }
+.set-lab b { font-size: 13.5px; font-weight: 700; }
+.set-lab span { font-size: 12px; color: var(--ink-2); font-weight: 560; }
+.set-lab small { display: block; margin-top: 1px; font-size: 10.5px; color: var(--ink-3); font-weight: 560; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.set-swatch .set-lab b { font-size: 12.5px; }
+.set-sw { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
+/* segmented control */
+.set-seg {
+  position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 2px;
+  padding: 3px; border-radius: 12px; background: var(--line);
+}
+.set-seg button {
+  appearance: none; border: 0; background: transparent; color: var(--ink-2); font: inherit;
+  font-size: 13px; font-weight: 640; height: 34px; border-radius: 9px; cursor: pointer;
+  position: relative; z-index: 1; touch-action: manipulation;
+}
+.set-seg button[aria-pressed="true"] { color: var(--ink); }
+.set-seg .thumb {
+  position: absolute; top: 3px; bottom: 3px; left: 3px; width: calc((100% - 8px) / 2);
+  border-radius: 9px; background: var(--surface);
+  box-shadow: 0 1px 2px rgba(0,0,0,.12), 0 2px 8px -2px rgba(0,0,0,.14);
+  transform: translateX(calc(var(--i, 0) * (100% + 2px)));
+  transition: transform 260ms cubic-bezier(.3,1.25,.5,1);
+}
+/* sound */
+.set-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; min-height: 42px; }
+.set-row > span, .set-row > label { font-size: 14px; font-weight: 600; color: var(--ink); margin: 0; letter-spacing: 0; text-transform: none; }
+.sheet.set .set-row > label { display: block; font-size: 14px; font-weight: 600; color: var(--ink); margin: 0; letter-spacing: 0; text-transform: none; }
+.sheet.set.mute .set-row:last-child { opacity: .45; }
+.set-toggle {
+  appearance: none; border: 0; padding: 0; cursor: pointer; position: relative;
+  width: 50px; height: 30px; border-radius: 15px; background: var(--line-strong);
+  transition: background 180ms ease-out; touch-action: manipulation; flex: none;
+}
+.set-toggle[aria-checked="true"] { background: var(--accent); }
+.set-toggle i {
+  position: absolute; left: 3px; top: 3px; width: 24px; height: 24px; border-radius: 50%;
+  background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.3);
+  transition: transform 220ms var(--spring);
+}
+.set-toggle[aria-checked="true"] i { transform: translateX(20px); }
+.set-row input[type="range"] {
+  -webkit-appearance: none; appearance: none; flex: 1; max-width: 210px; height: 30px; margin: 0;
+  background: transparent; cursor: pointer; touch-action: none;
+  --v: 80%;
+}
+.set-row input[type="range"]::-webkit-slider-runnable-track {
+  height: 6px; border-radius: 3px;
+  background: linear-gradient(90deg, var(--accent) var(--v), var(--line) var(--v));
+}
+.set-row input[type="range"]::-moz-range-track { height: 6px; border-radius: 3px; background: var(--line); }
+.set-row input[type="range"]::-moz-range-progress { height: 6px; border-radius: 3px; background: var(--accent); }
+.set-row input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none; width: 24px; height: 24px; margin-top: -9px; border-radius: 50%;
+  background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.35), 0 0 0 .5px rgba(0,0,0,.1);
+}
+.set-row input[type="range"]::-moz-range-thumb { width: 24px; height: 24px; border: 0; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.35); }
+.set-row input[type="range"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
+.sheet.set .set-done { margin-top: 16px; }
+@media (prefers-reduced-motion: reduce) {
+  .set-tile, .set-swatch, .set-seg .thumb, .set-toggle i { transition-duration: 80ms; }
+}
+/* --- end keys styles --- */
 </style>
 </head>
 <body>
@@ -732,6 +1114,12 @@ const engine = (() => {
   return {
     unlock,
     get muted() { return muted; },
+    /* --- keys: switch sounds (switches.js). keyStyle = active keycap style, or
+       null for the original clicks; prims = engine internals for new voices
+       (data properties, so the parity test's sfx wrapper leaves them alone) --- */
+    keyStyle: null,
+    prims: { get ctx() { return ctx; }, get master() { return master; }, get noise() { return noise; }, ready, now, jit, pj },
+    /* --- end keys --- */
     setMuted(m) {
       muted = m;
       if (master) master.gain.setTargetAtTime(m ? 0 : 0.9, ctx.currentTime, 0.01);
@@ -740,6 +1128,7 @@ const engine = (() => {
     /* Clicky switch: sharp high transient + bandpassed leaf click + low thock,
        then a soft low "seat" ~15ms later (the cap bottoming out on the plate) */
     pen() {
+      /* --- keys --- */ if (engine.keyStyle) return engine.sw('pen'); /* --- end keys --- */
       if (!ready()) return; const t = now(), p = pj(), v = jit(0.15);
       burst(t,          { type: 'highpass', f: 7800 * p, q: 0.7, gain: 0.27 * v, dur: 0.0035, attack: 0.0002 });
       burst(t,          { type: 'bandpass', f: 3700 * p, q: 3.4, gain: 0.55 * v, dur: 0.018, attack: 0.00025 });
@@ -753,12 +1142,14 @@ const engine = (() => {
     },
     /* Silent switch: muted, lowpassed thock */
     pencil() {
+      /* --- keys --- */ if (engine.keyStyle) return engine.sw('pencil'); /* --- end keys --- */
       if (!ready()) return; const t = now(), p = pj(), v = jit(0.15);
       burst(t,         { type: 'lowpass', f: 1150 * p, q: 0.8, gain: 0.32 * v, dur: 0.034, attack: 0.002 });
       tone(t + 0.002,  { f0: 175 * p, f1: 96 * p, dur: 0.056, gain: 0.28 * v, attack: 0.002, glide: 0.035 });
     },
     /* Modifier key: a slightly deeper, broader clack */
     mod() {
+      /* --- keys --- */ if (engine.keyStyle) return engine.sw('mod'); /* --- end keys --- */
       if (!ready()) return; const t = now(), p = pj(), v = jit(0.12);
       burst(t,         { type: 'highpass', f: 6000 * p, q: 0.7, gain: 0.12 * v, dur: 0.004 });
       burst(t,         { type: 'bandpass', f: 2500 * p, q: 2.2, gain: 0.40 * v, dur: 0.024 });
@@ -766,6 +1157,7 @@ const engine = (() => {
     },
     /* Upstroke: barely there */
     release() {
+      /* --- keys --- */ if (engine.keyStyle) return engine.sw('up'); /* --- end keys --- */
       if (!ready()) return; const t = now(), p = pj(), v = jit(0.2);
       burst(t, { type: 'highpass', f: 4600 * p, q: 0.9, gain: 0.045 * v, dur: 0.007 });
       tone(t,  { f0: 950 * p, f1: 800 * p, dur: 0.010, gain: 0.014 * v });
@@ -3776,15 +4168,21 @@ const { ALLOW } = __m_shared;
 //     {note: {cell, digit}}                {eliminate: [[cell, digit], …]}
 //     {loadDigit: d}                       {press: 'pencil'|'erase'|'undo'}
 //     {continue: true}
+//     {notes: {cell, digits: [..]}}        {fill: [cells]}        (step6)
 // validateScript() rejects unknown fields and simulates the whole script on
 // the board: every expected action must be legal at its step (placements must
 // match the unique solution AND be found by the solver with the techniques of
 // worlds 0..script.world; notes need Pencil on; erased notes must not be the
-// cell's answer; …).
+// cell's answer; …). The simulation keeps "logical" candidates too: the
+// computed candidates minus every justified elimination, so a placement that
+// only follows from an earlier pointing/pair elimination is accepted. From
+// world 3 on, erasing a real candidate must be a solver elimination.
 
 
 
-const EXPECT_TYPES = ['tap', 'place', 'note', 'eliminate', 'loadDigit', 'press', 'continue'];
+/* --- step6: notes (all candidates of a cell) and fill (several placements, any order) --- */
+const EXPECT_TYPES = ['tap', 'place', 'note', 'notes', 'eliminate', 'fill', 'loadDigit', 'press', 'continue'];
+/* --- end step6 --- */
 const PRESS_KEYS = ['pencil', 'erase', 'undo'];
 const TOP_KEYS = ['id', 'world', 'title', 'board', 'showCands', 'steps', 'outro'];
 const STEP_KEYS = ['say', 'focus', 'dim', 'highlight', 'expect', 'nudge', 'show'];
@@ -3828,6 +4226,8 @@ function expectCells(step) {
   if (e.tap) return e.tap.slice();
   if (e.place) return [e.place.cell];
   if (e.note) return [e.note.cell];
+  if (e.notes) return [e.notes.cell];      /* step6 */
+  if (e.fill) return e.fill.slice();       /* step6 */
   if (e.eliminate) return [...new Set(e.eliminate.map((x) => x[0]))];
   return [];
 }
@@ -3857,8 +4257,8 @@ function checkText(v, where, errors, warnings, required = true) {
     if (sentences > 2) warnings.push(`${where}: ${sentences} sentences (keep it to 2)`);
   }
 }
-function checkCells(v, where, errors) {
-  if (!Array.isArray(v) || !v.length || !v.every(isCell)) errors.push(`${where}: must be a non-empty array of cells 0-80`);
+function checkCells(v, where, errors, allowEmpty = false) {
+  if (!Array.isArray(v) || (!allowEmpty && !v.length) || !v.every(isCell)) errors.push(`${where}: must be a${allowEmpty ? 'n' : ' non-empty'} array of cells 0-80`);
 }
 function checkCellDigit(v, where, errors) {
   if (!checkKeys(v, ['cell', 'digit'], where, errors)) return;
@@ -3890,7 +4290,8 @@ function checkSchema(s, errors, warnings) {
       if (!Object.keys(st.focus).length) errors.push(`${w}.focus: empty`);
     }
     if (st.highlight != null && checkKeys(st.highlight, HL_KEYS, `${w}.highlight`, errors)) {
-      if (st.highlight.cells != null) checkCells(st.highlight.cells, `${w}.highlight.cells`, errors);
+      // step6: [] = no outline (a step with reduced help)
+      if (st.highlight.cells != null) checkCells(st.highlight.cells, `${w}.highlight.cells`, errors, true);
       if (st.highlight.digits != null && (!Array.isArray(st.highlight.digits) || !st.highlight.digits.length || !st.highlight.digits.every(isDigit)))
         errors.push(`${w}.highlight.digits: must be a non-empty array of digits 1-9`);
     }
@@ -3905,6 +4306,18 @@ function checkSchema(s, errors, warnings) {
       checkCells(e.tap, `${we}.tap`, errors);
       if (e.mode != null && e.mode !== 'any' && e.mode !== 'all') errors.push(`${we}.mode: must be "any" or "all"`);
     } else if (t === 'place' || t === 'note') checkCellDigit(e[t], `${we}.${t}`, errors);
+    /* --- step6 --- */
+    else if (t === 'notes') {
+      if (checkKeys(e.notes, ['cell', 'digits'], `${we}.notes`, errors)) {
+        if (!isCell(e.notes.cell)) errors.push(`${we}.notes.cell: must be a cell 0-80`);
+        const ds = e.notes.digits;
+        if (!Array.isArray(ds) || !ds.length || !ds.every(isDigit) || new Set(ds).size !== ds.length) errors.push(`${we}.notes.digits: must be a non-empty array of different digits 1-9`);
+      }
+    } else if (t === 'fill') {
+      checkCells(e.fill, `${we}.fill`, errors);
+      if (Array.isArray(e.fill) && new Set(e.fill).size !== e.fill.length) errors.push(`${we}.fill: a cell is listed twice`);
+    }
+    /* --- end step6 --- */
     else if (t === 'eliminate') {
       if (!Array.isArray(e.eliminate) || !e.eliminate.length) errors.push(`${we}.eliminate: must be a non-empty array of [cell, digit]`);
       else e.eliminate.forEach((x, j) => {
@@ -3933,7 +4346,7 @@ function scriptSolution(board) {
 /* ---------------------------------------------------------------------------
    Validation: schema + a full simulation of the script on its board
    --------------------------------------------------------------------------- */
-function validateScript(script) {
+function validateScript(script, opts = {}) {
   const errors = [], warnings = [];
   checkSchema(script, errors, warnings);
   if (errors.length) return { ok: false, errors, warnings };
@@ -3944,14 +4357,28 @@ function validateScript(script) {
   if (!sol) return { ok: false, errors: ['board: must have exactly one solution'], warnings };
   const notes = startNotes(script, values);
   const allow = ALLOW[script.world];
+  /* --- step6: logical candidates (computed, minus justified eliminations) --- */
+  const logic = computeCands(values);
+  const elimTechs = allow.filter((t) => ['pointing', 'claiming', 'naked-pair', 'hidden-pair'].includes(t));
+  /** The solver step (allowed techniques, logical cands) that places d in c, or null. */
+  const justify = (c, d) => {
+    for (const s of allSteps(values, logic, allow)) if (s.place && s.place.cell === c && s.place.digit === d) return s;
+    return null;
+  };
+  const placeSim = (c, d) => {
+    values[c] = d; notes[c] = 0; logic[c] = 0;
+    for (const j of peers[c]) { notes[j] &= ~bit(d); logic[j] &= ~bit(d); }
+  };
+  /* --- end step6 --- */
   const sim = { pencil: false, selected: -1, loaded: 0 };
   const history = [];
-  const snap = () => ({ v: values.slice(), n: notes.slice() });
+  const snap = () => ({ v: values.slice(), n: notes.slice(), l: logic.slice() });
   const count = (d) => values.reduce((n, x) => n + (x === d), 0);
 
   script.steps.forEach((st, k) => {
     const w = `steps[${k}]`, e = st.expect, t = expectType(st);
     const err = (m) => errors.push(`${w} (${t}): ${m}`);
+    if (opts.onStep) opts.onStep(k, st, { values: values.slice(), notes: notes.slice(), logic: logic.slice(), sol, pencil: sim.pencil, loaded: sim.loaded });
     for (const c of highlightCells(st)) if (!isCell(c)) err('bad highlight cell');
     if (t === 'tap') {
       sim.selected = e.tap.length === 1 ? e.tap[0] : -2;   // -2: some cell, not known
@@ -3962,16 +4389,11 @@ function validateScript(script) {
       if (values[cell]) err(`${name(cell)} is not empty`);
       else if (sol[cell] !== digit) err(`${name(cell)} is ${sol[cell]} in the solution, not ${digit}`);
       else if (peers[cell].some((j) => values[j] === digit)) err(`${digit} clashes with a peer of ${name(cell)}`);
-      else {
-        const cands = computeCands(values);
-        let found = null;
-        for (const s of allSteps(values, cands, allow)) if (s.place && s.place.cell === cell && s.place.digit === digit) { found = s; break; }
-        if (!found) err(`the solver cannot justify ${digit} in ${name(cell)} with the techniques of worlds 0-${script.world} (${allow.join(', ')}) on this board`);
-      }
+      else if (!justify(cell, digit)) err(`the solver cannot justify ${digit} in ${name(cell)} with the techniques of worlds 0-${script.world} (${allow.join(', ')}) on this board`);
       history.push(snap());
-      values[cell] = digit; notes[cell] = 0;
-      for (const j of peers[cell]) notes[j] &= ~bit(digit);
-      sim.selected = cell;
+      placeSim(cell, digit);
+      sim.selected = sim.loaded ? -1 : cell;
+      if (sim.loaded && sim.loaded !== digit) sim.loaded = 0;
     } else if (t === 'note') {
       const { cell, digit } = e.note;
       if (!sim.pencil) err('Pencil is off here (add a press: "pencil" step first)');
@@ -3981,13 +4403,51 @@ function validateScript(script) {
       history.push(snap());
       notes[cell] |= bit(digit);
       sim.selected = cell;
+    } else if (t === 'notes') {                     /* --- step6 --- */
+      const { cell, digits } = e.notes;
+      if (!sim.pencil) err('Pencil is off here (add a press: "pencil" step first)');
+      if (values[cell]) err(`${name(cell)} is not empty`);
+      else for (const d of digits) {
+        if (notes[cell] & bit(d)) err(`${name(cell)} already has the note ${d}`);
+        else if (peers[cell].some((j) => values[j] === d)) err(`${d} is already in a peer of ${name(cell)}, so it is not a candidate`);
+      }
+      history.push(snap());
+      for (const d of digits) notes[cell] |= bit(d);
+      sim.selected = cell;
+    } else if (t === 'fill') {                      /* --- step6 --- */
+      if (sim.pencil) err('Pencil is on here, so digits would become notes (add a press: "pencil" step first)');
+      history.push(snap());
+      const left = e.fill.filter((c) => {
+        if (values[c]) { err(`${name(c)} is not empty`); return false; }
+        return true;
+      });
+      // the cells must be fillable one after another, each placement justified at its moment
+      while (left.length) {
+        const k2 = left.findIndex((c) => justify(c, sol[c]));
+        if (k2 < 0) { err(`the solver cannot justify any of ${left.map(name).join(', ')} with the techniques of worlds 0-${script.world} at this point`); break; }
+        placeSim(left[k2], sol[left[k2]]);
+        left.splice(k2, 1);
+      }
+      sim.selected = -2;
     } else if (t === 'eliminate') {
       history.push(snap());
+      // step6: from world 3 on, erasing a real (logical) candidate must be one solver elimination
+      const real = e.eliminate.filter(([c, d]) => !values[c] && (logic[c] & bit(d)) && sol[c] !== d);
+      if (real.length && script.world >= 3) {
+        let found = null;
+        for (const s of allSteps(values, logic, elimTechs)) {
+          if (s.place) continue;
+          const keys = new Set(s.eliminate.map(([c, d]) => c * 10 + d));
+          if (real.every(([c, d]) => keys.has(c * 10 + d))) { found = s; break; }
+        }
+        if (!found) err(`no single ${elimTechs.join('/')} step justifies erasing ${real.map(([c, d]) => `${d} from ${name(c)}`).join(', ')}`);
+      }
       for (const [cell, digit] of e.eliminate) {
         if (values[cell]) err(`${name(cell)} is not empty`);
         else if (!(notes[cell] & bit(digit))) err(`${name(cell)} has no note ${digit} to erase`);
         else if (sol[cell] === digit) err(`${digit} is the answer of ${name(cell)}; erasing it teaches the wrong thing`);
         notes[cell] &= ~bit(digit);
+        if (script.world >= 3) logic[cell] &= ~bit(digit);
       }
     } else if (t === 'loadDigit') {
       if (count(e.loadDigit) >= 9) err(`all nine ${e.loadDigit}s are placed, the key is locked`);
@@ -4002,12 +4462,18 @@ function validateScript(script) {
           if (given) err(`${name(c)} is a given and cannot be erased`);
           else if (!values[c] && !notes[c]) err(`${name(c)} is already empty`);
           history.push(snap());
+          const was = values[c];
           values[c] = 0; notes[c] = 0;
+          if (was) {   // step6: the erased digit becomes a candidate again where nothing else blocks it
+            const fresh = computeCands(values);
+            logic[c] = fresh[c];
+            for (const j of peers[c]) if (!values[j] && (fresh[j] & bit(was))) logic[j] |= bit(was);
+          }
         }
       } else if (e.press === 'undo') {
         const h = history.pop();
         if (!h) err('nothing to undo');
-        else { values.set(h.v); notes.set(h.n); }
+        else { values.set(h.v); notes.set(h.n); logic.set(h.l); }
       }
     }
   });
@@ -4021,7 +4487,7 @@ return Object.freeze({ EXPECT_TYPES, PRESS_KEYS, SAY_MAX, expectType, focusCells
 /* ---- src/level0-data.js ---- */
 const __m_level0_data = (() => {
 
-const SCRIPTS = {"w0":{"id":"w0-l0","world":0,"title":"Full house","board":"864351729927486513531279684702534168308107402410802075143728956685913247279645831","showCands":false,"steps":[{"say":"This board is almost full. You'll finish it yourself, one move at a time.","dim":"none","expect":{"continue":true}},{"say":"Every row holds 1 to 9, once each. Tap this row's one gap.","focus":{"row":3},"highlight":{"cells":[28]},"expect":{"tap":[28]},"nudge":"The gap is in the bright row."},{"say":"Which number is this row missing? Type it.","focus":{"row":3},"highlight":{"cells":[28]},"expect":{"place":{"cell":28,"digit":9}},"nudge":"Read along the row. Which of 1 to 9 isn't there yet?"},{"say":"Columns follow the same rule. Fill this column's gap.","focus":{"col":6},"highlight":{"cells":[51]},"expect":{"place":{"cell":51,"digit":3}},"nudge":"Tap the gap, then type the number the column is missing."},{"say":"So do the 3×3 boxes. Fill this box's gap.","focus":{"box":5},"highlight":{"cells":[43]},"expect":{"place":{"cell":43,"digit":9}},"nudge":"Which of 1 to 9 is missing from the box?"},{"say":"The last gap in a row, column or box is a full house. Only one number fits.","dim":"none","expect":{"continue":true}},{"say":"Pencil marks are notes. Tap Pencil to switch to notes.","expect":{"press":"pencil"},"nudge":"Pencil is the key at the bottom right."},{"say":"Notes are free thinking, never mistakes. Write a small 6 here.","focus":{"cells":[49]},"highlight":{"cells":[49],"digits":[6]},"expect":{"note":{"cell":49,"digit":6}},"nudge":"Tap the glowing cell, then press 6."},{"say":"Changed your mind? Press 6 again, or Erase, to rub it out.","focus":{"cells":[49]},"highlight":{"cells":[49],"digits":[6]},"expect":{"eliminate":[[49,6]]},"nudge":"Select the cell, then press 6 or Erase."},{"say":"Tap Pencil again to go back to writing answers.","expect":{"press":"pencil"},"nudge":"Tap Pencil to turn notes off."},{"say":"Now a chain. This column has one gap left.","focus":{"col":1},"highlight":{"cells":[37]},"expect":{"place":{"cell":37,"digit":5}}},{"say":"That left one gap in this row.","focus":{"row":4},"highlight":{"cells":[40]},"expect":{"place":{"cell":40,"digit":6}}},{"say":"And one in this box.","focus":{"box":4},"highlight":{"cells":[49]},"expect":{"place":{"cell":49,"digit":9}}},{"say":"Last one. Finish the board!","focus":{"row":5},"highlight":{"cells":[47]},"expect":{"place":{"cell":47,"digit":6}}}],"outro":"Solved! When a row, column or box has one gap left, the missing number goes there."}};
+const SCRIPTS = {"w0":{"id":"w0-l0","world":0,"title":"Full house","board":"864351729927486513531279684702534168308107402410802075143728956685913247279645831","showCands":false,"steps":[{"say":"This board is almost full. You'll finish it yourself, one move at a time.","dim":"none","expect":{"continue":true}},{"say":"Every row holds 1 to 9, once each. Tap this row's one gap.","focus":{"row":3},"highlight":{"cells":[28]},"expect":{"tap":[28]},"nudge":"The gap is in the bright row."},{"say":"Which number is this row missing? Type it.","focus":{"row":3},"highlight":{"cells":[28]},"expect":{"place":{"cell":28,"digit":9}},"nudge":"Read along the row. Which of 1 to 9 isn't there yet?"},{"say":"Columns follow the same rule. Fill this column's gap.","focus":{"col":6},"highlight":{"cells":[51]},"expect":{"place":{"cell":51,"digit":3}},"nudge":"Tap the gap, then type the number the column is missing."},{"say":"So do the 3×3 boxes. Fill this box's gap.","focus":{"box":5},"highlight":{"cells":[43]},"expect":{"place":{"cell":43,"digit":9}},"nudge":"Which of 1 to 9 is missing from the box?"},{"say":"The last gap in a row, column or box is a full house. Only one number fits.","dim":"none","expect":{"continue":true}},{"say":"Pencil marks are notes. Tap Pencil to switch to notes.","expect":{"press":"pencil"},"nudge":"Pencil is the key at the bottom right."},{"say":"Notes are free thinking, never mistakes. Write a small 6 here.","focus":{"cells":[49]},"highlight":{"cells":[49],"digits":[6]},"expect":{"note":{"cell":49,"digit":6}},"nudge":"Tap the glowing cell, then press 6."},{"say":"Changed your mind? Press 6 again, or Erase, to rub it out.","focus":{"cells":[49]},"highlight":{"cells":[49],"digits":[6]},"expect":{"eliminate":[[49,6]]},"nudge":"Select the cell, then press 6 or Erase."},{"say":"Tap Pencil again to go back to writing answers.","expect":{"press":"pencil"},"nudge":"Tap Pencil to turn notes off."},{"say":"Now a chain. This column has one gap left.","focus":{"col":1},"highlight":{"cells":[37]},"expect":{"place":{"cell":37,"digit":5}}},{"say":"That left one gap in this row.","focus":{"row":4},"highlight":{"cells":[40]},"expect":{"place":{"cell":40,"digit":6}}},{"say":"And one in this box.","focus":{"box":4},"highlight":{"cells":[49]},"expect":{"place":{"cell":49,"digit":9}}},{"say":"Last one. Finish the board!","focus":{"row":5},"highlight":{"cells":[47]},"expect":{"place":{"cell":47,"digit":6}}}],"outro":"Solved! When a row, column or box has one gap left, the missing number goes there."},"w1":{"id":"w1-l0","world":1,"title":"Cross-hatch","board":"325479186791006354648530792457198023900300478830704915563987241189243567274615839","showCands":false,"steps":[{"say":"Now rows and boxes have a few gaps each. Here's a new way in: follow one number.","dim":"none","expect":{"continue":true}},{"say":"This box still needs a 5. Tap the 5 in this row.","focus":{"box":4,"row":5,"cells":[53]},"highlight":{"cells":[53]},"expect":{"tap":[53]},"nudge":"Look along the bright row for a 5."},{"say":"That 5 blocks its whole row, even inside the box. Now tap the 5 in this column.","focus":{"box":4,"col":5,"cells":[77]},"highlight":{"cells":[77]},"expect":{"tap":[77]},"nudge":"Look along the bright column for a 5."},{"say":"Here's a shortcut: press 5 with no cell selected. Every 5 lights up.","focus":{"box":4,"row":5,"col":5},"highlight":{"digits":[5]},"expect":{"loadDigit":5},"nudge":"Press the 5 key."},{"say":"Each 5 blocks its row and column. Tap the one cell in the box no 5 can see.","focus":{"box":4,"row":5,"col":5},"highlight":{"cells":[40,41,49]},"expect":{"place":{"cell":40,"digit":5}},"nudge":"A 5 already sees that cell. Find the one no 5 can see."},{"say":"When a number has only one open cell in a box, it goes there. That's a hidden single.","dim":"none","expect":{"continue":true}},{"say":"Your turn. Load 2.","highlight":{"digits":[2]},"expect":{"loadDigit":2},"nudge":"Press the 2 key, with no cell selected."},{"say":"Where can 2 go in this box?","focus":{"box":1},"dim":"none","highlight":{"cells":[]},"expect":{"place":{"cell":13,"digit":2}},"nudge":"Check each gap in the box: does a 2 already see it?"},{"say":"Rows work the same way. Load 6.","highlight":{"digits":[6]},"expect":{"loadDigit":6},"nudge":"Press the 6 key, with no cell selected."},{"say":"This row needs a 6. Which of its gaps can take it?","focus":{"row":4,"cells":[55,14]},"highlight":{"cells":[37,38,41]},"expect":{"place":{"cell":38,"digit":6}},"nudge":"A 6 above or below blocks that gap. Try another."},{"say":"Keep 6 loaded. Where does 6 go in this box?","focus":{"box":4},"dim":"none","highlight":{"cells":[]},"expect":{"place":{"cell":49,"digit":6}},"nudge":"The box has two gaps. Which one can a 6 still reach?"},{"say":"One more 6, for this row.","focus":{"row":3},"highlight":{"cells":[33]},"expect":{"place":{"cell":33,"digit":6}}},{"say":"Five gaps left. Finish the board!","expect":{"fill":[12,23,37,41,47]},"nudge":"Pick a number and look for its one open spot."}],"outro":"Solved! When a number has only one open spot in a box, row or column, it goes there."},"w2":{"id":"w2-l0","world":2,"title":"Last candidate","board":"496718235700246981812593674970382046600974023240651097327169458189435762564827319","showCands":false,"steps":[{"say":"Sometimes no number has just one spot. Then ask a cell instead: what can go here?","dim":"none","expect":{"continue":true}},{"say":"Notes help with that. Turn Pencil on.","expect":{"press":"pencil"},"nudge":"Pencil is the key at the bottom right."},{"say":"This cell's row, column and box hold seven different numbers. Tap the cell.","focus":{"row":3,"col":2,"box":3},"highlight":{"cells":[29]},"expect":{"tap":[29]},"nudge":"Tap the outlined cell."},{"say":"Note the two numbers none of them has. Those are its candidates.","focus":{"row":3,"col":2,"box":3},"highlight":{"cells":[29]},"expect":{"notes":{"cell":29,"digits":[1,5]}},"nudge":"Check 1 to 9. Which two are missing from the bright row, column and box?"},{"say":"Now this cell. Which numbers can it still be?","focus":{"row":4,"col":1,"box":3},"highlight":{"cells":[37]},"expect":{"notes":{"cell":37,"digits":[5]}},"nudge":"Check 1 to 9 against the bright row, column and box."},{"say":"Only one note, so it's the answer. Turn Pencil off.","expect":{"press":"pencil"},"nudge":"Tap Pencil to go back to writing answers."},{"say":"Write the 5 in.","focus":{"cells":[37]},"expect":{"place":{"cell":37,"digit":5}},"nudge":"Tap the outlined cell, then press 5."},{"say":"That 5 cleared a note here too. Place the number that's left.","focus":{"cells":[37,29]},"highlight":{"cells":[29]},"expect":{"place":{"cell":29,"digit":1}},"nudge":"Read the note that's left in the outlined cell."},{"say":"When a cell has just one candidate left, that's its number. That's a naked single.","dim":"none","expect":{"continue":true}},{"say":"This cell has one candidate too. Find it and place it.","focus":{"row":4,"col":2,"box":3},"dim":"none","highlight":{"cells":[38]},"expect":{"place":{"cell":38,"digit":8}},"nudge":"Which number is missing from its row, column and box together?"},{"say":"Six gaps left. Finish the board!","expect":{"fill":[10,11,33,42,47,51]},"nudge":"For each gap, ask: what can still go here?"}],"outro":"Solved! When a cell's row, column and box leave just one number, that number goes there."},"w3":{"id":"w3-l0","world":3,"title":"Pointing & claiming","board":"801250069950680201002149587019472850025896100080315920198564002503721098200938015","showCands":true,"steps":[{"say":"Every note is filled in for you. Now you'll use the notes to rule numbers out.","dim":"none","expect":{"continue":true}},{"say":"In this box, the 3 notes sit in one column. Tap both cells.","focus":{"box":3,"col":0},"highlight":{"cells":[27,36],"digits":[3]},"expect":{"tap":[27,36],"mode":"all"},"nudge":"Find the two cells in the box with a small 3."},{"say":"Turn Pencil on to edit notes.","expect":{"press":"pencil"},"nudge":"Pencil is the key at the bottom right."},{"say":"This column's 3 has to be one of those two. So rub out the 3 up here.","focus":{"box":3,"col":0},"highlight":{"cells":[18],"digits":[3]},"expect":{"eliminate":[[18,3]]},"nudge":"Select the outlined cell, then press 3."},{"say":"When a number's notes in a box sit on one line, clear it from the rest of that line. That's pointing.","dim":"none","expect":{"continue":true}},{"say":"Now the reverse: in this row, the 7 notes sit inside one box. Tap both cells.","focus":{"row":6,"box":8},"highlight":{"cells":[60,61],"digits":[7]},"expect":{"tap":[60,61],"mode":"all"},"nudge":"Find the two cells in the row with a small 7."},{"say":"So the box's 7 must be in this row. Rub out the box's other 7.","focus":{"row":6,"box":8},"highlight":{"cells":[78],"digits":[7]},"expect":{"eliminate":[[78,7]]},"nudge":"Select the outlined cell, then press 7."},{"say":"When a row or column keeps a number inside one box, clear it from the rest of that box. That's claiming.","dim":"none","expect":{"continue":true}},{"say":"Your turn: the 4 notes in this box share a column. Clear that column's other 4.","focus":{"box":8,"col":6},"highlight":{"cells":[],"digits":[4]},"expect":{"eliminate":[[6,4]]},"nudge":"Follow the bright column up, out of the box. Which cell still has a 4?"},{"say":"Turn Pencil off. Your clean-up left some cells with one note.","expect":{"press":"pencil"},"nudge":"Tap Pencil to go back to writing answers."},{"say":"This cell lost its 3. Place the number that's left.","focus":{"col":0},"highlight":{"cells":[18]},"expect":{"place":{"cell":18,"digit":6}},"nudge":"Read the one note left in the outlined cell."},{"say":"Same here: it lost its 4.","focus":{"col":6},"highlight":{"cells":[6]},"expect":{"place":{"cell":6,"digit":3}},"nudge":"Read the one note left in the outlined cell."},{"say":"Finish the board! Start with cells that have one note.","expect":{"fill":[1,5,11,14,16,19,27,35,36,43,44,45,47,53,60,61,64,69,73,74,78]},"nudge":"Look for a cell with a single note, or a number with one spot."}],"outro":"Solved! When a number's notes line up inside a box or a line, clear it from the rest."},"w4":{"id":"w4-l0","world":4,"title":"Pairs","board":"830900460540080031006400080968124573315769248724358619000840150480590026050007894","showCands":true,"steps":[{"say":"Notes are filled in again. This time, look for two cells that work as a team.","dim":"none","expect":{"continue":true}},{"say":"Two cells in this row have only 2 and 6. Tap both.","focus":{"row":1,"box":1},"highlight":{"cells":[12,14]},"expect":{"tap":[12,14],"mode":"all"},"nudge":"Find the two cells whose notes are just 2 and 6."},{"say":"One is 2, the other is 6. Turn Pencil on.","expect":{"press":"pencil"},"nudge":"Pencil is the key at the bottom right."},{"say":"So no other cell in their row or box can be 2 or 6. Rub out those 2s.","focus":{"row":1,"box":1},"highlight":{"cells":[11,5,23],"digits":[2]},"expect":{"eliminate":[[11,2],[5,2],[23,2]]},"nudge":"Select an outlined cell, then press 2."},{"say":"When two cells in a row, column or box share the same two notes, those numbers are taken. That's a naked pair.","dim":"none","expect":{"continue":true}},{"say":"Now this column: 2 and 6 fit only in these two cells. Tap both.","focus":{"col":5},"highlight":{"cells":[14,59],"digits":[2,6]},"expect":{"tap":[14,59],"mode":"all"},"nudge":"Find the two cells in the column that still have a 2 or a 6."},{"say":"So those two cells are 2 and 6. Rub out the other note.","focus":{"col":5},"highlight":{"cells":[59],"digits":[3]},"expect":{"eliminate":[[59,3]]},"nudge":"Select the outlined cell, then press 3."},{"say":"When two numbers fit only in the same two cells, those cells keep just those two. That's a hidden pair.","dim":"none","expect":{"continue":true}},{"say":"Your turn: two cells in this box share the same two notes. Clear those numbers from the rest.","focus":{"box":0},"highlight":{"cells":[]},"expect":{"eliminate":[[2,7]]},"nudge":"Find two cells whose notes are the same pair. Which other cell has one of them?"},{"say":"Turn Pencil off. Time to place.","expect":{"press":"pencil"},"nudge":"Tap Pencil to go back to writing answers."},{"say":"This row's 3 has only one spot left now. Place it.","focus":{"row":6},"highlight":{"cells":[56]},"expect":{"place":{"cell":56,"digit":3}},"nudge":"Which cell in the row still has a 3 note?"},{"say":"Finish the board! Start with cells that have one note.","expect":{"fill":[2,4,5,8,11,12,14,15,18,19,22,23,24,26,54,55,59,62,65,68,69,72,74,75,76]},"nudge":"Look for a cell with a single note, or a number with one spot."}],"outro":"Solved! When two cells own the same two numbers, clear those numbers from everywhere else they reach."}};
 return Object.freeze({ SCRIPTS });
 })();
 
@@ -4037,7 +4503,8 @@ const { resetGame, placeProvisional, finalizePending, toggleNote, clearCell, tog
 const { inputGuard, bindPress, cancelAllPresses } = __m_input;
 const { flushSave } = __m_token;
 const { gameHooks, updatePid } = __m_game;
-const { parseGrid } = __m_solver;
+const { parseGrid, computeCands, allSteps, peers: PEER_LIST } = __m_solver;
+const { ALLOW } = __m_shared;
 const { validateScript, expectType, focusCells, focusUnitCells, highlightCells, dimMode, hasShow, startNotes, scriptSolution } = __m_level0_script;
 const { SCRIPTS } = __m_level0_data;
 // level0.js — the Level 0 engine: plays a scripted, guided board (format and
@@ -4062,6 +4529,7 @@ const { SCRIPTS } = __m_level0_data;
 //   - S.mode is 'l0': no mistakes, no dead end; finishing the board runs the
 //     normal solve cascade, and actions.js toastHooks.before shows the outro in
 //     the coach instead of the toast.
+
 
 
 
@@ -4145,8 +4613,9 @@ function relevantKeys(st) {
   const digits = new Set(), mods = new Set(), ring = new Set(hd || []), ringMods = new Set();
   const all = () => { for (let d = 1; d <= 9; d++) digits.add(d); };
   if (t === 'place') all();
-  if (t === 'note' || t === 'eliminate' || t === 'loadDigit') { if (hd) hd.forEach(d => digits.add(d)); else all(); }
-  if (t === 'note') mods.add('pencil');
+  if (t === 'note' || t === 'notes' || t === 'eliminate' || t === 'loadDigit') { if (hd) hd.forEach(d => digits.add(d)); else all(); }
+  if (t === 'fill') all();                                       /* step6 */
+  if (t === 'note' || t === 'notes') mods.add('pencil');
   if (t === 'eliminate') { mods.add('pencil'); mods.add('erase'); }
   if (t === 'press') { mods.add(e.press); ringMods.add(e.press); }
   return { digits, mods, ring, ringMods };
@@ -4195,18 +4664,33 @@ function enterStep(k) {
   // keep a selection only when it is where this step acts; keep a loaded digit only after loadDigit
   let changed = false;
   if (S.selected >= 0 && !highlightCells(st).includes(S.selected)) { S.selected = -1; changed = true; }
-  if (S.loaded && prevType !== 'loadDigit') { S.loaded = 0; S.loadedNote = false; changed = true; }
+  /* --- step6: a loaded digit also carries into a step that uses only that digit (number-first chains) --- */
+  if (S.loaded && prevType !== 'loadDigit' && !usesOnly(st, S.loaded)) { S.loaded = 0; S.loadedNote = false; changed = true; }
+  /* --- end step6 --- */
   if (changed) refresh();
   clearTimeout(L.nudgeTimer);
   setText(st.say);
   renderDots(); showKeys(); applyVisuals(st);
 }
+/* --- step6 --- */
+function usesOnly(st, d) {
+  const e = st.expect;
+  if (e.place) return e.place.digit === d;
+  if (e.note) return e.note.digit === d;
+  if (e.eliminate) return e.eliminate.every(x => x[1] === d);
+  return false;
+}
+/* --- end step6 --- */
 function stepComplete(st) {
   const e = st.expect;
   switch (expectType(st)) {
     case 'tap': return e.mode === 'all' ? e.tap.every(c => L.tapped.has(c)) : L.tapped.has(S.selected);
     case 'place': return S.values[e.place.cell] === e.place.digit;
     case 'note': return !S.values[e.note.cell] && !!(S.notes[e.note.cell] & bit(e.note.digit));
+    /* --- step6 --- */
+    case 'notes': return !S.values[e.notes.cell] && e.notes.digits.every(d => S.notes[e.notes.cell] & bit(d));
+    case 'fill': return e.fill.every(c => S.values[c] === S.sol[c]);
+    /* --- end step6 --- */
     case 'eliminate': return e.eliminate.every(([c, d]) => !(S.notes[c] & bit(d)));
     case 'loadDigit': return S.loaded === e.loadDigit;
     default: return L.pressed;            // press, continue
@@ -4265,9 +4749,36 @@ function judge(st, a) {
       if (a.type === 'place' && a.cell === cell && a.digit === digit) return { r: 'ok' };
       if (a.type === 'convert') return { r: 'wrong', count: false, silent: true };
       if (a.type === 'note') return { r: 'wrong', text: 'Pencil is on, so that would be a note. Tap Pencil to write answers.' };
-      if (a.type === 'place' && a.cell !== cell) return { r: 'wrong', text: 'Use the outlined cell.' };
+      /* --- step6: several outlined cells (or none): say why that cell is out --- */
+      if (a.type === 'place' && a.cell !== cell) {
+        const hl = highlightCells(st);
+        if (hl.length === 1 && hl[0] === cell) return { r: 'wrong', text: 'Use the outlined cell.' };
+        return { r: 'wrong', text: seenText(a.cell, a.digit) || st.nudge || 'Not that cell. Look again.' };
+      }
+      /* --- end step6 --- */
       return { r: 'wrong', text: st.nudge || 'Not that one. Which number is missing?' };
     }
+    /* --- step6 --- */
+    case 'notes': {
+      const { cell, digits } = e.notes;
+      if (NEUTRAL_MOVES.includes(a.type) || isPencil) return { r: 'neutral' };
+      if (a.type === 'note' && a.cell === cell && digits.includes(a.digit)) return { r: a.on ? 'ok' : 'neutral' };
+      if (a.type === 'convert' && a.cell === cell && digits.includes(a.digit)) return { r: 'ok' };
+      if (a.type === 'place' && !S.pencil) return { r: 'wrong', text: 'Turn Pencil on first, then write the notes.' };
+      if ((a.type === 'note' || a.type === 'place') && a.cell !== cell) return { r: 'wrong', text: 'Use the outlined cell.' };
+      if (a.type === 'note' || a.type === 'convert') return { r: 'wrong', text: seenText(cell, a.digit) || st.nudge || 'That one can’t go here.' };
+      return { r: 'wrong', text: st.nudge || 'Write the numbers this cell can still be.' };
+    }
+    case 'fill': {
+      if (NEUTRAL_MOVES.includes(a.type) || isPencil) return { r: 'neutral' };
+      if (a.type === 'place' && e.fill.includes(a.cell) && a.digit === S.sol[a.cell]) return { r: 'ok' };
+      if (a.type === 'convert') return { r: 'wrong', count: false, silent: true };
+      if (a.type === 'note') return { r: 'neutral' };            // the player's own notes are fine here
+      if (a.type === 'place' && !e.fill.includes(a.cell)) return { r: 'wrong', text: 'Use one of the outlined cells.' };
+      if (a.type === 'place') return { r: 'wrong', text: seenText(a.cell, a.digit) || st.nudge || 'Not that one. Look at its notes.' };
+      return { r: 'wrong', text: st.nudge || 'Fill the outlined cells.' };
+    }
+    /* --- end step6 --- */
     case 'note': {
       const { cell, digit } = e.note;
       if (NEUTRAL_MOVES.includes(a.type) || isPencil) return { r: 'neutral' };
@@ -4281,6 +4792,7 @@ function judge(st, a) {
       const left = e.eliminate.filter(([c, d]) => S.notes[c] & bit(d));
       if (NEUTRAL_MOVES.includes(a.type) || isPencil) return { r: 'neutral' };
       if (a.type === 'note' && !a.on && left.some(([c, d]) => c === a.cell && d === a.digit)) return { r: 'ok' };
+      /* --- step6 --- */ if (a.type === 'place' && !S.pencil && left.some(([c, d]) => c === a.cell && d === a.digit)) return { r: 'wrong', text: `Turn Pencil on first, then press ${a.digit} to rub it out.` }; /* --- end step6 --- */
       if (a.type === 'press' && a.key === 'erase') {
         const c = a.cell, mine = left.filter(x => x[0] === c);
         if (c >= 0 && !S.values[c] && mine.length && mine.reduce((m, x) => m | bit(x[1]), 0) === S.notes[c]) return { r: 'ok' };
@@ -4301,6 +4813,18 @@ function judge(st, a) {
   return { r: 'neutral' };
 }
 
+/* --- step6: "This row already has a 6." for a digit a peer already holds --- */
+function seenText(cell, d) {
+  const r = (cell / 9) | 0, c = cell % 9, b = ((r / 3) | 0) * 3 + ((c / 3) | 0);
+  for (const j of PEER_LIST[cell]) {
+    if (S.values[j] !== d) continue;
+    const jr = (j / 9) | 0, jc = j % 9;
+    const where = jr === r ? 'row' : jc === c ? 'column' : 'box';
+    return `This ${where} already has a ${d}.`;
+  }
+  return '';
+}
+/* --- end step6 --- */
 function guard(a) {
   if (!L.active) return true;
   if (L.done) return false;
@@ -4393,6 +4917,24 @@ function showMe() {
       }
       add(700, () => {});
     }
+  /* --- step6 --- */
+  } else if (t === 'notes') {
+    const { cell, digits } = e.notes, todo = digits.filter(d => !(S.notes[cell] & bit(d)));
+    pencilTo(true);
+    add(0, () => demoSelect(cell));
+    todo.forEach((d, k) => add(k ? 450 : 800, () => keyTap(digitKeys[d].el, () => { if (toggleNote(cell, d)) sfx.pencil(); })));
+    add(1100, () => {});
+  } else if (t === 'fill') {
+    // play the next cell that follows from the board (endShow puts it back)
+    const c = nextFillCell(e.fill);
+    if (c >= 0) {
+      pencilTo(false);
+      add(0, () => demoSelect(c));
+      add(800, () => keyTap(digitKeys[S.sol[c]].el, () => { sfx.pen(); placeProvisional(c, S.sol[c], 'l0demo'); }));
+      add(140, () => finalizePending());
+      add(1100, () => { S.selected = c; refresh(); keyTap(keys.erase, () => { sfx.mod(); clearCell(c); }); });
+    }
+  /* --- end step6 --- */
   } else if (t === 'loadDigit') {
     const d = e.loadDigit;
     add(0, () => keyTap(digitKeys[d].el, () => { S.loaded = d; S.loadedNote = false; S.selected = -1; S.pencil ? sfx.pencil() : sfx.pen(); refresh(); FX.loadPulse(d); }));
@@ -4407,6 +4949,16 @@ function showMe() {
   add(900, () => endShow(st, snap));
   for (const [ms, fn] of seq) later(() => { if (L.active && L.demo) fn(); }, pace(ms));
 }
+/* --- step6: the first listed empty cell the solver can fill right now (else the first empty one) --- */
+function nextFillCell(list) {
+  const left = list.filter(c => !S.values[c]);
+  if (!left.length) return -1;
+  const cands = computeCands(S.values);
+  if (L.script.showCands) for (let i = 0; i < 81; i++) if (!S.values[i] && S.notes[i]) cands[i] &= S.notes[i];
+  for (const s of allSteps(S.values, cands, ALLOW[S.world])) if (s.place && left.includes(s.place.cell) && s.place.digit === S.sol[s.place.cell]) return s.place.cell;
+  return left[0];
+}
+/* --- end step6 --- */
 function endShow(st, snap) {
   // put the board back exactly as it was before the demo (notes that return are drawn back in)
   for (let i = 0; i < 81; i++) {
@@ -4423,6 +4975,9 @@ function endShow(st, snap) {
   // the demo may have switched Pencil; leave it where this step needs it (note/eliminate: on)
   const t = expectType(st);
   if (t === 'press' && st.expect.press === 'pencil') { if (S.pencil !== snap.pencil) togglePencil(); }
+  /* --- step6: a fill demo leaves Pencil off, as the step needs --- */
+  if (t === 'fill' && S.pencil) togglePencil();
+  /* --- end step6 --- */
   refresh();
   L.demo = false; L.wrong = 0;
   setText(st.say, '');
@@ -4532,7 +5087,11 @@ const { startLevel0, level0Scripts } = __m_level0;
 // later (step 7).
 //
 // Stored in localStorage 'sudoku.camp.v1' (best effort):
-//   { done: { <level id>: true }, clean: { <level id>: true }, skip: { <world>: true } }
+//   { done: { <level id>: true }, clean: { <level id>: true }, skip: { <world>: true },
+//     unlock: { fillNotes: true } }
+// unlock.fillNotes is set when World 2's Level 0 is finished (the player has
+// written a cell's candidates by hand once). TODO: a "fill all candidates"
+// control reads it (not built yet).
 // skip[w] is set when Spot it 1 of world w is cleared with no mistakes: from
 // then on Level 0 of that world shows a Skip keycap.
 //
@@ -4554,9 +5113,9 @@ const toastTitle = $('toastTitle'), againLbl = document.querySelector('#againKey
 function loadStore() {
   try {
     const o = JSON.parse(localStorage.getItem(KEY) || 'null');
-    if (o && typeof o === 'object') return { done: o.done || {}, clean: o.clean || {}, skip: o.skip || {} };
+    if (o && typeof o === 'object') return { done: o.done || {}, clean: o.clean || {}, skip: o.skip || {}, unlock: o.unlock || {} };
   } catch (e) {}
-  return { done: {}, clean: {}, skip: {} };
+  return { done: {}, clean: {}, skip: {}, unlock: {} };
 }
 const store = loadStore();
 function saveStore() { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) {} }
@@ -4588,7 +5147,8 @@ function play(k) {
   const id = cur.ids[k];
   starting = true;
   try {
-    if (k === 0) startLevel0(level0Scripts['w' + cur.world], { canSkip: !!store.skip[cur.world], onNext: next, onSkip: next, onDone: () => markDone(id, true) });
+    const w = cur.world;
+    if (k === 0) startLevel0(level0Scripts['w' + w], { canSkip: !!store.skip[w], onNext: next, onSkip: next, onDone: () => { markDone(id, true); level0Unlocks(w); } });
     else startPuzzle(id, false);
   } finally { starting = false; }
   updatePid();
@@ -4603,11 +5163,18 @@ function markDone(id, clean) {
   if (clean) store.clean[id] = true;
   saveStore();
 }
+/* --- step6: what finishing a world's Level 0 unlocks --- */
+function level0Unlocks(w) {
+  if (w === 2 && !store.unlock.fillNotes) { store.unlock.fillNotes = true; saveStore(); }
+}
+/** The next world that has a Level 0 and levels, or -1. */
+const nextWorld = w => (hasLevel0(w + 1) && worldLevels(w + 1).length ? w + 1 : -1);
+/* --- end step6 --- */
 function showWorldToast() {
   worldToast = true;
   toastTitle.textContent = `World ${cur.world} complete`;
   toastMsg.textContent = `All ${LEVELS_PER_WORLD} levels done.`;
-  againLbl.textContent = 'Done';
+  againLbl.textContent = nextWorld(cur.world) >= 0 ? 'Next world' : 'Done';   /* step6 */
   toastEl.classList.remove('show');
   void toastEl.offsetWidth;                       // replay the toast's entrance
   toastEl.classList.add('show');
@@ -4616,7 +5183,7 @@ function showWorldToast() {
 /** Open a world's Level 0 on its own (outside the runner). */
 function startLevel0Alone(w = 0) {
   cur = null;
-  return startLevel0(level0Scripts['w' + w], { canSkip: !!store.skip[w] });
+  return startLevel0(level0Scripts['w' + w], { canSkip: !!store.skip[w], onDone: () => level0Unlocks(w) });
 }
 
 function initCampaign() {
@@ -4637,7 +5204,14 @@ function initCampaign() {
   };
   gameHooks.next = () => {
     if (!cur) return false;
-    if (worldToast) { hideToast(); worldToast = false; cur = null; updatePid(); return true; }
+    if (worldToast) {
+      /* --- step6: "Next world" starts the following world's runner --- */
+      const nw = nextWorld(cur.world);
+      hideToast(); worldToast = false; cur = null;
+      if (nw >= 0) startCampaign(nw, 0); else updatePid();
+      /* --- end step6 --- */
+      return true;
+    }
     if (!S.solved) return false;
     next();
     return true;
@@ -5597,6 +6171,654 @@ function hintState() {
 return Object.freeze({ hintOpts, currentUnlocked, hintTap, enterCheck, exitCheck, initHints, hintState });
 })();
 
+/* ---- src/colorways.js ---- */
+const __m_colorways = (() => {
+
+// colorways.js — keycap colorways (colour only; the keycap STYLE is shape).
+//
+// A colorway = a LAYOUT × a PRESET:
+//   layout 'plain'   — every digit key cap A, mods cap MOD, the Hint key ACCENT
+//   layout 'checker' — digits alternate A (1 3 5 7 9) / B (2 4 6 8), mods MOD, Hint ACCENT
+// Each preset has a light and a dark palette (picked by prefers-color-scheme).
+// cssFor() turns the table into CSS classes `.cw-<id>` that set custom
+// properties; the keycap CSS (keys.css) only ever reads those properties:
+//   --cap-a --cap-b --cap-mod --cap-accent          cap colours
+//   --legend-a --legend-b --legend-mod --legend-accent   legend colours
+//   --latch-a --latch-b --latch-mod                 legend colour of a latched key
+//   --led                                           latch LED
+//   --plate --plate-ink --plate-line --well          plate, Level 0 slot ink/outline, switch well
+//   --deboss-a --deboss-b                           used-up digit (blank cap) deboss shadow
+//   --veil-* --glf-*                                tone: tames dish highlights / gloss on dark caps
+// Legends are forced to a contrast ratio >= 4.5 against their cap (ensure()),
+// so a new preset can be rough and still stay readable.
+
+const PRESETS = [
+  { id: 'retro', name: 'Retro', note: 'beige · grey',
+    light: { a: '#ebe2cd', b: '#d5c7a6', mod: '#a9a59b', accent: '#b8481f',
+             la: '#2b2721', lb: '#2b2721', lmod: '#1f1d1a', lacc: '#fff6ec', led: '#2fbf4f', plate: '#d6ccb8' },
+    dark:  { a: '#3e3b35', b: '#504a3f', mod: '#272521', accent: '#b8481f',
+             la: '#efe6d2', lb: '#f3ead6', lmod: '#d9d0bc', lacc: '#fff3e8', led: '#5ff07a', plate: '#22201c' } },
+  { id: 'ink', name: 'Ink', note: 'black · red',
+    light: { a: '#2a2b2f', b: '#3f4147', mod: '#17181b', accent: '#c7302a',
+             la: '#f3f3f1', lb: '#f3f3f1', lmod: '#e4e4e1', lacc: '#ffffff', led: '#ff4a3d', plate: '#c8c8cb' },
+    dark:  { a: '#26272b', b: '#36383d', mod: '#141518', accent: '#c7302a',
+             la: '#efefec', lb: '#efefec', lmod: '#d6d6d2', lacc: '#ffffff', led: '#ff5446', plate: '#101113' } },
+  { id: 'mint', name: 'Mint', note: 'cream · teal',
+    light: { a: '#f1ecdf', b: '#cfe6dd', mod: '#2c7169', accent: '#ec8a70',
+             la: '#1d3b38', lb: '#1d3b38', lmod: '#f5f1e6', lacc: '#2b1510', led: '#16b39f', plate: '#d9e2dc' },
+    dark:  { a: '#253230', b: '#2f4440', mod: '#1a3d39', accent: '#ec8a70',
+             la: '#e8f1ec', lb: '#e8f4ef', lmod: '#cdeee6', lacc: '#2b1510', led: '#45e0c8', plate: '#151c1b' } },
+  { id: 'rose', name: 'Rose', note: 'blush · charcoal',
+    light: { a: '#f4dcdc', b: '#e9c2c6', mod: '#3a393e', accent: '#b0425a',
+             la: '#3a272c', lb: '#3a272c', lmod: '#f8e4e5', lacc: '#ffffff', led: '#ff5f86', plate: '#e3d3d2' },
+    dark:  { a: '#563c42', b: '#684a51', mod: '#252428', accent: '#e07b93',
+             la: '#fbe5e8', lb: '#fde9ec', lmod: '#f0cdd3', lacc: '#2a1117', led: '#ff7c9c', plate: '#1d1a1c' } },
+  { id: 'ocean', name: 'Ocean', note: 'navy · sky',
+    light: { a: '#1f2f52', b: '#2c4573', mod: '#9ac6e9', accent: '#f2c641',
+             la: '#e9f1ff', lb: '#e9f1ff', lmod: '#0f2140', lacc: '#211b06', led: '#ffd23f', plate: '#c9d3df' },
+    dark:  { a: '#1b2948', b: '#263b65', mod: '#5d8fba', accent: '#e8bb33',
+             la: '#dce9ff', lb: '#dfebff', lmod: '#08162c', lacc: '#1e1804', led: '#ffd23f', plate: '#11151c' } },
+  { id: 'forest', name: 'Forest', note: 'olive · cream',
+    light: { a: '#5e633f', b: '#6c7247', mod: '#ece4cf', accent: '#a5582c',
+             la: '#f4efdf', lb: '#f7f2e3', lmod: '#3a3d24', lacc: '#fff7ef', led: '#e08a4a', plate: '#d3cfbd' },
+    dark:  { a: '#474b31', b: '#565b3b', mod: '#3a392f', accent: '#c97a45',
+             la: '#ece6d2', lb: '#efe9d6', lmod: '#e6ddc2', lacc: '#1c0f06', led: '#ef9a5a', plate: '#1a1a15' } }
+];
+const LAYOUTS = [
+  { id: 'plain', name: 'Plain' },
+  { id: 'checker', name: 'Checkerboard' }
+];
+
+/* ---- colour maths (sRGB, WCAG 2.x) ---- */
+const hex = h => { const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+const toHex = c => '#' + c.map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join('');
+const lin = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+function luminance(h) { const [r, g, b] = (Array.isArray(h) ? h : hex(h)); return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b); }
+function contrast(a, b) { const x = luminance(a), y = luminance(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); }
+function mix(a, b, t) { const x = hex(a), y = hex(b); return toHex(x.map((v, i) => v + (y[i] - v) * t)); }
+/* Push `fg` toward black or white (whichever side it is on) until it reaches `min` against `bg`. */
+function ensure(fg, bg, min = 4.5) {
+  if (contrast(fg, bg) >= min) return fg;
+  // walk toward white and toward black; keep the closest colour (least shift) that passes
+  for (let t = 0.05; t <= 1.0001; t += 0.05) {
+    for (const pole of luminance(fg) >= luminance(bg) ? ['#ffffff', '#000000'] : ['#000000', '#ffffff']) {
+      const c = mix(fg, pole, t); if (contrast(c, bg) >= min) return c;
+    }
+  }
+  return contrast('#ffffff', bg) > contrast('#000000', bg) ? '#ffffff' : '#000000';
+}
+const isLight = h => luminance(h) > 0.32;
+
+/* Resolved palette (all custom properties, as a plain object). */
+function palette(p, theme) {
+  const c = p[theme];
+  const plateInk = isLight(c.plate) ? '#26241f' : '#ece8de';
+  const latch = cap => ensure(c.led, cap, 4.5);   // accent-coloured latched legend, kept readable
+  const deboss = cap => isLight(cap)
+    ? '0 1px 0 rgba(255,255,255,.9), 0 -1px 0 rgba(0,0,0,.26)'
+    : '0 1px 0 rgba(255,255,255,.13), 0 -1px 0 rgba(0,0,0,.62)';
+  // dark caps under the light theme: soften the style's white dish highlights and gloss
+  const rgba = (h, a) => { const [r, g, b] = hex(h); return `rgba(${r},${g},${b},${a})`; };
+  const veil = cap => rgba(cap, theme === 'light' && luminance(cap) < 0.12 ? 0.5 : 0);
+  const glf = cap => theme === 'light' && luminance(cap) < 0.12 ? 0.35 : 1;
+  return {
+    '--veil-a': veil(c.a), '--veil-b': veil(c.b), '--veil-mod': veil(c.mod), '--veil-accent': veil(c.accent),
+    '--glf-a': glf(c.a), '--glf-b': glf(c.b), '--glf-mod': glf(c.mod), '--glf-accent': glf(c.accent),
+    '--cap-a': c.a, '--cap-b': c.b, '--cap-mod': c.mod, '--cap-accent': c.accent,
+    '--legend-a': ensure(c.la, c.a), '--legend-b': ensure(c.lb, c.b),
+    '--legend-mod': ensure(c.lmod, c.mod), '--legend-accent': ensure(c.lacc, c.accent),
+    '--latch-a': latch(c.a), '--latch-b': latch(c.b), '--latch-mod': latch(c.mod),
+    '--led': c.led, '--plate': c.plate, '--plate-ink': plateInk, '--plate-line': mix(c.plate, plateInk, 0.28),
+    '--well': theme === 'dark' ? mix(c.plate, '#000000', 0.7) : mix(c.plate, '#000000', 0.68),
+    '--deboss-a': deboss(c.a), '--deboss-b': deboss(c.b)
+  };
+}
+const decl = o => Object.entries(o).map(([k, v]) => `${k}:${v}`).join(';');
+
+/* CSS for every preset: `.cw-<id>` (light) + the dark override. */
+function cssFor(list = PRESETS) {
+  const light = list.map(p => `.cw-${p.id}{${decl(palette(p, 'light'))}}`).join('\n');
+  const dark = list.map(p => `.cw-${p.id}{${decl(palette(p, 'dark'))}}`).join('\n');
+  return `${light}\n@media (prefers-color-scheme: dark){\n${dark}\n}`;
+}
+const presetById = id => PRESETS.find(p => p.id === id) || null;
+return Object.freeze({ PRESETS, LAYOUTS, luminance, contrast, mix, ensure, palette, cssFor, presetById });
+})();
+
+/* ---- src/switches.js ---- */
+const __m_switches = (() => {
+const { sfx } = __m_audio;
+// switches.js — synthesized mechanical switch sounds, one voice per keycap style.
+//
+// Replaces the generic key click (sfx.pen / pencil / mod / release) while a
+// keycap style is active: audio.js routes those calls to sfx.sw(kind) when
+// sfx.keyStyle is set (settings.js sets it; it stays null in the debug-only
+// 'classic' look, so the parity test hears the prototype's clicks).
+//
+//   press   = (tactile bump | click-jacket transient) + stem bottom-out + housing knock
+//   release = top-out (stem hitting the top housing) + a faint, slightly random spring ping
+//
+//   sa     — linear, tall thick ABS caps: deep, marbly "thock", low-mid body
+//   cherry — brown tactile: soft bump, then a mid "thock"
+//   lp     — low-profile clicky: sharp click jacket on the way down AND up, short and light
+//
+// Pencil = the "silent" version of the same switch (dampened, no click/bump
+// transient, lowpassed). Mods = the same switch on a bigger cap (a touch lower).
+// Every voice uses the engine's pj() (±5% pitch) plus gain and timing jitter.
+// Everything starts at ctx.currentTime (the pointerdown), like the old click.
+
+
+const P = sfx.prims;             // shared engine internals (ctx, noise, pj, jit, ...)
+let bus = null, vol = 0.8;       // switch-sound bus (the "Switch sound" volume)
+let lastKind = 'pen';            // the release mirrors the press it follows
+
+function out() {
+  const ctx = P.ctx;
+  if (!bus || bus.context !== ctx) { bus = ctx.createGain(); bus.gain.value = vol; bus.connect(P.master); }
+  return bus;
+}
+function setSwitchVolume(v) {
+  vol = Math.max(0, Math.min(1, +v || 0));
+  if (bus) bus.gain.setTargetAtTime(vol, P.ctx.currentTime, 0.01);
+}
+
+/* local copies of the engine's burst/tone that play into the switch bus */
+function env(g, t, peak, attack, dur) {
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.linearRampToValueAtTime(peak, t + attack);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + attack + dur);
+}
+function burst(t, { type = 'bandpass', f = 2000, q = 1, gain = 0.3, dur = 0.02, attack = 0.0006 }) {
+  const ctx = P.ctx, src = ctx.createBufferSource(); src.buffer = P.noise;
+  const fl = ctx.createBiquadFilter(); fl.type = type; fl.frequency.value = f; fl.Q.value = q;
+  const g = ctx.createGain(); env(g, t, gain, attack, dur);
+  src.connect(fl); fl.connect(g); g.connect(out());
+  src.start(t, Math.random() * 0.9); src.stop(t + attack + dur + 0.03);
+}
+function tone(t, { type = 'sine', f0 = 440, f1 = f0, dur = 0.05, gain = 0.2, attack = 0.001, glide = dur }) {
+  const ctx = P.ctx, o = ctx.createOscillator(); o.type = type;
+  o.frequency.setValueAtTime(f0, t);
+  if (f1 !== f0) o.frequency.exponentialRampToValueAtTime(f1, t + glide);
+  const g = ctx.createGain(); env(g, t, gain, attack, dur);
+  o.connect(g); g.connect(out());
+  o.start(t); o.stop(t + attack + dur + 0.04);
+}
+
+/* The spring: a very quiet, short, inharmonic ring, a little different every time */
+function ping(t, f, gain) {
+  const j = P.jit, ff = f * j(0.08), g = gain * j(0.45), d = 0.07 * j(0.35);
+  tone(t, { f0: ff, f1: ff * 0.985, dur: d, gain: g, attack: 0.0015 });
+  tone(t + 0.0007, { f0: ff * 1.47, dur: d * 0.55, gain: g * 0.45, attack: 0.0012 });
+}
+
+/* Voices. p = pitch factor, v = gain factor, s = 1 (pen) or the silent damping (pencil), m = mod */
+const VOICES = {
+  sa: {
+    down(t, p, v, s, m) {
+      const dt = 0.0055 * P.jit(0.2), lo = m ? 0.9 : 1;
+      if (!s.silent) burst(t, { type: 'highpass', f: 5200 * p, q: 0.7, gain: 0.035 * v, dur: 0.003, attack: 0.0003 });
+      const tb = t + dt;   // bottom-out: dense, low and round
+      burst(tb, { type: 'bandpass', f: 1050 * p * s.f, q: 0.95, gain: 0.30 * v * s.g, dur: 0.022, attack: s.a });
+      burst(tb, { type: 'lowpass', f: 620 * p * s.f, q: 0.7, gain: 0.20 * v * s.g, dur: 0.05, attack: s.a * 1.6 });
+      tone(tb, { f0: 205 * p * lo, f1: 108 * p * lo, dur: 0.075, gain: 0.30 * v * s.g, glide: 0.04, attack: s.a });
+      // marble: a second, short resonance of the thick cap
+      tone(tb + 0.001, { f0: 540 * p, f1: 470 * p, dur: 0.028, gain: 0.07 * v * s.g * s.g, attack: s.a });
+      // housing knock (the top housing rattling on the bottom one)
+      tone(tb + 0.002, { type: 'triangle', f0: 350 * p, f1: 245 * p, dur: 0.022, gain: 0.07 * v * s.g });
+      if (m) tone(tb, { f0: 92 * p, f1: 64 * p, dur: 0.07, gain: 0.12 * v * s.g, attack: 0.002 });
+    },
+    up(t, p, v, s) {
+      burst(t, { type: 'bandpass', f: 1500 * p * s.f, q: 1.6, gain: 0.075 * v * s.g, dur: 0.012, attack: s.a });
+      tone(t, { f0: 265 * p, f1: 205 * p, dur: 0.022, gain: 0.05 * v * s.g });
+      if (!s.silent) ping(t + 0.004, 3900 * p, 0.0075 * v);
+    }
+  },
+  cherry: {
+    down(t, p, v, s, m) {
+      const lo = m ? 0.9 : 1;
+      // tactile bump: a soft, dull "tk" as the leaf passes the bump
+      if (!s.silent) {
+        burst(t, { type: 'bandpass', f: 1900 * p, q: 1.3, gain: 0.085 * v, dur: 0.008, attack: 0.0005 });
+        tone(t, { f0: 330 * p, f1: 260 * p, dur: 0.012, gain: 0.035 * v });
+      }
+      const tb = t + 0.0075 * P.jit(0.2);   // bottom-out: mid thock
+      burst(tb, { type: 'bandpass', f: 1650 * p * s.f, q: 1.25, gain: 0.30 * v * s.g, dur: 0.02, attack: s.a });
+      burst(tb, { type: 'lowpass', f: 850 * p * s.f, q: 0.7, gain: 0.12 * v * s.g, dur: 0.032, attack: s.a * 1.6 });
+      tone(tb, { f0: 245 * p * lo, f1: 140 * p * lo, dur: 0.055, gain: 0.25 * v * s.g, glide: 0.032, attack: s.a });
+      // housing knock: a little brighter and thinner than SA
+      burst(tb + 0.0015, { type: 'bandpass', f: 3200 * p * s.f, q: 2.5, gain: 0.09 * v * s.g, dur: 0.008 });
+      tone(tb + 0.002, { type: 'triangle', f0: 640 * p, f1: 420 * p, dur: 0.016, gain: 0.04 * v * s.g });
+      if (m) tone(tb, { f0: 110 * p, f1: 74 * p, dur: 0.06, gain: 0.10 * v * s.g, attack: 0.002 });
+    },
+    up(t, p, v, s) {
+      burst(t, { type: 'bandpass', f: 2200 * p * s.f, q: 1.8, gain: 0.08 * v * s.g, dur: 0.01, attack: s.a });
+      tone(t, { f0: 390 * p, f1: 300 * p, dur: 0.016, gain: 0.035 * v * s.g });
+      if (!s.silent) ping(t + 0.0035, 4700 * p, 0.0065 * v);
+    }
+  },
+  lp: {
+    down(t, p, v, s, m) {
+      // click jacket: sharp, bright, short (missing on the silent version)
+      if (!s.silent) {
+        burst(t, { type: 'highpass', f: 7200 * p, q: 0.7, gain: 0.30 * v, dur: 0.0028, attack: 0.0002 });
+        burst(t, { type: 'bandpass', f: 4300 * p, q: 4.2, gain: 0.62 * v, dur: 0.010, attack: 0.00025 });
+        tone(t, { type: 'triangle', f0: 2300 * p, f1: 1850 * p, dur: 0.006, gain: 0.05 * v });
+      }
+      const tb = t + 0.004 * P.jit(0.2);   // short travel: light, thin bottom-out
+      burst(tb, { type: 'bandpass', f: 2600 * p * s.f, q: 1.4, gain: 0.26 * v * s.g, dur: 0.012, attack: s.a });
+      tone(tb, { f0: 360 * p * (m ? 0.88 : 1), f1: 250 * p, dur: 0.032, gain: 0.24 * v * s.g, glide: 0.02, attack: s.a });
+      burst(tb + 0.001, { type: 'lowpass', f: 1300 * p * s.f, q: 0.7, gain: 0.11 * v * s.g, dur: 0.018 });
+    },
+    up(t, p, v, s) {
+      // the click jacket snaps back on the way up
+      if (!s.silent) {
+        burst(t, { type: 'bandpass', f: 4700 * p, q: 3.6, gain: 0.15 * v, dur: 0.007, attack: 0.00025 });
+        burst(t, { type: 'highpass', f: 7600 * p, q: 0.7, gain: 0.07 * v, dur: 0.002, attack: 0.0002 });
+      }
+      tone(t + 0.001, { f0: 430 * p, f1: 360 * p, dur: 0.01, gain: 0.03 * v * s.g });
+      if (!s.silent) ping(t + 0.003, 5400 * p, 0.0055 * v);
+    }
+  }
+};
+const PEN = { silent: false, g: 1, f: 1, a: 0.0006 };
+const SILENT = { silent: true, g: 0.55, f: 0.62, a: 0.0018 };
+
+/* sfx.sw(kind): kind = 'pen' | 'pencil' | 'mod' | 'up'. Called by audio.js
+   (pen/pencil/mod/release) only while sfx.keyStyle is set. */
+sfx.sw = function (kind) {
+  if (!P.ready()) return;
+  const voice = VOICES[sfx.keyStyle] || VOICES.sa;
+  const t = P.now(), p = P.pj(), v = P.jit(0.12);
+  if (kind === 'up') {
+    voice.up(t, p, v, lastKind === 'pencil' ? SILENT : PEN);
+    return;
+  }
+  lastKind = kind;
+  voice.down(t, p, v, kind === 'pencil' ? SILENT : PEN, kind === 'mod');
+};
+const SWITCH_NAMES = { sa: 'Linear · thock', cherry: 'Brown tactile', lp: 'Clicky' };
+return Object.freeze({ setSwitchVolume, SWITCH_NAMES });
+})();
+
+/* ---- src/settings.js ---- */
+const __m_settings = (() => {
+const { $, DEBUG } = __m_util;
+const { sfx } = __m_audio;
+const { keys } = __m_pad;
+const { PRESETS, LAYOUTS, cssFor, presetById } = __m_colorways;
+const { setSwitchVolume, SWITCH_NAMES } = __m_switches;
+// settings.js — player settings: keycap style, colorway, sound.
+//
+//   getSettings()            → a copy: { style, layout, preset, sound, switchVol }
+//   setSettings(patch, opt)  → validates, applies at once, saves; returns the new copy
+//   onSettings(fn)           → fn(settings) after every change
+//
+// Stored in localStorage 'sudoku.settings.v1' as JSON { v: 1, ...settings }.
+// (Kept as a plain object so the progress token v2 can carry it later.)
+//
+// Applying = classes on <html> (keys.css reads them):
+//   .kx (any real style) .ks-<style> .cw-<preset> .cl-<layout>
+// plus the colorway custom properties (one generated <style>, see colorways.js),
+// the switch voice (sfx.keyStyle) and its volume, and the master mute.
+//
+// DEBUG ONLY: ?debug=1&keys=classic renders the original keycaps and clicks
+// (no .kx, no dressing, sfx.keyStyle = null) so the parity test compares like
+// with like. 'classic' is never saved and setSettings refuses it without debug.
+
+
+
+
+
+
+const STORE_KEY = 'sudoku.settings.v1';
+const STYLES = [
+  { id: 'sa', name: 'SA', sub: 'Retro', sound: SWITCH_NAMES.sa },
+  { id: 'cherry', name: 'Cherry', sub: 'OEM', sound: SWITCH_NAMES.cherry },
+  { id: 'lp', name: 'Low', sub: 'Profile', sound: SWITCH_NAMES.lp }
+];
+const DEFAULTS = { style: 'sa', layout: 'plain', preset: 'retro', sound: true, switchVol: 0.8 };
+
+const listeners = [];
+let cur = { ...DEFAULTS };
+let classicUrl = false;
+let observer = null;
+
+function clean(o, base) {
+  const out = { ...base };
+  if (!o || typeof o !== 'object') return out;
+  if (STYLES.some(s => s.id === o.style) || (o.style === 'classic' && DEBUG)) out.style = o.style;
+  if (LAYOUTS.some(l => l.id === o.layout)) out.layout = o.layout;
+  if (presetById(o.preset)) out.preset = o.preset;
+  if (typeof o.sound === 'boolean') out.sound = o.sound;
+  if (typeof o.switchVol === 'number' && isFinite(o.switchVol)) out.switchVol = Math.max(0, Math.min(1, o.switchVol));
+  return out;
+}
+function load() {
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(STORE_KEY) || 'null'); } catch (e) {}
+  const s = clean(saved, DEFAULTS);
+  if (s.style === 'classic') s.style = DEFAULTS.style;      // never restored from storage
+  return s;
+}
+function save() {
+  if (cur.style === 'classic') return;
+  try {
+    const { style, layout, preset, sound, switchVol } = cur;
+    localStorage.setItem(STORE_KEY, JSON.stringify({ v: 1, style, layout, preset, sound, switchVol }));
+  } catch (e) {}
+}
+
+const getSettings = () => ({ ...cur });
+const isClassic = () => cur.style === 'classic';
+function onSettings(fn) { listeners.push(fn); }
+function setSettings(patch, opt = {}) {
+  const next = clean({ ...cur, ...patch }, cur);
+  const changed = Object.keys(next).some(k => next[k] !== cur[k]);
+  cur = next;
+  apply();
+  if (opt.persist !== false) save();
+  if (changed) for (const fn of listeners) { try { fn(getSettings()); } catch (e) {} }
+  return getSettings();
+}
+
+/* ---- DOM ---- */
+function injectColorways() {
+  if (document.getElementById('kcw')) return;
+  const st = document.createElement('style');
+  st.id = 'kcw'; st.textContent = cssFor(PRESETS);
+  document.head.appendChild(st);
+}
+function swapClass(el, prefix, value) {
+  for (const c of [...el.classList]) if (c.startsWith(prefix)) el.classList.remove(c);
+  if (value) el.classList.add(prefix + value);
+}
+function apply() {
+  const html = document.documentElement, classic = cur.style === 'classic';
+  html.classList.toggle('kx', !classic);
+  swapClass(html, 'ks-', classic ? null : cur.style);
+  swapClass(html, 'cw-', classic ? null : cur.preset);
+  swapClass(html, 'cl-', classic ? null : cur.layout);
+  sfx.keyStyle = classic ? null : cur.style;
+  setSwitchVolume(cur.switchVol);
+  if (!classic) {
+    injectColorways();
+    dressAll();
+    if (sfx.muted !== !cur.sound) sfx.setMuted(!cur.sound);
+    const mb = $('muteBtn'); if (mb) mb.classList.toggle('muted', !cur.sound);
+  }
+}
+
+/* Give a .key the extra parts the styles need (idempotent). */
+const ROW_OF_MOD = { undo: 1, erase: 2, pencil: 3 };
+function dressKey(el) {
+  const cap = el.querySelector(':scope > .cap');
+  if (!cap) return;
+  if (!cap.querySelector(':scope > .sk')) {
+    const tf = document.createElement('i'); tf.className = 'tf';
+    const sk = document.createElement('i'); sk.className = 'sk';
+    cap.prepend(sk, tf);
+  }
+  if (!el.querySelector(':scope > .sw')) {
+    const sw = document.createElement('div'); sw.className = 'sw';
+    sw.innerHTML = '<i class="hs"></i><i class="st"></i><span class="pl"></span>';
+    if (el.dataset.d || el.dataset.pd) sw.lastChild.textContent = el.dataset.d || el.dataset.pd;
+    el.insertBefore(sw, cap);
+  }
+  const d = +(el.dataset.d || el.dataset.pd);
+  if (d) { el.classList.add('r' + Math.ceil(d / 3)); el.classList.toggle('ev', d % 2 === 0); }
+  for (const m in ROW_OF_MOD) if (keys[m] === el) el.classList.add('r' + ROW_OF_MOD[m]);
+  if (el.classList.contains('mod') && cap.querySelector(':scope > .led')) el.classList.add('tg');
+}
+function dressAll(root = document) {
+  root.querySelectorAll('.key').forEach(dressKey);
+  if (!observer && 'MutationObserver' in window) {
+    observer = new MutationObserver(recs => {
+      if (cur.style === 'classic') return;
+      for (const r of recs) {
+        for (const n of r.addedNodes) {
+          if (n.nodeType !== 1) continue;
+          if (n.classList.contains('key')) dressKey(n);
+          else if (n.querySelector) n.querySelectorAll('.key').forEach(dressKey);
+        }
+        // a cap whose content was replaced (innerHTML) lost its body parts
+        const t = r.target;
+        if (t.classList && t.classList.contains('cap') && t.parentNode && t.parentNode.classList.contains('key')) dressKey(t.parentNode);
+      }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
+}
+
+/* Called once from main.js, after the pad and the hint keys exist. */
+function initSettings() {
+  try { classicUrl = DEBUG && new URLSearchParams(location.search).get('keys') === 'classic'; } catch (e) {}
+  cur = load();
+  if (classicUrl) cur.style = 'classic';
+  apply();
+  if (DEBUG) window.__keys = { getSettings, setSettings, STYLES, PRESETS, LAYOUTS, DEFAULTS };
+}
+return Object.freeze({ STORE_KEY, STYLES, DEFAULTS, getSettings, isClassic, onSettings, setSettings, dressKey, initSettings });
+})();
+
+/* ---- src/settingsui.js ---- */
+const __m_settingsui = (() => {
+const { $, div, reducedMotion } = __m_util;
+const { sfx } = __m_audio;
+const { UI } = __m_state;
+const { padEl, makeKey, ICONS } = __m_pad;
+const { bindPress, bindHeaderBtn, cancelAllPresses } = __m_input;
+const { release } = __m_actions;
+const { PRESETS, LAYOUTS } = __m_colorways;
+const { STYLES, getSettings, setSettings, initSettings, isClassic } = __m_settings;
+// settingsui.js — the gear button and the Settings sheet (Keycaps, Colorway,
+// Sound) with a live preview strip of real keys. Every change applies at once;
+// the keys "swap" in a wave from the tapped option: each cap keeps its old
+// look (old classes pinned on the key itself), lifts, takes the new look at
+// the top of the lift and drops back in (transform/opacity only). Reduced
+// motion: a short crossfade instead.
+
+
+
+
+
+
+
+
+
+const GEAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
+const CLOSE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>';
+const HINT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.3 1.1 2.2h5c0-.9.4-1.6 1.1-2.2A6 6 0 0 0 12 3z"/></svg>';
+
+let sheet, bg, tilesEl, swEl, segEl, sndBtn, volEl, prevEl;
+
+/* ---- the swap wave ---- */
+let waveTimers = [];
+function pinOld(el, old) {
+  el.classList.add('ks-' + old.style, 'cw-' + old.preset, 'pin-' + old.layout, 'kpin');
+}
+function unpin(el) {
+  for (const c of [...el.classList]) if (c.startsWith('ks-') || c.startsWith('cw-') || c.startsWith('pin-') || c === 'kpin') el.classList.remove(c);
+}
+const swapKeys = () => [...document.querySelectorAll('.set-prev .key, #pad .key, .hkeys .key')];
+function wave(old, origin) {
+  for (const t of waveTimers) clearTimeout(t);
+  waveTimers = [];
+  document.querySelectorAll('.key.kpin').forEach(unpin);
+  const rm = reducedMotion();
+  for (const k of swapKeys()) {
+    pinOld(k, old);
+    const cap = k.querySelector(':scope > .cap');
+    const r = k.getBoundingClientRect();
+    const dist = origin ? Math.hypot(r.left + r.width / 2 - origin.x, r.top + r.height / 2 - origin.y) : 0;
+    if (rm) {
+      cap.animate([{ opacity: 1 }, { opacity: 0, offset: 0.45 }, { opacity: 1 }], { duration: 220, easing: 'ease-in-out' });
+      waveTimers.push(setTimeout(() => unpin(k), 100));
+      continue;
+    }
+    const delay = Math.min(300, dist * 0.55), dur = 330;
+    cap.animate([
+      { transform: 'translate3d(0,0,0)', opacity: 1 },
+      { transform: 'translate3d(0,-8px,0)', opacity: 0.15, offset: 0.34 },
+      { transform: 'translate3d(0,1.5px,0)', opacity: 1, offset: 0.72 },
+      { transform: 'translate3d(0,0,0)', opacity: 1 }
+    ], { duration: dur, delay, easing: 'cubic-bezier(.33,.6,.4,1)' });
+    const sh = k.querySelector(':scope > .shadow');
+    if (sh) sh.animate([{ opacity: 1 }, { opacity: 0.35, offset: 0.34 }, { opacity: 1, offset: 0.72 }, { opacity: 1 }], { duration: dur, delay });
+    waveTimers.push(setTimeout(() => unpin(k), delay + dur * 0.34));
+  }
+}
+function change(patch, ev) {
+  const old = getSettings();
+  const origin = ev && ev.currentTarget ? (() => { const r = ev.currentTarget.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })() : null;
+  const next = setSettings(patch);
+  if (next.style !== old.style || next.preset !== old.preset || next.layout !== old.layout) wave(old, origin);
+  sync();
+}
+
+/* ---- building blocks ---- */
+function btn(cls, parent, html) {
+  const b = document.createElement('button'); b.type = 'button'; b.className = cls;
+  if (html) b.innerHTML = html;
+  parent.appendChild(b); return b;
+}
+function digitKey(d, parent, extra = '') {
+  // data-pd, not data-d: '.key.digit[data-d=…]' stays unique to the real pad
+  const k = makeKey('digit ' + extra, `<span class="lg">${d}</span><span class="cnt"></span><i class="led"></i>`, parent);
+  k.dataset.pd = d; k.setAttribute('aria-hidden', 'true'); return k;
+}
+function modKey(icon, label, parent, extra = '', led = false) {
+  const k = makeKey('mod ' + extra, `${icon}<span class="lbl">${label}</span>${led ? '<i class="led"></i>' : ''}`, parent);
+  k.setAttribute('aria-hidden', 'true'); return k;
+}
+
+function build() {
+  bg = div('sheet-bg', document.body); bg.id = 'setBg';
+  sheet = div('sheet set', document.body); sheet.id = 'setSheet';
+  sheet.setAttribute('role', 'dialog'); sheet.setAttribute('aria-label', 'Settings');
+
+  const top = div('set-top', sheet);
+  const head = div('set-head', top);
+  const h = document.createElement('h2'); h.textContent = 'Settings'; head.appendChild(h);
+  const x = btn('set-x', head, CLOSE); x.setAttribute('aria-label', 'Close settings');
+  x.addEventListener('click', () => { sfx.mod(); close(); });
+
+  // live preview strip: real keys, pressable (you hear the switch)
+  prevEl = div('set-prev kp', top);
+  prevEl.setAttribute('aria-label', 'Preview');
+  const k4 = digitKey(4, prevEl), k5 = digitKey(5, prevEl), k6 = digitKey(6, prevEl, 'locked');
+  k4.querySelector('.cnt').textContent = '6'; k5.querySelector('.cnt').textContent = '7';
+  const pen = modKey(ICONS.pencil, 'Pencil', prevEl, 'latched', true);
+  const hint = modKey(HINT, 'Hint', prevEl, 'hk');
+  for (const k of [k4, k5, k6]) bindPress(k, () => { k.classList.contains('locked') ? sfx.blocked() : sfx.pen(); });
+  bindPress(pen, () => { pen.classList.toggle('latched'); sfx.mod(); });
+  bindPress(hint, () => sfx.mod());
+
+  // Keycaps
+  const s1 = div('set-sec', sheet);
+  s1.appendChild(Object.assign(document.createElement('h3'), { textContent: 'Keycaps' }));
+  tilesEl = div('set-tiles', s1);
+  for (const st of STYLES) {
+    const t = btn('set-tile ks-' + st.id, tilesEl);
+    t.dataset.style = st.id;
+    t.setAttribute('aria-label', `${st.name} ${st.sub} keycaps`);
+    const mk = div('set-mk kp', t);
+    digitKey(5, mk);
+    modKey(ICONS.undo, 'Undo', mk);
+    const lab = div('set-lab', t);
+    lab.innerHTML = `<b>${st.name}</b> <span>${st.sub}</span><small>${st.sound}</small>`;
+    t.addEventListener('click', e => { change({ style: st.id }, e); sfx.pen(); });
+  }
+
+  // Colorway
+  const s2 = div('set-sec', sheet);
+  s2.appendChild(Object.assign(document.createElement('h3'), { textContent: 'Colorway' }));
+  segEl = div('set-seg', s2); segEl.setAttribute('role', 'group'); segEl.setAttribute('aria-label', 'Layout');
+  div('thumb', segEl);
+  for (const l of LAYOUTS) {
+    const b = btn('', segEl, l.name); b.dataset.layout = l.id;
+    b.addEventListener('click', e => { change({ layout: l.id }, e); sfx.mod(); });
+  }
+  swEl = div('set-sw', s2);
+  for (const p of PRESETS) {
+    const b = btn('set-swatch cw-' + p.id, swEl);
+    b.dataset.preset = p.id; b.setAttribute('aria-label', `${p.name} colorway: ${p.note}`);
+    const mk = div('set-mini', b);
+    digitKey(1, mk); digitKey(2, mk);
+    modKey(ICONS.undo, '', mk);
+    modKey(HINT, '', mk, 'hk');
+    const lab = div('set-lab', b);
+    lab.innerHTML = `<b>${p.name}</b><small>${p.note}</small>`;
+    b.addEventListener('click', e => { change({ preset: p.id }, e); sfx.mod(); });
+  }
+
+  // Sound
+  const s3 = div('set-sec', sheet);
+  s3.appendChild(Object.assign(document.createElement('h3'), { textContent: 'Sound' }));
+  const r1 = div('set-row', s3);
+  r1.appendChild(Object.assign(document.createElement('span'), { textContent: 'Sound' }));
+  sndBtn = btn('set-toggle', r1, '<i></i>'); sndBtn.setAttribute('role', 'switch'); sndBtn.setAttribute('aria-label', 'Sound');
+  sndBtn.addEventListener('click', () => { const on = !getSettings().sound; setSettings({ sound: on }); if (on) sfx.select(); sync(); });
+  const r2 = div('set-row', s3);
+  const vl = document.createElement('label'); vl.textContent = 'Switch sound'; vl.htmlFor = 'setVol'; r2.appendChild(vl);
+  volEl = document.createElement('input');
+  Object.assign(volEl, { type: 'range', min: '0', max: '100', step: '1', id: 'setVol' });
+  r2.appendChild(volEl);
+  volEl.addEventListener('input', () => { setSettings({ switchVol: volEl.value / 100 }); paintVol(); });
+  volEl.addEventListener('change', () => { sfx.unlock(); sfx.pen(); sfx.release(); });
+
+  const row = div('row set-done', sheet);
+  const done = makeKey('mod', '<span class="lbl">Done</span>', row);
+  done.setAttribute('aria-label', 'Done');
+  bindPress(done, () => { sfx.mod(); close(); });
+
+  bg.addEventListener('pointerdown', e => { e.preventDefault(); close(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && sheet.classList.contains('show')) close(); });
+}
+function paintVol() { volEl.style.setProperty('--v', volEl.value + '%'); }
+
+function sync() {
+  const s = getSettings();
+  for (const t of tilesEl.children) t.setAttribute('aria-pressed', String(t.dataset.style === s.style));
+  for (const b of swEl.children) b.setAttribute('aria-pressed', String(b.dataset.preset === s.preset));
+  const bs = [...segEl.querySelectorAll('button')];
+  bs.forEach((b, i) => { b.setAttribute('aria-pressed', String(b.dataset.layout === s.layout)); if (b.dataset.layout === s.layout) segEl.style.setProperty('--i', i); });
+  sndBtn.setAttribute('aria-checked', String(s.sound));
+  volEl.value = Math.round(s.switchVol * 100); paintVol();
+  sheet.classList.toggle('mute', !s.sound);
+}
+
+function openSettings() {
+  if (!sheet) return;
+  cancelAllPresses(); release();
+  sync();
+  UI.sheetOpen = true;
+  sheet.scrollTop = 0;
+  sheet.classList.add('show'); bg.classList.add('show');
+}
+function closeSettings() { close(); }
+function close() {
+  if (!sheet || !sheet.classList.contains('show')) return;
+  UI.sheetOpen = false;
+  sheet.classList.remove('show'); bg.classList.remove('show');
+}
+
+/* Called once from main.js after the pad and the hint keys exist. */
+function initKeys() {
+  initSettings();
+  if (isClassic()) return;                      // debug-only original look: no gear, no sheet
+  padEl.classList.add('kp');
+  build();
+  const hb = document.querySelector('.hbtns');
+  const g = div('hbtn', null); g.id = 'setBtn';
+  g.setAttribute('role', 'button'); g.setAttribute('aria-label', 'Settings');
+  g.innerHTML = GEAR;
+  hb.insertBefore(g, $('muteBtn'));
+  bindHeaderBtn(g, () => { sfx.mod(); openSettings(); });
+  sync();
+}
+return Object.freeze({ openSettings, closeSettings, initKeys });
+})();
+
 /* ---- src/main.js ---- */
 const __m_main = (() => {
 const { $, DEBUG } = __m_util;
@@ -5617,6 +6839,7 @@ const { initLevel0, L0 } = __m_level0;
 const { initCampaign, camp } = __m_campaign;
 const { initHints, hintTap, enterCheck, exitCheck, hintState, hintOpts } = __m_hintui;
 const hintlogic = __m_hintlogic;
+const { initKeys } = __m_settingsui;
 // main.js — boot. Same order as the feel prototype: build, first render,
 // then the token/autosave hook, then restore the saved board.
 
@@ -5641,6 +6864,9 @@ const hintlogic = __m_hintlogic;
 
 
 /* --- end hints --- */
+/* --- keys: keycap styles, colorways, switch sounds, Settings sheet --- */
+
+/* --- end keys --- */
 
 const REWIND_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 18 4 12l7-6z"/><path d="M20 18l-7-6 7-6z"/></svg>';
 
@@ -5661,6 +6887,7 @@ initDevMenu();
 initLevel0();     // after initToken: wraps the autosave refresh hook
 /* --- end level0 --- */
 /* --- hints --- */ initHints(); /* --- end hints --- */
+/* --- keys --- */ initKeys(); /* --- end keys --- */
 
 /* PWA: offline cache + install (needs https; skipped in sandboxed frames) */
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
