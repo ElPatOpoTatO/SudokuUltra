@@ -18,6 +18,9 @@ const CLOSE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke
 const HINT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.3 1.1 2.2h5c0-.9.4-1.6 1.1-2.2A6 6 0 0 0 12 3z"/></svg>';
 
 let sheet, bg, tilesEl, swEl, segEl, sndBtn, volEl, prevEl;
+/* --- step7: hooks for the unlock layer (unlockui.js): locked tiles, NEW marks, gear badge --- */
+export const setHooks = { sync: [], open: [], close: [] };
+/* --- end step7 --- */
 
 /* ---- the swap wave ---- */
 let waveTimers = [];
@@ -173,6 +176,7 @@ function sync() {
   sndBtn.setAttribute('aria-checked', String(s.sound));
   volEl.value = Math.round(s.switchVol * 100); paintVol();
   sheet.classList.toggle('mute', !s.sound);
+  /* --- step7 --- */ for (const f of setHooks.sync) f(sheet); /* --- end step7 --- */
 }
 
 export function openSettings() {
@@ -182,12 +186,14 @@ export function openSettings() {
   UI.sheetOpen = true;
   sheet.scrollTop = 0;
   sheet.classList.add('show'); bg.classList.add('show');
+  /* --- step7 --- */ for (const f of setHooks.open) f(sheet); /* --- end step7 --- */
 }
 export function closeSettings() { close(); }
 function close() {
   if (!sheet || !sheet.classList.contains('show')) return;
   UI.sheetOpen = false;
   sheet.classList.remove('show'); bg.classList.remove('show');
+  /* --- step7 --- */ for (const f of setHooks.close) f(sheet); /* --- end step7 --- */
 }
 
 /* Called once from main.js after the pad and the hint keys exist. */

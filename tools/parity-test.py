@@ -31,7 +31,7 @@ PROTO_DIR = Path('/home/claude/sudoku/pwa')
 DIST = ROOT / 'dist'
 OUT = Path('/tmp/parity'); OUT.mkdir(exist_ok=True)
 CHROME = '/usr/bin/google-chrome'
-P_PROTO, P_BUILD = 8761, 8762
+P_PROTO, P_BUILD = int(os.environ.get('PARITY_PROTO_PORT', 8761)), int(os.environ.get('PARITY_PORT', 8762))   # step7: env override
 VIEW = {'width': 390, 'height': 844}
 HEADER_PX = 54          # header band (padding 8 + 44 high) is allowed to differ (DEV puzzle id)
 PIXEL_TOL = 10          # per-channel tolerance for anti-aliasing noise

@@ -14,6 +14,9 @@ import {
   animNoteOut, animShake, animBlink, animSweep, animCascade, CASCADE_STEP, SWEEP_STEP
 } from './board.js';
 import { FX } from './particles.js';
+/* --- step7: the single solve point emits sudoku:solved --- */
+import { emitSolved, solvedDetail } from './events.js';
+/* --- end step7 --- */
 
 const toastTitle = $('toastTitle'), againLbl = document.querySelector('#againKey .lbl');
 export const deadEl = $('dead');
@@ -125,6 +128,7 @@ function consequences(i, d) {
   if (spotHit) spotSuccess(spotHit, i);
   else if (solved) {
     S.solved = true;
+    /* --- step7 --- */ emitSolved(solvedDetail(i)); /* --- end step7 --- */
     S.selected = -1; S.loaded = 0; S.loadedNote = false;
     const total = animCascade(i);
     FX.wave(i, CASCADE_STEP());
@@ -211,6 +215,7 @@ const UNIT_CELLS = { row: ROWS, col: COLS, box: BOXES };
 function spotSuccess(step, origin) {
   S.solved = true;
   S.spot.found = step;
+  /* --- step7 --- */ emitSolved(solvedDetail(origin)); /* --- end step7 --- */
   S.selected = -1; S.loaded = 0; S.loadedNote = false;
   const unit = step.unit ? UNIT_CELLS[step.unit.type][step.unit.index] : unitsOf(origin)[0];
   const o = unit.includes(origin) ? origin : unit.slice().sort((a, b) => dist(a, origin) - dist(b, origin))[0];

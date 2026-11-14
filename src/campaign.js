@@ -4,6 +4,9 @@
 // selectable (DEV menu row). Units, unlock gates and the keyboard map come
 // later (step 7).
 //
+/* --- step7: the store now lives in the progress profile ('sudoku.profile.v1', profile.js), which
+   migrates 'sudoku.camp.v1' once; `store` below is a live view of it with the same shape. The
+   Master gate (24 charges) and the end-of-world reward are step 7 (docs/progression.md). --- */
 // Stored in localStorage 'sudoku.camp.v1' (best effort):
 //   { done: { <level id>: true }, clean: { <level id>: true }, skip: { <world>: true },
 //     unlock: { fillNotes: true } }
@@ -23,20 +26,22 @@ import { startPuzzle, gameHooks, updatePid } from './game.js';
 import { toastHooks, hideToast } from './actions.js';
 import { toastEl, toastMsg } from './board.js';
 import { startLevel0, level0Scripts } from './level0.js';
+/* --- step7: the store lives in the progress profile; Master gate; hooks for the progression UI --- */
+import { campStore, saveProfile, markLevelDone, isMasterOpen } from './profile.js';
+/* --- end step7 --- */
 
 const KEY = 'sudoku.camp.v1';
 export const LEVELS_PER_WORLD = 14;
 const toastTitle = $('toastTitle'), againLbl = document.querySelector('#againKey .lbl');
 
-function loadStore() {
-  try {
-    const o = JSON.parse(localStorage.getItem(KEY) || 'null');
-    if (o && typeof o === 'object') return { done: o.done || {}, clean: o.clean || {}, skip: o.skip || {}, unlock: o.unlock || {} };
-  } catch (e) {}
-  return { done: {}, clean: {}, skip: {}, unlock: {} };
-}
-const store = loadStore();
-function saveStore() { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) {} }
+/* --- step7: 'sudoku.camp.v1' is migrated into 'sudoku.profile.v1' (profile.js); this is a live view --- */
+const store = campStore();
+function saveStore() { saveProfile(); }
+// gate(w): may the runner go on to world w's Master? blocked(w): it may not (show the level list).
+// worldToast(w): the end-of-world toast is up (reward + keyboard key). leave(): the runner stopped.
+export const campHooks = { blocked: null, worldToast: null, leave: null };
+void KEY;
+/* --- end step7 --- */
 
 /** Level ids of world w, in play order (14). */
 export function worldLevels(w) {
@@ -52,14 +57,17 @@ let starting = false;    // the runner itself is starting a level
 let worldToast = false;  // the end-of-world toast is showing
 
 /** Start the runner on world w at level index k (0 = Level 0). */
-export function startCampaign(w = 0, k = 0) {
+export function startCampaign(w = 0, k = 0, restore = false) {
   const ids = worldLevels(w);
   if (!ids.length || !hasLevel0(w)) return false;
   cur = { world: w, ids, k: 0 };
-  play(Math.max(0, Math.min(LEVELS_PER_WORLD - 1, k)));
+  play(Math.max(0, Math.min(LEVELS_PER_WORLD - 1, k)), restore);   /* step7: restore = Continue */
   return true;
 }
-function play(k) {
+/* --- step7 --- */
+export const campCurrent = () => (cur ? { world: cur.world, k: cur.k, id: cur.ids[cur.k], worldToast } : null);
+/* --- end step7 --- */
+function play(k, restore = false) {
   cur.k = k; worldToast = false;
   hideToast();
   const id = cur.ids[k];
@@ -67,19 +75,22 @@ function play(k) {
   try {
     const w = cur.world;
     if (k === 0) startLevel0(level0Scripts['w' + w], { canSkip: !!store.skip[w], onNext: next, onSkip: next, onDone: () => { markDone(id, true); level0Unlocks(w); } });
-    else startPuzzle(id, false);
+    else startPuzzle(id, restore);   /* step7: restore */
   } finally { starting = false; }
   updatePid();
 }
 function next() {
   if (!cur) return;
+  /* --- step7: Master stays locked until the gate; the runner shows the world's level list instead --- */
+  if (cur.k + 1 === LEVELS_PER_WORLD - 1 && !isMasterOpen(cur.world) && campHooks.blocked) {
+    const w = cur.world; hideToast(); cur = null; worldToast = false; campHooks.blocked(w); return;
+  }
+  /* --- end step7 --- */
   if (cur.k < LEVELS_PER_WORLD - 1) play(cur.k + 1);
   else showWorldToast();
 }
 function markDone(id, clean) {
-  store.done[id] = true;
-  if (clean) store.clean[id] = true;
-  saveStore();
+  markLevelDone(id, clean);   /* step7: profile.js */
 }
 /* --- step6: what finishing a world's Level 0 unlocks --- */
 function level0Unlocks(w) {
@@ -97,6 +108,7 @@ function showWorldToast() {
   void toastEl.offsetWidth;                       // replay the toast's entrance
   toastEl.classList.add('show');
   sfx.latch(0, 0); sfx.latch(0.18, 1); sfx.latch(0.36, 2);
+  /* --- step7 --- */ if (campHooks.worldToast) campHooks.worldToast(cur.world); /* --- end step7 --- */
 }
 /** Open a world's Level 0 on its own (outside the runner). */
 export function startLevel0Alone(w = 0) {
@@ -106,7 +118,7 @@ export function startLevel0Alone(w = 0) {
 
 export function initCampaign() {
   // leaving the runner: any puzzle the runner did not start
-  gameHooks.start.push(() => { if (cur && !starting) { cur = null; worldToast = false; } });
+  gameHooks.start.push(() => { if (cur && !starting) { cur = null; worldToast = false; /* step7 */ if (campHooks.leave) campHooks.leave(); } });
   gameHooks.label = () => {
     if (cur) return `<b>DEV</b> · World ${cur.world} · Level ${cur.k}/${LEVELS_PER_WORLD - 1}`;
     if (S.mode === 'l0' || S.mode === 'l0demo') return `<b>DEV</b> · ${S.id} · W${S.world} Level 0`;
@@ -126,6 +138,7 @@ export function initCampaign() {
       /* --- step6: "Next world" starts the following world's runner --- */
       const nw = nextWorld(cur.world);
       hideToast(); worldToast = false; cur = null;
+      /* step7 */ if (campHooks.leave) campHooks.leave();
       if (nw >= 0) startCampaign(nw, 0); else updatePid();
       /* --- end step6 --- */
       return true;

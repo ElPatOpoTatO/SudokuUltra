@@ -19,14 +19,14 @@
          390x844 and 375x667 (light), plus screenshots in /tmp/worlds/.
 Exit code 1 on any failure.
 """
-import asyncio, importlib.util, json, subprocess, sys, time
+import asyncio, importlib.util, json, os, subprocess, sys, time
 from pathlib import Path
 from playwright.async_api import async_playwright
 
 ROOT = Path(__file__).resolve().parent.parent
 _spec = importlib.util.spec_from_file_location('l0t', ROOT / 'tools/level0-test.py')
 L = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(L)
-L.PORT = PORT = 8772
+L.PORT = PORT = int(os.environ.get('WORLDS_PORT', 8772))   # step7: env override (parallel checkouts)
 L.OUT = OUT = Path('/tmp/worlds'); OUT.mkdir(exist_ok=True)
 tap, cell, key, mod, coach_key, l0, S, wait_step = L.tap, L.cell, L.key, L.mod, L.coach_key, L.l0, L.S, L.wait_step
 failures, notes = [], []
@@ -143,9 +143,9 @@ class Seq:
         f = self.fs[self.i % len(self.fs)]; self.i += 1; await f(page)
 
 async def w2_extra(page):
-    st = await page.evaluate("() => JSON.parse(localStorage.getItem('sudoku.camp.v1') || '{}')")
-    check((st.get('unlock') or {}).get('fillNotes') is True, f'W2: unlock.fillNotes not set after Level 0: {st}')
-    notes.append('W2: finishing Level 0 sets unlock.fillNotes in sudoku.camp.v1')
+    st = await page.evaluate("() => JSON.parse(localStorage.getItem('sudoku.profile.v1') || '{}')")   # step7: the store is the profile
+    check((st.get('unlocks') or {}).get('fillNotes') is True, f'W2: unlocks.fillNotes not set after Level 0: {st}')
+    notes.append('W2: finishing Level 0 sets unlocks.fillNotes in sudoku.profile.v1')
 
 # --- runners -----------------------------------------------------------------
 async def spot(page):
@@ -207,7 +207,7 @@ async def t_runner(browser, w, storage=None):
         check(after['st']['active'] and after['st']['world'] == w + 1 and after['st']['k'] == 0 and after['l0']['id'] == f'w{w + 1}-l0', f'R{w} Next world -> {after}')
     else:
         check(not after['st']['active'], f'R4 Done should leave the runner: {after["st"]}')
-    raw = await page.evaluate("() => localStorage.getItem('sudoku.camp.v1')")
+    raw = await page.evaluate("() => localStorage.getItem('sudoku.profile.v1')")   # step7: profile
     check(not errs, f'R{w} errors: {errs}')
     notes.append(f'R{w}: Level 0 + 13 levels (Spot it techs: {", ".join(sorted(set(techs)))}) -> "{end["title"]}" [{end["lbl"]}] -> ' +
                  (f'World {w + 1} Level 0' if w < 4 else 'runner closed') + f'; {sum(1 for i in ids if store["done"].get(i))}/14 stored done, skip[{w}] set; hint techniques limited to ALLOW[{w}] (first hint at levels {", ".join(hint_log)})')
@@ -216,7 +216,7 @@ async def t_runner(browser, w, storage=None):
 
 async def t_entry(browser, raw):
     # Skip keycap after a clean Spot it 1; #camp=N.K; #l0=wN; DEV menu rows
-    ctx, page, errs = await new_page(browser, '#camp=3', storage={'sudoku.camp.v1': raw})
+    ctx, page, errs = await new_page(browser, '#camp=3', storage={'sudoku.profile.v1': raw})
     s = await l0(page)
     check(s['skip'] and s['id'] == 'w3-l0', f'Entry: Skip on W3 Level 0: {s}')
     await tap(page, '.coach .key.skip.show'); await page.wait_for_timeout(150)

@@ -14,6 +14,9 @@ import { BANDS, dailyIndex, DAILY_EPOCH } from './shared.js';
 /* --- level0: campaign runner entries --- */
 import { devEntries } from './campaign.js';
 /* --- end level0 --- */
+/* --- step7: progression DEV rows (unlock all, master worlds, reset) --- */
+import { progDevEntries } from './devprog.js';
+/* --- end step7 --- */
 
 const sheet = $('devSheet'), bg = $('devBg');
 
@@ -42,6 +45,7 @@ function render() {
   /* --- level0: campaign runner + Level 0 entries (no data-id, so the chip handler below skips them) --- */
   devEntries(sheet, el, chip, closeDev);
   /* --- end level0 --- */
+  /* --- step7 --- */ progDevEntries(sheet, el, chip, closeDev); /* --- end step7 --- */
 
   el('div', 'grp', 'Campaign', sheet);
   for (const w of worlds) {

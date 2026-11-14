@@ -11,7 +11,7 @@ keyboard, persistence, and layout screenshots at 390x844 and 375x667 in
 light / dark / reduced motion (written to /tmp/hints-shots/).
 Exit code 1 on any failure.
 """
-import asyncio, json, subprocess, sys, time
+import asyncio, json, os, subprocess, sys, time
 from pathlib import Path
 from playwright.async_api import async_playwright
 
@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parent.parent
 DIST = ROOT / 'dist'
 OUT = Path('/tmp/hints-shots'); OUT.mkdir(exist_ok=True)
 CHROME = '/usr/bin/google-chrome'
-PORT = 8763
+PORT = int(os.environ.get('HINTS_PORT', 8763))   # step7: env override (parallel checkouts)
 
 WRAP_SFX = """() => {
   const o = window.__debug.sfx; window.__sfxLog = [];

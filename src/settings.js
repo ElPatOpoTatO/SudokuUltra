@@ -29,6 +29,9 @@ export const STYLES = [
 ];
 export const DEFAULTS = { style: 'sa', layout: 'plain', preset: 'retro', sound: true, switchVol: 0.8 };
 
+/* --- step7: unlock gate (profile.js installs allow(kind, id)); locked items fall back to the defaults --- */
+export const settingsGate = { allow: null };
+/* --- end step7 --- */
 const listeners = [];
 let cur = { ...DEFAULTS };
 let classicUrl = false;
@@ -42,6 +45,14 @@ function clean(o, base) {
   if (presetById(o.preset)) out.preset = o.preset;
   if (typeof o.sound === 'boolean') out.sound = o.sound;
   if (typeof o.switchVol === 'number' && isFinite(o.switchVol)) out.switchVol = Math.max(0, Math.min(1, o.switchVol));
+  /* --- step7 --- */
+  const A = settingsGate.allow;
+  if (A) {
+    if (out.style !== 'classic' && !A('style', out.style)) out.style = DEFAULTS.style;
+    if (!A('layout', out.layout)) out.layout = DEFAULTS.layout;
+    if (!A('preset', out.preset)) out.preset = DEFAULTS.preset;
+  }
+  /* --- end step7 --- */
   return out;
 }
 function load() {

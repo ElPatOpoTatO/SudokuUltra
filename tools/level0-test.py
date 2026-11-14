@@ -249,10 +249,10 @@ async def t3_runner(browser):
         check(await S(page, 'S.mistakes') == 0, f'T3 level {k}: mistakes')
         await tap(page, '#againKey'); await page.wait_for_timeout(150)
     await page.wait_for_timeout(300)
-    end = await page.evaluate("() => ({ title: document.getElementById('toastTitle').textContent, show: document.getElementById('toast').classList.contains('show'), lbl: document.querySelector('#againKey .lbl').textContent, st: __debug.camp.state(), raw: localStorage.getItem('sudoku.camp.v1') })")
+    end = await page.evaluate("() => ({ title: document.getElementById('toastTitle').textContent, show: document.getElementById('toast').classList.contains('show'), lbl: document.querySelector('#againKey .lbl').textContent, st: __debug.camp.state(), raw: localStorage.getItem('sudoku.profile.v1') })")  # step7: the store is the profile
     store = end['st']['store']
     check(end['show'] and end['title'] == 'World 0 complete' and end['lbl'] == 'Next world' and end['st']['worldToast'], f'T3 end of world: {end}')
-    check(all(store['done'].get(i) for i in ids) and store['skip'].get('0') and json.loads(end['raw'])['done'] == store['done'], f'T3 store: {store}')
+    check(all(store['done'].get(i) for i in ids) and store['skip'].get('0') and set(json.loads(end['raw'])['levels']) == set(store['done']) and json.loads(end['raw'])['flags']['skip'] == store['skip'], f'T3 store: {store}')
     await page.screenshot(path=str(OUT / 't3-world-toast.png'))
     notes.append(f'T3 runner: L0 -> {", ".join(labels[:2])} … {labels[-1]} -> toast "{end["title"]}" [{end["lbl"]}] -> World 1; {len(store["done"])} levels stored done, skip[0]={store["skip"].get("0")}')
     await tap(page, '#againKey'); await page.wait_for_timeout(150)
@@ -263,7 +263,7 @@ async def t3_runner(browser):
     await ctx.close()
 
     # Skip: after a clean Spot it 1 the Level 0 offers Skip
-    ctx, page, errs = await new_page(browser, '#camp=0', storage={'sudoku.camp.v1': raw})
+    ctx, page, errs = await new_page(browser, '#camp=0', storage={'sudoku.profile.v1': raw})   # step7: profile
     s = await l0(page)
     check(s['skip'], f'T3 Skip key should show: {s}')
     await tap(page, '.coach .key.skip.show'); await page.wait_for_timeout(150)

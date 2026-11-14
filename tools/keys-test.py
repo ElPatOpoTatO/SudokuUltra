@@ -21,7 +21,7 @@ K7 sound: a digit press logs pen() -> sw(pen), release -> sw(up); pencil and
    Offline render: every switch voice produces sound at a sane level.
 Screenshots: /tmp/keys-shots (overview-*.png = combined grids).
 """
-import asyncio, json, subprocess, sys, time
+import asyncio, json, os, subprocess, sys, time
 from pathlib import Path
 from playwright.async_api import async_playwright
 from PIL import Image, ImageDraw, ImageChops, ImageStat
@@ -30,7 +30,7 @@ ROOT = Path(__file__).resolve().parent.parent
 DIST = ROOT / 'dist'
 OUT = Path('/tmp/keys-shots'); OUT.mkdir(exist_ok=True)
 CHROME = '/usr/bin/google-chrome'
-PORT = 8795
+PORT = int(os.environ.get('KEYS_PORT', 8795))   # step7: env override (parallel checkouts)
 STYLES = ['sa', 'cherry', 'lp']
 LAYOUTS = ['plain', 'checker']
 TRAVEL = {'sa': 3.5, 'cherry': 3.0, 'lp': 2.0}
@@ -100,6 +100,8 @@ async def new_page(browser, settings=None, hash_='#p=q-gentle-001', vp=(390, 844
     page.on('pageerror', lambda e: errs.append(f'pageerror: {e}'))
     page.on('console', lambda m: errs.append(f'console.{m.type}: {m.text}') if m.type in ('error', 'warning') else None)
     if init: await page.add_init_script(init)
+    # step7: keycaps are earned now; this suite sweeps every style / layout / preset, so it runs with DEV "unlock all"
+    await page.add_init_script("try { if (!localStorage.getItem('sudoku.profile.v1')) localStorage.setItem('sudoku.profile.v1', JSON.stringify({ v: 1, flags: { devUnlockAll: true } })); } catch (e) {}")
     if settings is not None:
         await page.add_init_script(f"try {{ if (!sessionStorage.getItem('kt')) {{ localStorage.setItem('sudoku.settings.v1', {json.dumps(json.dumps(settings))}); sessionStorage.setItem('kt', '1'); }} }} catch (e) {{}}")
     await page.goto(f'http://127.0.0.1:{PORT}/?debug=1{query}{hash_}')
