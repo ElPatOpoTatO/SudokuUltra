@@ -80,6 +80,11 @@ function render() {
   const tk = chip(orow, 'Progress token');
   tk.addEventListener('click', () => { closeDev(); openSheet(); });
   chip(orow, 'Prototype puzzle', 'proto');
+  /* --- step8: TEMP entry until Home (step 7) exists --- */
+  const fmc = chip(orow, 'Free Mode');
+  fmc.dataset.nav = 'free';
+  fmc.addEventListener('click', () => { closeDev(); document.dispatchEvent(new CustomEvent('sudoku:nav', { detail: { to: 'free' } })); });
+  /* --- end step8 --- */
   const close = chip(orow, 'Close');
   close.addEventListener('click', closeDev);
 

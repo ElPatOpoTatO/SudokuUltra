@@ -25,6 +25,9 @@ import * as hintlogic from './hintlogic.js';
 /* --- keys: keycap styles, colorways, switch sounds, Settings sheet --- */
 import { initKeys } from './settingsui.js';
 /* --- end keys --- */
+/* --- step8: Free Mode (Quick Play + Daily) --- */
+import { initFreeMode } from './freemode.js';
+/* --- end step8 --- */
 
 const REWIND_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 18 4 12l7-6z"/><path d="M20 18l-7-6 7-6z"/></svg>';
 
@@ -58,6 +61,9 @@ loadSaved();
 /* --- level0: after loadSaved; may start the runner / a Level 0 from the URL (#camp=0, #l0=w0) --- */
 initCampaign();
 /* --- end level0 --- */
+/* --- step8: after initCampaign (chains its toast / Next hooks) --- */
+initFreeMode();
+/* --- end step8 --- */
 
 /* Test hooks, only with ?debug=1 */
 if (DEBUG) {

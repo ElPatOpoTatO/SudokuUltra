@@ -3,6 +3,9 @@
 // 7 MOTION). Only change: givens come from S.given (per puzzle).
 import { $, div, rowOf, colOf, BOXES, PEERS, PEERFLAG, bit, reducedMotion, dist } from './util.js';
 import { S, UI, conflictAt, countOf, wrongAt, hintHooks } from './state.js';
+/* --- step8 --- */
+import { shownConflict } from './state.js';
+/* --- end step8 --- */
 import { digitKeys, keys } from './pad.js';
 
 export const boardEl = $('board');
@@ -70,7 +73,7 @@ export function refresh() {
     cl.toggle('sel', i === sel && !S.loaded);
     cl.toggle('peer', !!(peers && peers[i]));
     cl.toggle('same', !!focus && v === focus);
-    cl.toggle('conflict', conflictAt(i) || wrongAt(i));
+    cl.toggle('conflict', /* --- step8 --- */ shownConflict(i) /* --- end step8 --- */);
     for (let k = 0; k < 9; k++) c.n[k].classList.toggle('hit', k + 1 === focus);
   }
 

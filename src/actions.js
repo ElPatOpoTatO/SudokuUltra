@@ -8,6 +8,9 @@ import {
   S, UI, pushUndo, restore, countOf, isLocked, isSolvedBoard, checkDeadEnd,
   rewindTarget, rewindNotes, spotPlacementHit, spotEliminationHit
 } from './state.js';
+/* --- step8 --- */
+import { feedbackMode } from './state.js';
+/* --- end step8 --- */
 import {
   cells, mistEl, toastEl, toastMsg, renderCell, renderAll, refresh,
   animPop, animFlash, animNoteIn, animNoteFlick, animErase, animModeShimmer, animPing, bumpCounter,
@@ -115,7 +118,13 @@ function consequences(i, d) {
   //    a wrong digit at once). A wrong digit with no visible clash is silent.
   const clashes = PEERS[i].filter(j => S.values[j] === d);
   const wrong = d !== S.sol[i];
-  if (clashes.length || (wrong && S.mode === 'spot')) {
+  /* --- step8: Free Mode feedback ('instant' flags any wrong digit, 'nothing' shows nothing) --- */
+  const fb = feedbackMode();
+  if (fb === 'nothing' && S.mode === 'free') {
+    if (wrong) S.silentWrong++;
+  } else
+  /* --- end step8 --- */
+  if (clashes.length || (wrong && (S.mode === 'spot' /* --- step8 --- */ || fb === 'instant' /* --- end step8 --- */))) {
     mistake(i, clashes);
   } else if (wrong) S.silentWrong++;
 
@@ -125,6 +134,13 @@ function consequences(i, d) {
   if (spotHit) spotSuccess(spotHit, i);
   else if (solved) {
     S.solved = true;
+    /* --- step8: TEMP solved emitter (remove on merge if step7 emits) --- */
+    try {
+      document.dispatchEvent(new CustomEvent('sudoku:solved', { detail: {
+        id: S.id, mode: S.kind, world: S.world, mistakes: S.mistakes, paidHints: S.paidHints || 0,
+        silentWrong: S.silentWrong, ms: null, charges: 0, clean: S.mistakes === 0 } }));
+    } catch (e) {}
+    /* --- end step8 --- */
     S.selected = -1; S.loaded = 0; S.loadedNote = false;
     const total = animCascade(i);
     FX.wave(i, CASCADE_STEP());

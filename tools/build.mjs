@@ -134,6 +134,9 @@ let css = fs.readFileSync(path.join(SRC, 'style.css'), 'utf8').trim();
 /* --- keys: keycap styles + Settings sheet CSS, appended after style.css --- */
 css += '\n' + fs.readFileSync(path.join(SRC, 'keys.css'), 'utf8').trim();
 /* --- end keys --- */
+/* --- step8: Free Mode screen CSS, appended after keys.css --- */
+css += '\n' + fs.readFileSync(path.join(SRC, 'freemode.css'), 'utf8').trim();
+/* --- end step8 --- */
 const tpl = fs.readFileSync(path.join(SRC, 'index.html'), 'utf8');
 if (!tpl.includes('/*__STYLE__*/') || !tpl.includes('//__SCRIPT__')) fail(path.join(SRC, 'index.html'), 'template placeholders missing');
 const html = tpl.replace('/*__STYLE__*/', () => css).replace('//__SCRIPT__', () => js);
