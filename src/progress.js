@@ -49,7 +49,7 @@ function doContinue() {
   const c = lp.ctx;
   if (c && c.world != null && c.k != null) startCampaign(c.world, c.k, true);
   else if (/^w(\d)-l0$/.test(lp.id)) startLevel0Alone(+lp.id[1]);
-  else if (S.id !== lp.id && has(lp.id)) startPuzzle(lp.id);
+  else if (has(lp.id)) startPuzzle(lp.id, true);   // also re-runs the start hooks (Free Mode session, clock)
   recordLast();
 }
 let sessionStarted = false;
@@ -84,6 +84,32 @@ function go(to) {
   else if (to === 'settings') openSettings();
   else if (to === 'free') hideScreens();              // Free Mode screens (src/freemode.js) take over
 }
+/* ---- the game header's one back control ---------------------------------------
+   Free Mode puzzle (Quick Play / Daily) → the Free Mode screen; campaign runner
+   or a world's Level 0 → that world's level list; anything else → Home. */
+let homeBtn = null;
+function backTarget() {
+  if (S.kind === 'quick' || S.kind === 'daily') return { to: 'free', label: 'Back to Free Mode' };
+  const c = campCurrent();
+  const w = c ? c.world : (S.mode === 'l0' || S.mode === 'l0demo') && typeof S.world === 'number' ? S.world : null;
+  if (w != null && WORLD_IDS.includes(w)) return { to: 'world', world: w, label: `Back to World ${w}` };
+  return { to: 'home', label: 'Home' };
+}
+function syncBack() {
+  if (!homeBtn) return;
+  const t = backTarget();
+  if (homeBtn.dataset.to === t.to && homeBtn.getAttribute('aria-label') === t.label) return;
+  homeBtn.dataset.to = t.to;
+  homeBtn.setAttribute('aria-label', t.label);
+  homeBtn.title = t.label;
+  homeBtn.innerHTML = t.to === 'home' ? ICON.home : ICON.back;
+}
+function goBack() {
+  const t = backTarget();
+  if (t.to === 'free') nav('free');
+  else if (t.to === 'world') openWorld(t.world, 0);
+  else showHome(0);
+}
 function playLevel(w, k) {
   hideScreens();
   sessionStarted = true;
@@ -96,7 +122,7 @@ export function initProgress() {
   startClock(S.id);
   gameHooks.start.push(id => { startClock(id); clearResults(); });
   const label = gameHooks.label;
-  gameHooks.label = () => { recordLast(); return label ? label() : null; };
+  gameHooks.label = () => { recordLast(); syncBack(); return label ? label() : null; };
   const after = toastHooks.after;
   toastHooks.after = () => { if (after) after(); onToast(); };
   campHooks.blocked = w => openWorld(w, 1, { blocked: true });
@@ -118,7 +144,9 @@ export function initProgress() {
   const hb = div('hbtn', null); hb.id = 'homeBtn';
   hb.setAttribute('role', 'button'); hb.setAttribute('aria-label', 'Home'); hb.innerHTML = ICON.home;
   hdr.insertBefore(hb, hdr.firstChild);
-  bindHeaderBtn(hb, () => { sfx.mod(); showHome(0); });
+  homeBtn = hb;
+  bindHeaderBtn(hb, () => { sfx.mod(); goBack(); });
+  syncBack();
 
   document.addEventListener('sudoku:nav', e => { const to = e.detail && e.detail.to; if (to) go(to); });
   onProfile(() => { paintBadge(); const c = currentScreen(); if (c === 'home') paintHome(); else if (c === 'campaign') paintMap(); else if (c === 'world') paintWorld(mapWorld()); });
@@ -129,6 +157,7 @@ export function initProgress() {
   if (direct) sessionStarted = true;
   else showScreen('home', null, 0);
   booted = true;
+  if (!direct && /[#&]free\b/.test(location.hash)) nav('free');    // #free: Free Mode over Home
 
   if (DEBUG) {
     window.__debug = window.__debug || {};
@@ -136,7 +165,7 @@ export function initProgress() {
       getProfile, setProfile, recordSolved, emitSolved, chargesFor, nav, worldStats, totals, expertise, levelIds, levelInfo,
       isUnlocked, setDevUnlockAll, RC, MAP, SPARKS, fillAll, fillVisible, fillKey, openMap, openWorld, showHome, hideScreens,
       screen: currentScreen, lastResult: getLastResult, lastSolved: getLastSolved, devMaster, devGate,
-      hideToast
+      hideToast, backTarget
     };
   }
 }

@@ -136,7 +136,7 @@ At launch the app shows Home, unless the URL opens something directly (`#p=`, `#
 - **Campaign** (→ the keyboard map), **Free Mode** (dispatches `sudoku:nav {to:'free'}` and leaves the screens), **Settings** (with the badge dot).
 - A footer explains the three charges. **DEV** (top left) opens the dev menu.
 
-Every screen has a way back Home: back / home buttons on the screens, and a Home button at the left of the game header. Escape on a desktop keyboard goes back. While a screen is up, keyboard input does not reach the board.
+Every screen has a way back Home: back / home buttons on the screens, and the back control at the left of the game header (Home, or after the merge: Free Mode during a Quick Play / Daily puzzle, the world's level list during a campaign level). Escape on a desktop keyboard goes back. While a screen is up, keyboard input does not reach the board.
 
 ## Profile format
 
@@ -183,6 +183,21 @@ document.addEventListener('sudoku:solved', e => {
 - `cell` is the winning cell.
 - profile.js records every event. Campaign levels keep their best result, and clean solves feed expertise.
 - On `to:'free'` this branch only hides its screens. The Free Mode screens (src/freemode.js) take over from there.
+
+## Integration with Free Mode (step 7 + step 8 merged)
+
+- **One solved event.** `actions.js` emits `sudoku:solved` once per solve (a solved board or a found Spot it) through `events.js emitSolved`. Step 8's TEMP emitter is gone. Listeners, in registration order: Free Mode (`freemode.js onSolved`: best times, solved ids, daily streak; ignores ids that are not its current session and solves already handled), then the profile (`profile.js recordSolved`: charges for campaign levels, expertise for clean solves).
+- **`ms`.** While Free Mode owns the puzzle, `events.clockHooks.ms(id)` returns Free Mode's own play clock (it pauses behind every screen, persists across reloads and resumes). So the event, the toast and the best times carry the same time. For other puzzles `ms` is the time since the puzzle was opened in this session.
+- **Charges.** Free Mode ids are not campaign levels, so `recordSolved` stores no charges for them and `onToast` shows no results card. The `charges` / `clean` fields are still computed by the same rule, and a clean Free Mode solve adds `band world + 1` expertise points (not twice for the same id in a row: `flags.lastFree`). Free Mode's own bookkeeping never touches expertise.
+- **Toasts.** Campaign levels: the results card (`chargeui.js`); Free Mode puzzles: the Free Mode title/message and, for a Daily, the streak row with the flame. Each hook checks the puzzle kind, so the two never show together.
+- **Mastery.** `fm-progress.js` imports `getProfile()` and reads `.mastered`; it is the only place Free Mode learns mastery. Free Mode re-renders its bands on `onProfile` (DEV "master worlds" applies live). The old `sudoku.camp.v1` fallback is gone (the profile migrates that store once).
+- **Navigation.** Home's Free Mode key → `nav('free')` → step 7 hides its screens, Free Mode opens (z-index 31, above the step 7 layers). Free Mode's Home key / Escape → `nav('home')` → Free Mode closes, Home shows. `#free` opens Free Mode over Home at launch.
+- **The header's one back control** (`#homeBtn`, `progress.js backTarget()`): Quick Play / Daily → Free Mode (chevron, "Back to Free Mode"); the campaign runner or a world's Level 0 → that world's level list (chevron, "Back to World N"); anything else → Home (house icon). `data-to` holds `free` / `world` / `home`. Step 8's `#fmBack` button and the TEMP DEV chip are removed.
+- **Continue** resumes the last puzzle played of any kind ("Quick Play · Gentle", "Daily · Medium", "World 1 · Spot it 3"). Outside a running session it restarts that puzzle through `startPuzzle(id, true)` so the start hooks run (Free Mode session, clock, hint limits).
+- **Boot.** The app opens on Home. The puzzle the game boots underneath (the last played, or `q-gentle-001` on a fresh install) is inert: it is not recorded as played and its Free Mode clock does not run (or persist) until the board is actually shown.
+- **Feedback setting.** Free Mode only (`ruleHooks.feedback` answers `'conflicts'` for every non-Free-Mode kind); `freemode-test.py feedback` checks that a campaign puzzle ignores it.
+- **Header at 375 px.** The status line has short forms (`Tap a cell · Pen`, `5 · note`, `Spot a Hidden Single`) shown at ≤ 400 px through `.s-long` / `.s-short` spans (the text content is unchanged, so the parity test still compares the prototype's strings), and the DEV label is capped at 36 % of the header so it sits between the Mistakes counter and the buttons.
+- **Tests.** `tools/integration-test.py` (I1–I7) covers the combined flows; see the README.
 
 ## Tests
 

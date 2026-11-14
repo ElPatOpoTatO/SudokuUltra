@@ -141,6 +141,15 @@
 
 /* the game header's Home button */
 #homeBtn { margin-right: -4px; margin-left: -6px; }
+/* merge: a tight header (375 px) — short status strings, the DEV label kept
+   between the Mistakes counter and the header buttons */
+.status .s-short { display: none; }
+.hdr .pid { max-width: 36%; }
+@media (max-width: 400px) {
+  .status .s-long { display: none; }
+  .status .s-short { display: inline; }
+  .status .s-short::before { content: attr(data-s); }
+}
 
 /* ---- expertise -------------------------------------------------------------- */
 .xp { display: flex; flex-direction: column; gap: 7px; }

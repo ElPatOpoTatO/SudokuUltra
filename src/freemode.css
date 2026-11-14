@@ -1,0 +1,196 @@
+/* =========================================================================
+   FREE MODE (freemode.css, appended after keys.css by the build)
+   Screen: Daily card on top, Quick Play band keycaps below, the Free Mode
+   feedback setting. Keys are real .key elements (settings.js dresses them),
+   so they follow the player's keycap style and colorway. Plates use the
+   colorway's --plate (fallback --line when the classic debug look is on).
+   ========================================================================= */
+.fm {
+  position: fixed; inset: 0; z-index: 31; background: var(--bg); color: var(--ink);
+  opacity: 0; visibility: hidden; transform: translate3d(0, 10px, 0); pointer-events: none;
+  transition: opacity 200ms ease-out, transform 280ms cubic-bezier(.2,.8,.25,1), visibility 0s 280ms;
+}
+.fm.show { opacity: 1; visibility: visible; transform: none; pointer-events: auto; transition: opacity 200ms ease-out, transform 280ms cubic-bezier(.2,.8,.25,1), visibility 0s; }
+.fm-in {
+  height: 100%; max-width: 500px; margin: 0 auto; display: flex; flex-direction: column;
+  padding:
+    max(env(safe-area-inset-top), 8px)
+    max(env(safe-area-inset-right), 14px)
+    0
+    max(env(safe-area-inset-left), 14px);
+}
+.fm-top { flex: none; height: 48px; display: flex; align-items: center; gap: 12px; }
+.fm-top h1 { margin: 0; font-size: 21px; font-weight: 760; letter-spacing: -.01em; }
+.fm .key { touch-action: pan-y; }
+.fm .key:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 12px; }
+.fm-back { --kh: 36px; width: 86px; flex: none; }
+.fm-back .cap { grid-auto-flow: column; grid-template-rows: none !important; justify-content: center; align-items: center; gap: 3px; }
+.fm-back svg { width: 16px; height: 16px; }
+.fm-back .lbl { font-size: 12.5px !important; font-weight: 680; color: var(--cap-ink); }
+
+.fm-scroll {
+  flex: 1 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+  margin: 0 -14px; padding: 6px 14px max(env(safe-area-inset-bottom), 16px);
+  display: flex; flex-direction: column; gap: 16px;
+}
+
+/* ---- shared plate (the pad's plate, smaller) ---- */
+.fm-week, .fm-bands {
+  position: relative; isolation: isolate; border-radius: 15px;
+  background: linear-gradient(165deg, rgba(255,255,255,.14), rgba(0,0,0,.06)), var(--plate, var(--line));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.35), inset 0 -2px 0 rgba(0,0,0,.08);
+}
+@media (prefers-color-scheme: dark) {
+  .fm-week, .fm-bands { box-shadow: inset 0 1px 0 rgba(255,255,255,.05), inset 0 -2px 0 rgba(0,0,0,.4), 0 0 0 1px rgba(255,255,255,.03); }
+}
+
+/* ---- Daily card ---- */
+.fm-card {
+  background: var(--surface); border-radius: 20px; padding: 14px 14px 12px;
+  box-shadow: 0 0 0 1px var(--line), 0 14px 30px -22px rgba(0,0,0,.35);
+}
+.fm-dhead { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.fm-eyebrow, .fm-fb h3 { font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-3); }
+.fm-dtitle { margin-top: 2px; font-size: 18px; font-weight: 720; letter-spacing: -.005em; white-space: nowrap; }
+.fm-streak { display: flex; align-items: center; gap: 6px; padding: 5px 10px 5px 7px; border-radius: 13px; background: var(--bg); box-shadow: inset 0 0 0 1px var(--line); }
+.fm-sn { display: grid; line-height: 1; }
+.fm-sn b { font-size: 19px; font-weight: 760; }
+.fm-sn small { margin-top: 2px; font-size: 9.5px; font-weight: 650; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-3); }
+
+/* the flame: an outline until lit */
+.fm-flame { display: grid; place-items: center; width: 26px; height: 26px; transform-origin: 50% 85%; }
+.fm-flame svg { width: 100%; height: 100%; overflow: visible; }
+.fm-flame .fo { fill: transparent; stroke: var(--ink-3); stroke-width: 1.6; stroke-linejoin: round; transition: fill 200ms ease-out, stroke 200ms ease-out; }
+.fm-flame .fi { fill: #ffd76a; opacity: 0; transition: opacity 200ms ease-out; }
+.lit > .fm-flame .fo { fill: #ff7330; stroke: #f05a1a; }
+.lit > .fm-flame .fi { opacity: 1; }
+.lit > .fm-flame svg { filter: drop-shadow(0 1px 4px rgba(255, 110, 40, .45)); }
+
+/* week strip: seven small keycaps on a plate */
+.fm-week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; padding: 6px 6px 8px; }
+.fm-day { --kh: clamp(42px, 5.8dvh, 48px); }
+.fm-day .cap { grid-template-rows: auto auto; align-content: center; gap: 1px; }
+.fm-day .fm-wd { font-size: 9px; font-weight: 700; letter-spacing: .06em; opacity: .6; line-height: 1; }
+.fm-day .lg { font-size: 15px !important; font-weight: 700 !important; line-height: 1; }
+.fm-day .led { left: auto !important; right: calc(var(--kS, 0px) + 4px) !important; top: calc(var(--kB, 0px) + 4px) !important; width: 5px !important; height: 5px !important; }
+.fm-day .fm-ck { position: absolute; right: calc(var(--kS, 0px) + 3px); top: calc(var(--kB, 0px) + 2px); width: 10px; height: 10px; display: none; }
+.fm-day .fm-ck svg { width: 100%; height: 100%; display: block; }
+.fm-day.late .fm-ck { display: block; opacity: .75; }
+.fm-day.latched .lg { color: var(--accent-ink); }
+/* today: a mark on the plate under the key */
+.fm-day.today::after {
+  content: ""; position: absolute; left: 50%; bottom: -6px; width: 14px; height: 3px; margin-left: -7px;
+  border-radius: 2px; background: var(--accent);
+}
+.kx .fm-day.today::after { background: var(--led); box-shadow: 0 0 4px var(--led); }
+/* future days: an empty slot on the plate */
+.fm-day.future { cursor: default; }
+.fm-day.future .shadow, .fm-day.future .wall { opacity: 0; }
+.fm-day.future .cap { background: none; box-shadow: inset 0 0 0 1.5px var(--plate-line, var(--line-strong)); color: var(--plate-ink, var(--ink-3)); opacity: .7; }
+.fm-day.future .cap::after { display: none; }
+.kx .fm-day.future { --lg: var(--plate-ink); }
+.kx .fm-day.future .sk, .kx .fm-day.future .tf, .kx .fm-day.future .sw { opacity: 0; }
+
+.fm-dfoot { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
+.fm-dstatus { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.fm-dstatus .fm-dn { font-size: 13px; font-weight: 600; color: var(--ink-2); }
+.fm-dstatus .fm-ok { display: flex; align-items: center; gap: 5px; font-size: 15px; font-weight: 720; color: var(--accent-ink); }
+.fm-dstatus .fm-ok svg { width: 17px; height: 17px; }
+.fm-dstatus small { font-size: 12.5px; font-weight: 650; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.fm-play { --kh: 46px; width: 132px; flex: none; }
+/* the accent cap (same colorway slot as the Hint key) */
+.kx .key.fm-play { --base: var(--cap-accent); --lg: var(--legend-accent); --lgl: var(--legend-accent); --veil: var(--veil-accent); --glf: var(--glf-accent); }
+.fm-play .cap { grid-auto-flow: column; grid-template-rows: none; justify-content: center; align-items: center; gap: 7px; }
+.fm-play svg { width: 17px; height: 17px; }
+.fm-play .lbl { font-size: 14px; font-weight: 720; color: var(--cap-ink); }
+.fm-next { margin-top: 10px; font-size: 11.5px; font-weight: 560; color: var(--ink-3); text-align: right; }
+
+/* ---- Quick Play ---- */
+.fm-qhead { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 2px 2px 10px; }
+.fm-qhead h2 { margin: 0; font-size: 18px; font-weight: 740; }
+.fm-ch { display: flex; align-items: center; gap: 9px; font-size: 13px; font-weight: 620; color: var(--ink-2); cursor: pointer; }
+.fm-ch .set-toggle { width: 44px; height: 26px; border-radius: 13px; }
+.fm-ch .set-toggle i { width: 20px; height: 20px; }
+.fm-ch .set-toggle[aria-checked="true"] i { transform: translateX(18px); }
+.fm-warn {
+  display: none; align-items: flex-start; gap: 8px; margin: -2px 0 10px; padding: 8px 10px; border-radius: 12px;
+  background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent-sel);
+  font-size: 12px; line-height: 1.35; font-weight: 560; color: var(--ink-2);
+}
+.fm-warn.show { display: flex; animation: fm-in 220ms ease-out; }
+.fm-warn svg { flex: none; width: 15px; height: 15px; margin-top: 1px; color: var(--accent-ink); }
+@keyframes fm-in { from { opacity: 0; transform: translate3d(0, -4px, 0); } to { opacity: 1; transform: none; } }
+
+.fm-bands { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 9px; padding: 8px 8px 10px; }
+.fm-band { --kh: 56px; height: clamp(90px, 12.4dvh, 106px); }
+.fm-band .cap {
+  display: grid; grid-template-rows: auto auto 1fr; align-content: stretch; justify-items: start; place-items: initial;
+  text-align: left; padding: 10px 12px 9px; color: var(--cap-ink);
+}
+.kx .fm-band .cap { padding: calc(var(--kB) + 8px) calc(var(--kS) + 10px) calc(var(--kF) + 6px); }
+.fm-bn { font-size: 17px; font-weight: 760; line-height: 1.1; }
+.kx .fm-bn { text-transform: var(--lbl-tt); letter-spacing: var(--lbl-ls); font-weight: var(--lbl-w); }
+.kx.ks-sa .fm-bn { font-size: 15px; }
+.fm-bneeds { margin-top: 2px; font-size: 11.5px; font-weight: 620; opacity: .66; white-space: nowrap; }
+.fm-bstat { align-self: end; font-size: 11.5px; font-weight: 560; opacity: .8; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.fm-bstat b { font-weight: 760; }
+.fm-band .led { left: auto !important; right: calc(var(--kS, 0px) + 10px) !important; top: calc(var(--kB, 0px) + 10px) !important; }
+.fm-block {
+  position: absolute; left: calc(var(--kS, 0px) + 10px); bottom: calc(var(--kF, 0px) + 6px);
+  display: flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 680; opacity: 0; pointer-events: none;
+}
+.fm-block svg { width: 14px; height: 14px; overflow: visible; }
+.fm-block .shackle { transform-box: fill-box; transform-origin: 100% 100%; }
+.fm-band.locked { cursor: default; }
+.fm-band.locked .fm-bn, .fm-band.locked .fm-bneeds { opacity: .42; }
+.fm-band.locked .fm-bstat { opacity: 0; }
+.fm-band.locked .fm-block { opacity: .8; }
+.fm-band.locked .shadow { opacity: .6; }
+/* the lock opens where it sits, then fades (Challenge me switched on) */
+.fm-block.opening { animation: fm-unlock 560ms ease-out; }
+.fm-block.opening .shackle { animation: fm-shackle 560ms cubic-bezier(.3,1.4,.5,1); }
+@keyframes fm-unlock { 0%, 55% { opacity: .8; } 100% { opacity: 0; } }
+@keyframes fm-shackle { 0% { transform: none; } 45%, 100% { transform: translate3d(0, -2.5px, 0) rotate(28deg); } }
+
+/* ---- Free Mode feedback ---- */
+.fm-fb h3 { margin: 4px 2px 8px; }
+.fm-seg {
+  position: relative; display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px;
+  padding: 3px; border-radius: 12px; background: var(--line);
+}
+.fm-seg button {
+  appearance: none; border: 0; background: transparent; color: var(--ink-2); font: inherit;
+  font-size: 12.5px; font-weight: 640; height: 36px; border-radius: 9px; cursor: pointer; padding: 0 2px;
+  position: relative; z-index: 1; touch-action: manipulation; white-space: nowrap;
+}
+.fm-seg button[aria-checked="true"] { color: var(--ink); }
+.fm-seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.fm-seg .thumb {
+  position: absolute; top: 3px; bottom: 3px; left: 3px; width: calc((100% - 10px) / 3);
+  border-radius: 9px; background: var(--surface);
+  box-shadow: 0 1px 2px rgba(0,0,0,.12), 0 2px 8px -2px rgba(0,0,0,.14);
+  transform: translateX(calc(var(--i, 1) * (100% + 2px)));
+  transition: transform 260ms cubic-bezier(.3,1.25,.5,1);
+}
+.fm-fbnote { margin: 8px 2px 0; min-height: 32px; font-size: 12px; line-height: 1.35; color: var(--ink-2); }
+
+/* ---- game side: header button, toast streak row, embers ---- */
+.fm-tstreak { display: none; align-items: center; justify-content: center; gap: 6px; margin: -6px 0 12px; }
+.fm-tstreak.on { display: flex; }
+.fm-tstreak .fm-flame { width: 24px; height: 24px; }
+.fm-tstreak b { font-size: 17px; font-weight: 760; }
+.fm-tstreak small { font-size: 12px; font-weight: 600; color: var(--ink-2); }
+.fm-embers { position: fixed; inset: 0; z-index: 60; pointer-events: none; }
+.fm-ember {
+  position: absolute; left: 0; top: 0; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%;
+  background: radial-gradient(circle, #fff4c8 0%, #ffb23c 45%, #ff6a1f 80%);
+  box-shadow: 0 0 8px 2px rgba(255, 140, 40, .5); opacity: 0; will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fm { transform: none; transition: opacity 120ms ease-out, visibility 0s 120ms; }
+  .fm.show { transition: opacity 120ms ease-out, visibility 0s; }
+  .fm-seg .thumb, .fm-flame .fo, .fm-flame .fi { transition-duration: 80ms; }
+  .fm-warn.show { animation: none; }
+}

@@ -142,3 +142,24 @@ python3 tools/parity-test.py    # parity with the feel prototype + game-flow tes
 ```
 
 The shell modules live in `src/` (see `docs/shell-map.md` for what each holds and `docs/shell-report.md` for test results). `src/index.html` is the HTML template; the build inlines `style.css`, the module graph from `src/main.js` and `data/puzzles.json`. URL options: `#p=<puzzle id>` opens a puzzle (`#p=proto` = the prototype's puzzle, DEV), `?debug=1` exposes `window.__debug` for tests. Tap the DEV label in the header for the puzzle menu.
+
+### Screens
+
+The app opens on **Home**; the board always stays loaded underneath the screens.
+
+| Screen | How you get there | What it holds |
+|---|---|---|
+| **Home** (`src/home.js`) | launch; Home buttons; Free Mode's Home key; Escape | SUDOKU title, expertise (tier + level), total charge bar, **Continue** (resumes the last puzzle played: a campaign level, a Quick Play or a Daily), **Campaign**, **Free Mode**, **Settings**, DEV |
+| **Campaign map** (`src/campmap.js`) | Home → Campaign | The keyboard being built (one socket per world), the next world's card |
+| **World level list** | a world's key on the map; the game header's back control during a campaign level | Level 0, Spot it 1–6, Use it 1–6, Master (with the 24 ⚡ gate) |
+| **Free Mode** (`src/freemode.js`) | Home → Free Mode (`sudoku:nav {to:'free'}`); the game header's back control during a Quick Play / Daily puzzle | Daily card (week strip, streak, Play), Quick Play bands (locked by mastered worlds, Challenge me), the Free Mode feedback setting |
+| **Game** | starting any puzzle; Continue | The board. The header's one back control (left) goes to Free Mode during a Quick Play / Daily puzzle, to the world's level list during a campaign level or a world's Level 0, and Home otherwise |
+| **Settings** (sheet) | Home → Settings; the header gear | Keycap style, layout, colorway, sound (locked items are earned in the campaign) |
+
+After a solve, a campaign level shows the **power charges** card on the toast; a Free Mode puzzle shows the Free Mode toast (time, "New best", and for a Daily the streak flame). Free Mode solves give no charges, but clean ones raise expertise. Details: `docs/progression.md` (step 7) and `docs/freemode.md` (step 8); the combined events contract is at the end of `docs/progression.md`.
+
+URL options for tests: `#p=<id>`, `#camp=w.k`, `#l0=wN` open the game directly (skipping Home); `#free` opens Free Mode over Home.
+
+```
+python3 tools/integration-test.py   # Home + campaign + Free Mode together (INTEG_PORT, default 8799)
+```

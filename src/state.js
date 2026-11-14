@@ -73,8 +73,18 @@ export function conflictAt(i) {
 export function countOf(d) { let n = 0; for (let i = 0; i < 81; i++) if (S.values[i] === d) n++; return n; }
 export const isLocked = d => countOf(d) >= 9;
 
+/* --- step8: Free Mode feedback setting. freemode.js sets ruleHooks.feedback;
+   it returns 'instant' | 'conflicts' | 'nothing' for the current puzzle
+   (only Quick Play / Daily ever get anything but the default 'conflicts'). --- */
+export const ruleHooks = { feedback: null };
+export const feedbackMode = () => (ruleHooks.feedback && ruleHooks.feedback()) || 'conflicts';
+/* --- end step8 --- */
+
 /* Spot it shows wrong digits at once (styled like a conflict). */
-export const wrongAt = i => S.mode === 'spot' && !!S.values[i] && !S.given[i] && S.values[i] !== S.sol[i];
+export const wrongAt = i => (S.mode === 'spot' /* --- step8 --- */ || feedbackMode() === 'instant' /* --- end step8 --- */) && !!S.values[i] && !S.given[i] && S.values[i] !== S.sol[i];
+/* --- step8: what the board shows as red ('nothing' shows none) --- */
+export const shownConflict = i => feedbackMode() !== 'nothing' && (conflictAt(i) || wrongAt(i));
+/* --- end step8 --- */
 
 export function isSolvedBoard() {
   for (let k = 0; k < 81; k++) if (S.values[k] !== S.sol[k]) return false;
@@ -85,6 +95,9 @@ export function isSolvedBoard() {
 /* Banner-worthy dead end: cannot be completed, but nothing clashes visibly. */
 export function checkDeadEnd() {
   if (S.mode !== 'free' || S.solved) return false;
+  /* --- step8: the dead-end banner is "conflicts only" feedback --- */
+  if (feedbackMode() !== 'conflicts') return false;
+  /* --- end step8 --- */
   for (let i = 0; i < 81; i++) if (conflictAt(i)) return false;
   return isDeadEnd(S.values);
 }

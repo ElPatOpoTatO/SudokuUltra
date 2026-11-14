@@ -3,6 +3,9 @@
 // 7 MOTION). Only change: givens come from S.given (per puzzle).
 import { $, div, rowOf, colOf, BOXES, PEERS, PEERFLAG, bit, reducedMotion, dist } from './util.js';
 import { S, UI, conflictAt, countOf, wrongAt, hintHooks } from './state.js';
+/* --- step8 --- */
+import { shownConflict } from './state.js';
+/* --- end step8 --- */
 import { digitKeys, keys } from './pad.js';
 
 export const boardEl = $('board');
@@ -70,7 +73,7 @@ export function refresh() {
     cl.toggle('sel', i === sel && !S.loaded);
     cl.toggle('peer', !!(peers && peers[i]));
     cl.toggle('same', !!focus && v === focus);
-    cl.toggle('conflict', conflictAt(i) || wrongAt(i));
+    cl.toggle('conflict', /* --- step8 --- */ shownConflict(i) /* --- end step8 --- */);
     for (let k = 0; k < 9; k++) c.n[k].classList.toggle('hit', k + 1 === focus);
   }
 
@@ -91,11 +94,14 @@ export function refresh() {
 
   const mode = S.pencil ? 'Pencil' : 'Pen';
   let msg;
+  /* --- merge: alt(long, short) keeps the text (textContent) but shows the short
+     form when the header is tight (≤ 400 px, style.css .s-long / .s-short) --- */
+  const alt = (long, short) => `<span class="s-long">${long}</span><span class="s-short" data-s="${short}"></span>`;
   if (S.solved) msg = S.mode === 'spot' ? 'Spotted' : 'Solved';
-  else if (S.loaded) msg = `<b>${S.loaded}</b> loaded${S.loadedNote ? ' as note' : ''} · tap cells`;
+  else if (S.loaded) msg = `<b>${S.loaded}</b>` + alt(` loaded${S.loadedNote ? ' as note' : ''} · tap cells`, S.loadedNote ? ' · note' : ' loaded');
   else if (sel >= 0) msg = `R${rowOf(sel) + 1} C${colOf(sel) + 1} · ${mode}`;
-  else if (S.mode === 'spot') msg = `Spot a <b>${S.spot.label}</b> · ${mode}`;
-  else msg = `Tap a cell or a number · ${mode}`;
+  else if (S.mode === 'spot') msg = `Spot a <b>${S.spot.label}</b>` + alt(` · ${mode}`, '');
+  else msg = alt('Tap a cell or a number', 'Tap a cell') + ` · ${mode}`;
   statusEl.innerHTML = msg;
   if (hooks.afterRefresh) hooks.afterRefresh();   // autosave (token.js)
   /* --- hints: board changed -> the hint ladder resets --- */

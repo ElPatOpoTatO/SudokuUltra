@@ -36,6 +36,11 @@ let t0 = performance.now(), t0id = '';
 /** Called when a puzzle starts (progress.js hooks gameHooks.start). */
 export function startClock(id) { if (id !== t0id) { t0 = performance.now(); t0id = id; } }
 
+/* Free Mode keeps its own pausable, persisted play clock (freemode.js). When it
+   owns the puzzle it answers here, so the event carries the same ms the Free
+   Mode toast and best times use. Otherwise: ms since the puzzle was opened. */
+export const clockHooks = { ms: null };
+
 let lastSolved = null;
 export const getLastSolved = () => lastSolved;
 
@@ -48,9 +53,15 @@ export function solvedDetail(cell = -1) {
   return {
     id: S.id, mode, kind, world: worldOf(S.id),
     mistakes: r.mistakes, paidHints: r.paidHints, silentWrong: S.silentWrong | 0,
-    ms: Math.round(performance.now() - (t0id === S.id ? t0 : performance.now())),
+    ms: msFor(S.id),
     charges, clean: charges === CHARGES_PER_LEVEL, cell
   };
+}
+
+function msFor(id) {
+  const own = clockHooks.ms ? clockHooks.ms(id) : null;
+  if (typeof own === 'number' && isFinite(own)) return Math.round(own);
+  return Math.round(performance.now() - (t0id === id ? t0 : performance.now()));
 }
 
 export function emitSolved(detail) {
