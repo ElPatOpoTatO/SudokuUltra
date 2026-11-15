@@ -12,6 +12,10 @@ import { getSettings } from './settings.js';
 import { setHooks } from './settingsui.js';
 import { getProfile, isUnlocked, lockWorld, clearBadge, clearFresh, itemsFor, itemName, onProfile } from './profile.js';
 import { ICON } from './home.js';
+/* --- step10: the unlock moment in Settings (source: the badge, then the tile) --- */
+import { SPARKS } from './sparks.js';
+import { currentScreen } from './screens.js';
+/* --- end step10 --- */
 
 const LOCK = ICON.lock;
 
@@ -108,9 +112,71 @@ export function showReward(w, parent = toastEl, before = $('againKey')) {
   return box;
 }
 
+/* ---- step10: a fresh unlock, the first time Settings opens after it ------------------
+   The gear's badge sends a spark into the sheet, to the new tile; the tile's lock pops
+   off (up, tumbling, falling with gravity), the tile lights, a soft latch. Tiles out of
+   view simply show unlocked. Reduced motion: the lock fades, the tile flashes. */
+export const UFX = { pops: 0, spark: 0 };
+let fxT = [];
+function badgePoint() {
+  const home = currentScreen() === 'home' ? document.querySelector('#home .key.set .dotb') : null;
+  const el = home || $('setBtn');
+  if (!el) return null;
+  const r = el.getBoundingClientRect();
+  if (r.width < 1) return null;
+  return home ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : { x: r.right - 9, y: r.top + 9 };
+}
+function freshFx(sheet, src) {
+  const tiles = [...sheet.querySelectorAll('.set-tile.fresh, .set-swatch.fresh')];
+  if (!tiles.length) return;
+  const rm = reducedMotion();
+  tiles.forEach(t => t.classList.add('fx-wait'));
+  const go = () => {
+    const vis = tiles.filter(t => { const r = t.getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight; });
+    tiles.filter(t => !vis.includes(t)).forEach(t => t.classList.remove('fx-wait'));
+    if (vis.length) { document.body.classList.add('bk-fx'); fxT.push(setTimeout(() => document.body.classList.remove('bk-fx'), 1500 + vis.length * 160)); }
+    if (src && vis.length && !rm) {
+      UFX.spark++;
+      SPARKS.pulse(src, vis[0].querySelector('.set-mk, .set-mini') || vis[0], { done: () => vis.forEach((t, j) => fxT.push(setTimeout(() => popTile(t, j), j * 160))) });
+    } else vis.forEach((t, j) => fxT.push(setTimeout(() => popTile(t, j), j * 160)));
+  };
+  fxT.push(setTimeout(go, 360));          // after the sheet's spring has settled (rects read once)
+}
+function popTile(t, j) {
+  if (!t.isConnected) return;
+  UFX.pops++;
+  const host = t.querySelector('.set-mk, .set-mini') || t, r = host.getBoundingClientRect();
+  const x = r.left + r.width / 2, y = r.top + r.height / 2, rm = reducedMotion();
+  const lock = document.createElement('span');
+  lock.className = 'set-pop'; lock.innerHTML = LOCK; lock.setAttribute('aria-hidden', 'true');
+  document.body.appendChild(lock);
+  t.classList.remove('fx-wait');
+  sfx.latch(0, Math.min(2, j)); haptic(8);
+  const glow = document.createElement('span'); glow.className = 'set-glow'; t.appendChild(glow);
+  glow.animate([{ opacity: 0 }, { opacity: 1, offset: 0.25 }, { opacity: 0 }], { duration: 620, easing: 'ease-out' }).onfinish = () => glow.remove();
+  if (rm) {
+    lock.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+    lock.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 220, fill: 'forwards' }).onfinish = () => lock.remove();
+    return;
+  }
+  const frames = [], dir = x < innerWidth / 2 ? -1 : 1, vx = dir * (0.04 + Math.random() * 0.03), vy = -0.34, g = 0.0017, D = 600;
+  for (let i = 0; i <= 10; i++) {
+    const tt = (i / 10) * D;
+    frames.push({ transform: `translate3d(${(x + vx * tt).toFixed(1)}px, ${(y + vy * tt + 0.5 * g * tt * tt).toFixed(1)}px, 0) rotate(${(dir * i * 9).toFixed(0)}deg) scale(${i === 0 ? 1.12 : 1})`, opacity: i < 7 ? 1 : 1 - (i - 6) / 4 });
+  }
+  lock.animate(frames, { duration: D, easing: 'linear', fill: 'forwards' }).onfinish = () => lock.remove();
+  SPARKS.crackle({ x, y }, 5);
+}
+
 export function initUnlockUI() {
   setHooks.sync.push(paintSheet);
-  setHooks.open.push(sheet => { paintSheet(sheet); clearBadge(); });
+  setHooks.open.push(sheet => {
+    /* step10: read the badge before it clears, then the fresh tiles pop their locks */
+    const had = getProfile().flags.badge, src = had ? badgePoint() : null;
+    paintSheet(sheet); clearBadge();
+    freshFx(sheet, src);
+  });
+  setHooks.close.push(() => { for (const t of fxT) clearTimeout(t); fxT = []; document.querySelectorAll('.set-pop').forEach(e => e.remove()); document.querySelectorAll('#setSheet .fx-wait').forEach(e => e.classList.remove('fx-wait')); document.body.classList.remove('bk-fx'); });
   setHooks.close.push(() => clearFresh());
   const sheet = $('setSheet');
   if (sheet) {

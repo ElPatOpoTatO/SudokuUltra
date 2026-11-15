@@ -86,8 +86,9 @@ Edits to shared files are fenced with `/* --- step8: … --- */ … /* --- end s
 
 - **Keycap presses:** the cap goes down and the switch sound (`sfx.mod`, routed to the player's switch) plays on pointerdown, with release on the upstroke, like the pad. On this scrollable screen the *action* runs on release, and dragging more than 10 px cancels it (it is a scroll). Enter and Space work on focused keys. While the screen is open, `UI.sheetOpen` keeps keyboard input away from the board.
 - **Streak ignite:** when a daily solve raises the streak, the toast shows a streak row with an unlit flame outline. Nine embers rise from **the cell that finished the puzzle** (found from the last undo snapshot) along bowed paths to the flame. The first ember to arrive lights it: a scale pop, a soft low-pass "fwoomp" (synthesized with `sfx.prims`, ±5% pitch via `pj()`) and a latch chime. With reduced motion there are no embers and the flame fades in.
-- **Lock:** rattles when pressed while locked, and the shackle opens when Challenge me unlocks the card.
-- **Screen:** fades in and rises 10 px (opacity only with reduced motion).
+- **Lock:** rattles when pressed while locked. The shackle opens when Challenge me unlocks the card, and closes when Challenge me is turned off (step 10).
+- **Screen:** grows out of Home's Free Mode key and collapses back into it. A puzzle collapses into its band card or day key. With reduced motion it crossfades. If no key was pressed, it falls back to the old fade and 10 px rise. See `docs/effects-audit.md` (step 10).
+- **Since last visit (step 10):** when the streak rises, an ember leaves the flame for each newly solved day of the strip, and that day key latches on arrival. A band's solved count flips in, and a better best time blinks. Locks close again when Challenge me is turned off.
 
 ## Game-side additions
 

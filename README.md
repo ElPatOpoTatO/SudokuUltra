@@ -172,3 +172,16 @@ The key icon in the game header, Settings → **Backup & restore** and the small
 node tools/token-test.mjs           # codec + format: round trip, edits, migration, sizes
 python3 tools/token-test.py         # browser: device A -> device B, Undo, errors (TOKEN_PORT, default 8803)
 ```
+
+### Effects pass (step 10)
+
+Every animation outside the board has a source and a purpose (`docs/effects-audit.md`):
+
+- **Screen changes** grow out of the key you tapped and collapse back into it (`src/morph.js`). With reduced motion they crossfade.
+- **Sheets and the solved toast** spring out of the control that opened them.
+- **Gains animate once, on the next visit.** Home's expertise and total bars, a level list's pips, world bar and Master lock, Free Mode's band counts and streak days each show the delta since they were last seen. The "last seen" values live in `sudoku.ui.v1` (`src/uistate.js`). It is UI state only, not part of the backup code.
+- **Unlocks have a moment.** A fresh Settings tile pops its lock, and Backup's Copy sends a pulse into the code box.
+
+```
+python3 tools/effects-test.py       # transitions, interrupts, reduced motion, deltas, layout, fx, perf, shots (EFFECTS_PORT, default 8801)
+```

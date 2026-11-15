@@ -1,0 +1,84 @@
+/* =========================================================================
+   STEP 10 — EFFECTS PASS (effects.css, appended last by the build)
+   Transform / opacity only. Every rule here serves an effect with a source
+   (where the action happened) and a purpose (what its motion explains).
+   ========================================================================= */
+
+/* the slab: the tapped key's face growing into the next screen (morph.js) */
+.mslab { position: fixed; left: 0; top: 0; display: none; pointer-events: none; transform-origin: 0 0; will-change: transform, opacity; }
+
+/* charge meters: the delta grows with scaleX; the surge is an opacity flash of the hot core */
+.cm-fill { transform-origin: 0 50%; }
+.cm-fill::after { content: ""; position: absolute; inset: 0; border-radius: inherit; background: var(--charge-hot); opacity: 0; pointer-events: none; }
+.cm.surge .cm-fill { animation: none; }
+.cm.surge .cm-fill::after { animation: cm-hot 700ms ease-out; }
+@keyframes cm-hot { 0% { opacity: .55; } 100% { opacity: 0; } }
+
+/* expertise segments: the fill is a scaled child (scaleX), not a width */
+.xp-seg i::after { content: none; }
+.xp-seg i > b { position: absolute; inset: 0; background: var(--ink); border-radius: inherit; transform-origin: 0 50%; transform: scaleX(var(--f)); }
+.xp-lv b { display: inline-block; }
+
+/* a charge cell waiting for its fill to land (the DOM is final, the paint waits) */
+.cc.on.fx-wait .cc-fill { opacity: 0; transform: scaleY(.2); }
+.cc.on.fx-wait .cc-body { stroke: var(--charge-line); }
+.cc.on.fx-wait .cc-nub { fill: var(--charge-line); }
+.cc.on.fx-wait .cc-bolt { fill: none; stroke: var(--charge-line); stroke-width: 1.2; }
+.cc.on.fx-wait svg { filter: none; }
+.cw-row .key.lt .pips3 .cc.on.fx-wait .cc-body, .cw-row .key.lt .pips3 .cc.on.fx-wait .cc-bolt { stroke: color-mix(in srgb, var(--lg) 42%, transparent); }
+.cw-row .key.lt .pips3 .cc.on.fx-wait .cc-nub { fill: color-mix(in srgb, var(--lg) 42%, transparent); }
+
+/* the open world's switch: its halo breathes twice when the map opens, then rests (no ambient loop) */
+.kbd .key.wk.open > .sw .hs { animation: none; box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 1px 0 rgba(255,255,255,.35); }
+.kbd .key.wk.open > .sw .hs::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--charge) 60%, transparent), 0 0 12px var(--charge-glow);
+  animation: sw-halo 1.6s ease-in-out 2;
+}
+@keyframes sw-halo { 50% { opacity: .3; } }
+
+/* the Master tile before its lock pops off */
+.cw-row .key.mt > .cap > * { transition: opacity 220ms ease-out; }
+.cw-row .key.mt.fx-unlit > .cap > *:not(.m-pop) { opacity: .4; }
+.m-pop { position: absolute; left: calc(var(--kS, 6px) + 12px); top: 50%; width: 18px; height: 18px; margin-top: -10px; pointer-events: none; z-index: 3; color: var(--lg, var(--cap-ink)); opacity: 1 !important; }
+.m-pop svg { width: 100%; height: 100%; display: block; }
+
+/* Free Mode: a day waiting for its ember, the lock closing again */
+.fm-day.fx-wait.latched > .cap { transform: none; }
+.fm-day.fx-wait .fm-ck, .fm-day.fx-wait .led { opacity: 0 !important; }
+.fm-day.fx-wait.latched .lg { color: inherit; }
+.kx .fm-day.fx-wait.latched .shadow { opacity: 1; }
+.fm-sn b { display: inline-block; }
+.fm-bstat b { display: inline-block; }
+.fm-block.closing { animation: fm-lock 420ms ease-out; }
+.fm-block.closing .shackle { animation: fm-shackle-close 420ms cubic-bezier(.3,1.4,.5,1); }
+@keyframes fm-lock { 0% { opacity: 0; } 30%, 100% { opacity: .8; } }
+@keyframes fm-shackle-close { 0%, 30% { transform: translate3d(0, -2.5px, 0) rotate(28deg); } 100% { transform: none; } }
+
+/* Settings: a fresh unlock — the lock pops off the tile, the tile lights */
+.set-pop { position: fixed; left: 0; top: 0; z-index: 60; width: 26px; height: 26px; margin: -13px 0 0 -13px; border-radius: 50%; display: grid; place-items: center; pointer-events: none;
+  background: var(--surface); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.2), 0 0 0 1px var(--line); }
+.set-pop svg { width: 13px; height: 13px; }
+.set-glow { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 1;
+  box-shadow: inset 0 0 0 2px var(--charge), 0 0 14px var(--charge-glow); opacity: 0; }
+.set-tile.fx-wait .set-mk > .key, .set-swatch.fx-wait .set-mini > .key { opacity: .38; filter: saturate(.3); }
+
+/* Backup: the code box acknowledges what was copied */
+.bk-ack { position: absolute; pointer-events: none; border-radius: 10px; box-shadow: 0 0 0 2px var(--accent), 0 0 12px color-mix(in srgb, var(--accent) 45%, transparent); opacity: 0; }
+.sheet.bk { isolation: isolate; }
+body.fx-top .fxc { z-index: 52; }
+
+@media (prefers-reduced-motion: reduce) {
+  .kbd .key.wk.open > .sw .hs::after { animation: none; }
+  .fm-block.closing, .fm-block.closing .shackle { animation-duration: 1ms; }
+}
+
+/* results card: the unlock beat (its line is reserved from the start, it only lights) */
+.rc-unlock { display: flex; align-items: center; justify-content: center; gap: 5px; margin-top: 4px; min-height: 16px; font-size: 12px; font-weight: 740; color: color-mix(in srgb, var(--charge) 62%, var(--ink)); opacity: 0; }
+.rc-unlock.on { opacity: 1; }
+.rc-lk { width: 14px; height: 14px; display: inline-block; transform-origin: 50% 80%; }
+.rc-lk svg { width: 100%; height: 100%; display: block; }
+
+/* Settings tiles anchor their own overlays (the unlock glow, and the NEW tag, which had no positioned parent) */
+.set-tile, .set-swatch { position: relative; }
+.cc.fx-snap .cc-fill { transition: none; }

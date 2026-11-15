@@ -70,6 +70,8 @@ The card does not change the toast's title, message or keycap. Free Mode solves 
 | Total (Home, map) | All charges earned | 39 × open worlds | 39 × every world (5 × 39 = 195) |
 | Master gate | Charges from Spot it + Use it | 24 | 24 |
 
+Step 10: meters animate their delta with `scaleX` (the layout width is final at once) and flash an opacity "hot core". On Home, on the map and in a level list, the bars show only what is new since they were last seen (`src/uistate.js`). See `docs/effects-audit.md`.
+
 ## Expertise
 
 Tiers 1 and 2 exist now (5 are planned): **Novice** from the start, which covers mastering W0 to W2, and **Solver** once **World 3** is mastered. Each tier has an inner level from 1 to 10, shown on Home and on the map as a tier pill, "Level n", 10 segments (the current one partly filled) and 5 tier diamonds.

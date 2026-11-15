@@ -5,7 +5,7 @@
 import { $, div, reducedMotion, haptic } from './util.js';
 import { sfx } from './audio.js';
 import { cells, mistEl, toastEl } from './board.js';
-import { SPARKS } from './sparks.js';
+import { SPARKS, pointOf } from './sparks.js';
 import { MISTAKE_LIMIT, WORLD_CHARGES } from './progcfg.js';
 
 /* ---- the charge cell ------------------------------------------------------- */
@@ -44,28 +44,31 @@ export function meter(parent, { label = '', ticks = 13, big = false } = {}) {
   m._num = num;
   return m;
 }
-export function setMeter(m, earned, available, all = available, { animate = false, from = null } = {}) {
+export function setMeter(m, earned, available, all = available, { animate = false, from = null, delay = 0, dur = 520 } = {}) {
   const pct = v => (all > 0 ? Math.max(0, Math.min(100, (v / all) * 100)) : 0);
   const fill = m.querySelector('.cm-fill'), dim = m.querySelector('.cm-dim');
   dim.style.width = pct(available) + '%';
   m.setAttribute('aria-valuenow', String(earned)); m.setAttribute('aria-valuemax', String(available));
   m.dataset.earned = earned; m.dataset.available = available; m.dataset.all = all;
-  const show = v => { m._num.innerHTML = `<b>${v}</b><span>/${available}</span>`; };
-  if (animate && from != null && from !== earned && !reducedMotion()) {
-    fill.style.width = pct(from) + '%';
-    void fill.offsetWidth;
-    fill.style.transition = 'width 520ms cubic-bezier(.2,.9,.25,1)';
-    fill.style.width = pct(earned) + '%';
-    const t0 = performance.now(), d = 520;
-    const tick = now => { const t = Math.min(1, (now - t0) / d); show(Math.round(from + (earned - from) * (1 - Math.pow(1 - t, 3)))); if (t < 1) requestAnimationFrame(tick); };
-    requestAnimationFrame(tick);
-    m.classList.remove('surge'); void m.offsetWidth; m.classList.add('surge');
-    setTimeout(() => { fill.style.transition = ''; }, d + 40);
-  } else {
-    fill.style.transition = 'none'; fill.style.width = pct(earned) + '%';
-    void fill.offsetWidth; fill.style.transition = '';
-    show(earned);
-  }
+  const show = v => { m._num.innerHTML = `<b>${v}</b><span>/${available}</span>`; m._shown = v; };
+  const tickTo = v => { if (v === m._shown) return; m._shown = v; const b = m._num.firstChild; if (b) b.textContent = String(v); };
+  if (m._anim) { try { m._anim.cancel(); } catch (e) {} m._anim = null; }
+  if (m._tick) { clearTimeout(m._tick); m._tick = 0; }
+  fill.style.transition = 'none'; fill.style.width = pct(earned) + '%';
+  /* step10: the delta grows with transform only (scaleX from the old width), the layout width is final at once */
+  if (animate && from != null && from < earned && !reducedMotion() && pct(earned) > 0) {
+    const r = Math.max(0, pct(from) / pct(earned));
+    m._anim = fill.animate([{ transform: `scaleX(${r.toFixed(4)})` }, { transform: 'none' }],
+      { duration: dur, delay, easing: 'cubic-bezier(.2,.9,.25,1)', fill: 'backwards' });
+    show(from);
+    // the number counts up in a few steps (each text change costs a layout: ≤ 6 of them)
+    const steps = Math.min(6, earned - from);
+    for (let i = 1; i <= steps; i++) {
+      const v = Math.round(from + (earned - from) * (i / steps)), at = delay + dur * (1 - Math.pow(1 - i / steps, 1 / 3));
+      m._tick = setTimeout(() => tickTo(v), at);
+    }
+    try { fill.animate([{ opacity: 0.55 }, { opacity: 0 }], { duration: 700, delay, easing: 'ease-out', pseudoElement: '::after' }); } catch (e) {}
+  } else show(earned);
 }
 
 /* ---- the "charge up" sound: a rising buzz + a soft zap; step 0-2 rises in pitch ---- */
@@ -165,47 +168,80 @@ export function showResults(r, d, worldLabel) {
   const m = meter(mrow, { label: worldLabel + ' charges', ticks: 13 });
   setMeter(m, r.worldBefore, WORLD_CHARGES);
   const note = div('rc-note', box);
+  /* --- step10: the unlock beat gets its own line, reserved from the start (no layout shift) --- */
+  const unlockText = r.masteredNow != null ? `World ${r.world} mastered` : r.masterOpenedNow ? 'Master unlocked' : '';
+  const ul = unlockText ? div('rc-unlock', box) : null;
+  if (ul) ul.innerHTML = `<span class="rc-lk">${LOCK_SVG}</span><span>${unlockText}</span>`;
+  /* --- end step10 --- */
   const sources = [boardSource(d.cell), hintKeyEl(), mistEl];
   const order = [0, 1, 2].filter(k => earned[k]);
   RC.phase = 'charging'; RC.filled = 0;
+  /* step10: one beat after another — charges, then the bar, then the unlock; never overlapping */
+  const unlockBeat = () => {
+    if (!ul) { RC.phase = 'done'; return; }
+    RC.phase = 'unlock';
+    ul.classList.add('on');
+    sfx.latch(0, 2); haptic(10);
+    const lk = ul.querySelector('.rc-lk');
+    if (reducedMotion()) ul.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 160 });
+    else {
+      ul.animate([{ opacity: 0, transform: 'translate3d(0,4px,0)' }, { opacity: 1, transform: 'none' }], { duration: 220, easing: 'cubic-bezier(.2,.8,.3,1)' });
+      lk.animate([{ transform: 'none' }, { transform: 'translate3d(0,-3px,0) rotate(-14deg)', offset: 0.4 }, { transform: 'none' }], { duration: 360, easing: 'cubic-bezier(.3,1.3,.5,1)' });
+      SPARKS.crackle(lk, 6);
+    }
+    later(() => { RC.phase = 'done'; }, 400);
+  };
   const finish = () => {
     RC.phase = 'feeding';
     const fresh = [];
     for (let k = 0; k < 3; k++) if (earned[k] && k >= Math.max(0, r.prev)) fresh.push(k);   // cells above the old best feed the bar
     const n = r.delta;
+    let barEnd = 0;
     if (n > 0 && !reducedMotion()) {
       fresh.slice(0, n).forEach((k, j) => SPARKS.pulse(els[k], m.querySelector('.cm-fill'), { delay: j * 90 }));
-      later(() => setMeter(m, r.worldAfter, WORLD_CHARGES, WORLD_CHARGES, { animate: true, from: r.worldBefore }), 360);
-    } else setMeter(m, r.worldAfter, WORLD_CHARGES);
-    note.textContent = n > 0 ? `+${n} ⚡ for ${worldLabel}` + (r.masterOpenedNow ? ' · Master unlocked' : '')
-      : (r.prev >= 0 ? `Best kept: ${r.best} ⚡` : '');
+      const at = 360 + (Math.min(n, fresh.length) - 1) * 90;
+      later(() => setMeter(m, r.worldAfter, WORLD_CHARGES, WORLD_CHARGES, { animate: true, from: r.worldBefore }), at);
+      barEnd = at + 520;
+    } else { setMeter(m, r.worldAfter, WORLD_CHARGES); barEnd = n > 0 ? 200 : 0; }
+    note.textContent = n > 0 ? `+${n} ⚡ for ${worldLabel}` : (r.prev >= 0 ? `Best kept: ${r.best} ⚡` : '');
     note.classList.toggle('up', n > 0);
-    later(() => { RC.phase = 'done'; }, 900);
+    RC.barEnd = barEnd;
+    later(unlockBeat, barEnd + (ul ? 140 : 380));
   };
   const fillCell = (k, j) => {
     const cc = els[k];
     cc.classList.add('on');
     RC.filled++;
+    RC.lands.push(Math.round(performance.now()));
     sfx.charge(j);
     haptic(8);
-    if (reducedMotion()) cc.animate([{ filter: 'brightness(2.2)' }, { filter: 'none' }], { duration: 260, easing: 'ease-out' });
+    if (reducedMotion()) cc.animate([{ opacity: 0.35 }, { opacity: 1 }], { duration: 260, easing: 'ease-out' });
     else {
       cc.animate([{ transform: 'scale(.82)' }, { transform: 'scale(1.18)', offset: 0.45 }, { transform: 'scale(1)' }], { duration: 340, easing: 'cubic-bezier(.3,1.4,.5,1)' });
       SPARKS.crackle(cc, 10);
     }
   };
+  RC.lands = [];
   if (!order.length) { finish(); return; }
   if (reducedMotion()) {
-    order.forEach((k, j) => later(() => { fillCell(k, j); if (j === order.length - 1) later(finish, 200); }, 200 + j * 160));
+    order.forEach((k, j) => later(() => { fillCell(k, j); if (j === order.length - 1) later(finish, 240); }, 220 + j * 300));
     return;
   }
-  const start = 380, gap = 420;
+  /* step10: an even rhythm of landings (one every BEAT ms), each bolt launched so it lands on
+     its beat: the three charges read one by one, the rising charge sound marks each */
+  const START = 380, BEAT = 380;
+  let land = 0;
   order.forEach((k, j) => {
+    const src = sources[k], ok = src && visible(src);
+    let life = 0;
+    if (ok) { const A = pointOf(src), B = pointOf(els[k]); life = Math.min(620, 300 + Math.hypot(B.x - A.x, B.y - A.y) * 0.9); }
+    land = j === 0 ? START + life : Math.max(land + BEAT, START + j * 160 + life);
+    const launch = land - life, last = j === order.length - 1;
     later(() => {
-      const src = sources[k];
-      if (!src || !visible(src)) { fillCell(k, j); if (j === order.length - 1) later(finish, 260); return; }
+      if (!ok || !visible(src)) { fillCell(k, j); if (last) later(finish, 280); return; }
       sfx.crackle();
-      SPARKS.bolt(src, els[k], { done: () => { fillCell(k, j); if (j === order.length - 1) later(finish, 280); } });
-    }, start + j * gap);
+      SPARKS.bolt(src, els[k], { dur: life, done: () => { fillCell(k, j); if (last) later(finish, 280); } });
+    }, launch);
   });
 }
+const LOCK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="10" rx="2.2"/><path d="M8 10.5V7.8a4 4 0 0 1 8 0"/></svg>';

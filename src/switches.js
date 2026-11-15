@@ -147,3 +147,15 @@ sfx.sw = function (kind) {
   voice.down(t, p, v, kind === 'pencil' ? SILENT : PEN, kind === 'mod');
 };
 export const SWITCH_NAMES = { sa: 'Linear · thock', cherry: 'Brown tactile', lp: 'Clicky' };
+
+/* --- step10: a key-like moment away from the pad (the Home title keys settling, a
+   week-strip day latching): the player's own switch, press + release, at `gain` of
+   its volume. Same voices, same ±5 % pitch jitter (pj). Silent in the classic look. --- */
+export function swPress(gain = 0.3, kind = 'pen') {
+  if (!P.ready() || !sfx.keyStyle) return;
+  const voice = VOICES[sfx.keyStyle] || VOICES.sa;
+  const t = P.now(), p = P.pj(), v = P.jit(0.12) * gain;
+  voice.down(t, p, v, PEN, kind === 'mod');
+  voice.up(t + 0.075 * P.jit(0.2), P.pj(), v * 0.8, PEN);
+}
+/* --- end step10 --- */

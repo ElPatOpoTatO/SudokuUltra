@@ -157,6 +157,8 @@ export const FX = (() => {
   const edgeK = (c, s, h) => h / Math.max(Math.abs(c), Math.abs(s));
 
   return {
+    /* step10 (tests): particles alive right now */
+    get alive() { return alive; },
     clear() {
       for (const p of pool) p.on = false;
       alive = 0; g.clearRect(0, 0, innerWidth, innerHeight); dirty = false;
@@ -347,6 +349,22 @@ export const FX = (() => {
       return far;
     },
     /* --- end hints --- */
+
+    /* --- step10: BACKUP COPY — three accent motes carry the code from the Copy key into
+          the code box (what was copied). Returns the flight time (ms); 0 with reduced motion. --- */
+    carry(from, to) {
+      if (rm()) return 0;
+      const a = from.getBoundingClientRect(), b = to.getBoundingClientRect();
+      const sx = a.left + a.width / 2, sy = a.top + a.height * 0.4, tx = b.left + b.width / 2, ty = b.top + b.height / 2;
+      const dx = tx - sx, dy = ty - sy, L = Math.hypot(dx, dy) || 1, life = Math.min(240 + L * 0.8, 420);
+      for (let k = 0; k < 3; k++) {
+        const p = get(MOTE, sx + (k - 1) * 12, sy, life, k * 45, C.accent, 1.5);
+        p.tx = tx + (k - 1) * b.width * 0.22; p.ty = ty; p.nx = -dy / L; p.ny = dx / L; p.curve = (k - 1) * 0.12 * L; p.a = 0.9;
+      }
+      wake();
+      return life + 90;
+    },
+    /* --- end step10 --- */
 
     /* 6. Solved: one wave born at the winning cell, riding the cascade
           outward — a single short streak per cell, pointing away from it */

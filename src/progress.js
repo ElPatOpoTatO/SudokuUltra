@@ -28,6 +28,13 @@ import { initFillNotes, fillAll, fillVisible, fillKey } from './fillnotes.js';
 import { SPARKS } from './sparks.js';
 import { devMaster, devGate } from './devprog.js';
 import { WORLD_CHARGES } from './progcfg.js';
+/* --- step10: effects pass (spatial transitions, sheet springs, last-seen deltas) --- */
+import { morphReady, regSheet, settle, MORPH } from './morph.js';
+import { seenSet, seenAll, reloadSeen, reseedSeen } from './uistate.js';
+import { CFX } from './campmap.js';
+import { FXLOG } from './home.js';
+import { isClassic } from './settings.js';
+/* --- end step10 --- */
 
 let booted = false, directBoot = false;
 
@@ -39,6 +46,7 @@ function recordLast() {
   if (!c && /^w\d-l0$/.test(S.id)) ctx.alone = true;
   try { localStorage.setItem('sudoku.lastctx', JSON.stringify(ctx)); localStorage.setItem('sudoku.last', S.id); } catch (e) {}
   if (booted) markSessionPlayed();
+  /* step10: the map pulses the world key just played */ if (booted && ctx.world != null) seenSet('pulse', ctx.world);
 }
 function doContinue() {
   const lp = lastPlayed();
@@ -58,6 +66,8 @@ let sessionStarted = false;
    When the board is showing (the sheet was opened in a game), switch now. --- */
 export function resumeAfterRestore(show) {
   sessionStarted = false;
+  /* step10: a loaded (or undone) backup is not a gain: bars and counters start from it, static */
+  reseedSeen();
   forgetSessionPlayed();
   if (show) doContinue();
   const c = currentScreen();
@@ -146,7 +156,11 @@ export function initProgress() {
     onSettings: () => nav('settings'),
     onDevMenu: () => openDev()
   });
-  initCampMap({ home: () => showHome(-1), play: playLevel });
+  initCampMap({ home: () => showHome(-1), play: playLevel,
+    /* step10: what the game screen collapses into on the map / a level list */
+    gameWorld: () => { const c = campCurrent(); if (c) return c.world; const t = backTarget(); return t.to === 'world' ? t.world : null; },
+    gameLevel: () => { const c = campCurrent(); if (c) return `${c.world}.${c.k}`; const t = backTarget(); return t.to === 'world' ? `${t.world}.0` : null; }
+  });
   initUnlockUI();
   initFillNotes();
 
@@ -168,6 +182,12 @@ export function initProgress() {
   if (direct) sessionStarted = true;
   else showScreen('home', null, 0);
   booted = true;
+  /* --- step10: spatial transitions from now on; sheets and the solved toast spring from their source --- */
+  morphReady(true);
+  const toastSrc = () => { const d = getLastSolved(); const i = d && d.id === S.id && d.cell >= 0 ? d.cell : S.selected; return i >= 0 ? document.querySelector(`.cell[data-i="${i}"]`) : null; };
+  regSheet(toastEl, { source: toastSrc, skip: isClassic });
+  for (const id of ['setSheet', 'sheet', 'devSheet']) regSheet($(id), { skip: isClassic });
+  /* --- end step10 --- */
   if (!direct && /[#&]free\b/.test(location.hash)) nav('free');    // #free: Free Mode over Home
 
   if (DEBUG) {
@@ -176,7 +196,8 @@ export function initProgress() {
       getProfile, setProfile, recordSolved, emitSolved, chargesFor, nav, worldStats, totals, expertise, levelIds, levelInfo,
       isUnlocked, setDevUnlockAll, RC, MAP, SPARKS, fillAll, fillVisible, fillKey, openMap, openWorld, showHome, hideScreens,
       screen: currentScreen, lastResult: getLastResult, lastSolved: getLastSolved, devMaster, devGate,
-      hideToast, backTarget
+      hideToast, backTarget,
+      /* step10 */ settle, MORPH, seen: seenAll, reloadSeen, CFX, FXLOG
     };
   }
 }

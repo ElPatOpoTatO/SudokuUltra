@@ -36,6 +36,11 @@ import { clockHooks } from './events.js';
 import { currentScreen, onScreen } from './screens.js';
 import { onProfile } from './profile.js';
 /* --- end merge --- */
+/* --- step10: spatial transitions + effects with a source (morph.js, uistate.js) --- */
+import { regLayer, note } from './morph.js';
+import { seenGet, seenSet, fmSnapshot } from './uistate.js';
+import { swPress } from './switches.js';
+/* --- end step10 --- */
 
 const ICON = {
   back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>',
@@ -335,10 +340,10 @@ function renderQuick(animate) {
     k.setAttribute('aria-label', `${BAND_INFO[b].name}, needs ${BAND_INFO[b].needs}. ` +
       (open ? `${stats.solved} solved${stats.best != null ? ', best ' + fmtTime(stats.best) : ''}${inProgress ? ', in progress' : ''}` : `Locked: master World ${BAND_INFO[b].world}`));
     k.setAttribute('aria-disabled', String(!open));
-    // the lock opens where it sits (Challenge me just switched on)
-    if (animate && was && open && !reducedMotion()) {
+    // the lock opens where it sits (Challenge me just switched on) — step10: and closes again when it goes off
+    if (animate && was !== !open && !reducedMotion()) {
       const sh = k.querySelector('.fm-block');
-      sh.classList.remove('opening'); void sh.offsetWidth; sh.classList.add('opening');
+      sh.classList.remove('opening', 'closing'); void sh.offsetWidth; sh.classList.add(open ? 'opening' : 'closing');
     }
   }
 }
@@ -366,17 +371,23 @@ export function openFreeMode() {
   render();
   UI.sheetOpen = true;              // the keyboard goes to this screen, not the board
   clearTimeout(hideTimer);
+  const wasOpen = isOpen();
   fm.style.display = '';
   void fm.offsetWidth;              // start the entrance from the hidden state
+  /* step10: morph.js grows it out of the tapped key (its CSS transition stays off meanwhile) */
+  if (!wasOpen && note('in', 'free')) fm.style.transition = 'none';
   fm.classList.add('show');
   fm.setAttribute('aria-hidden', 'false');
   document.documentElement.classList.add('fm-open');
   scroller.scrollTop = 0;
   clearInterval(tick);
   tick = setInterval(() => { if (today() !== renderedDay) render(); else renderCountdown(); }, 20e3);
+  /* step10 */ if (!wasOpen) gainsFx();
 }
 export function closeFreeMode() {
   if (!isOpen()) return;
+  /* step10 */ if (note('out', 'free')) fm.style.transition = 'none';
+  killFx();
   fm.classList.remove('show');
   fm.setAttribute('aria-hidden', 'true');
   document.documentElement.classList.remove('fm-open');
@@ -514,6 +525,100 @@ function igniteSfx() {
 }
 
 /* =========================================================================
+   step10: the screen as a morph.js layer, and what changed since it was last seen
+   ========================================================================= */
+function anchorFromGame() {
+  if (!session) return null;
+  if (session.kind === 'quick') return bandKeys[session.band] || null;
+  if (session.day === today()) return dPlay;
+  return weekEl.querySelector(`.fm-day[data-day="${session.day}"]`) || dPlay;
+}
+const restoreT = () => { if (fm) fm.style.transition = ''; };
+function regFreeLayer() {
+  regLayer('free', {
+    el: () => fm,
+    anchor: from => (from === 'game' ? anchorFromGame() : null),
+    inDone: restoreT, outDone: restoreT,
+    fallbackIn: () => {
+      if (reducedMotion()) { const a = fm.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 120 }); a.onfinish = restoreT; return; }
+      const a = fm.animate([{ opacity: 0, transform: 'translate3d(0,10px,0)' }, { opacity: 1, transform: 'none' }], { duration: 280, easing: 'cubic-bezier(.2,.8,.25,1)' });
+      a.onfinish = a.oncancel = restoreT;
+    },
+    fallbackOut: () => {
+      const a = fm.animate([{ opacity: 1, visibility: 'visible' }, { opacity: 0, visibility: 'visible', transform: reducedMotion() ? 'none' : 'translate3d(0,10px,0)' }], { duration: 200, easing: 'ease-out' });
+      a.onfinish = a.oncancel = restoreT;
+    }
+  });
+}
+export const FMFX = { embers: 0, flips: 0, best: 0, lastDays: [] };
+let fxTimers = [];
+function killFx() { for (const t of fxTimers) clearTimeout(t); fxTimers = []; document.querySelectorAll('.fm-wembers').forEach(e => e.remove()); }
+const fxLater = (fn, ms) => fxTimers.push(setTimeout(fn, ms));
+/* Free Mode just appeared: show what the last solve(s) changed, once. */
+function gainsFx() {
+  killFx();
+  const st = getFreeModeState(), now = fmSnapshot(st, today()), old = seenGet('fm', null);
+  seenSet('fm', now);
+  if (!old) return;
+  const rm = reducedMotion();
+  // the streak rose: an ember leaves the flame for each newly solved day of the strip, which lights on arrival
+  if (now.streak > (old.streak | 0)) {
+    const seen = new Set(old.days || []);
+    const fresh = [...weekEl.querySelectorAll('.fm-day.latched, .fm-day.late')].filter(k => !seen.has(+k.dataset.day));
+    FMFX.lastDays = fresh.map(k => +k.dataset.day);
+    if (fresh.length) emberToDays(fresh, rm);
+    const n = dStreakN;
+    if (!rm) n.animate([{ transform: 'rotateX(90deg)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 300, delay: 260, easing: 'cubic-bezier(.3,1.3,.5,1)', fill: 'backwards' });
+  }
+  // a band's solved count went up: it flips in; a better best time flashes
+  for (const b of BANDS) {
+    const o = (old.bands || {})[b], c = now.bands[b], k = bandKeys[b];
+    if (!o || !c || !k || k.classList.contains('locked') || k.classList.contains('latched')) continue;
+    const bs = k.querySelectorAll('.fm-bstat b');
+    if (c.solved > o.solved && bs[0]) {
+      FMFX.flips++;
+      if (rm) bs[0].animate([{ opacity: 0.3 }, { opacity: 1 }], { duration: 240, delay: 260 });
+      else bs[0].animate([{ transform: 'perspective(80px) rotateX(-90deg)', opacity: 0 }, { transform: 'perspective(80px) rotateX(18deg)', opacity: 1, offset: 0.6 }, { transform: 'none', opacity: 1 }],
+        { duration: 340, delay: 280, easing: 'ease-out', fill: 'backwards' });
+      fxLater(() => sfx.noteTick(0, 2), 400);
+    }
+    if (c.best != null && (o.best == null || c.best < o.best) && bs[1]) {
+      FMFX.best++;
+      bs[1].animate([{ opacity: 1 }, { opacity: 0.25, offset: 0.2 }, { opacity: 1, offset: 0.45 }, { opacity: 0.25, offset: 0.65 }, { opacity: 1 }], { duration: 600, delay: 520 });
+      fxLater(() => sfx.noteTick(0, 4), 560);
+    }
+  }
+}
+function emberToDays(days, rm) {
+  FMFX.embers++;
+  days.forEach(k => k.classList.add('fx-wait'));
+  const light = (k, j) => {
+    k.classList.remove('fx-wait');
+    swPress(0.32);
+    if (!rm) k.querySelector(':scope > .cap').animate([{ transform: 'translate3d(0,2px,0)' }, { transform: 'none' }], { duration: 200, easing: 'cubic-bezier(.3,1.4,.5,1)' });
+    sfx.noteTick(0.02, j + 1);
+  };
+  if (rm) { days.forEach((k, j) => fxLater(() => light(k, j), 300 + j * 120)); return; }
+  fxLater(() => {
+    const flame = dStreak.querySelector('.fm-flame').getBoundingClientRect();
+    const fx = flame.left + flame.width / 2, fy = flame.top + flame.height * 0.5;
+    const layer = el('div', 'fm-embers fm-wembers', document.body);
+    days.forEach((k, j) => {
+      const r = k.getBoundingClientRect(), tx = r.left + r.width / 2, ty = r.top + r.height * 0.42;
+      const e = el('i', 'fm-ember', layer);
+      const cx = (fx + tx) / 2, cy = Math.min(fy, ty) - 26 - j * 4;
+      const frames = [];
+      for (let s = 0; s <= 8; s++) {
+        const t = s / 8, u = 1 - t, x = u * u * fx + 2 * u * t * cx + t * t * tx, y = u * u * fy + 2 * u * t * cy + t * t * ty;
+        frames.push({ transform: `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) scale(${(1 - 0.4 * t).toFixed(2)})`, opacity: t < 0.12 ? t / 0.12 : t > 0.88 ? (1 - t) / 0.12 : 1, offset: t });
+      }
+      const a = e.animate(frames, { duration: 440, delay: j * 90, easing: 'cubic-bezier(.4,0,.6,1)', fill: 'both' });
+      a.onfinish = () => { e.remove(); light(k, j); if (!layer.children.length) layer.remove(); };
+    });
+  }, 300);
+}
+
+/* =========================================================================
    INIT (main.js, after initCampaign so the toast / Next hooks chain behind it)
    ========================================================================= */
 /* --- step 9: a backup code was loaded / undone: forget the session without
@@ -534,6 +639,7 @@ export function initFreeMode() {
   fbMode = st.feedback;
   ruleHooks.feedback = () => (isFreeKind(S.kind) ? fbMode : 'conflicts');
   build();
+  /* step10 */ regFreeLayer();
 
   // (the game header's back control lives in progress.js: Free Mode puzzles → this screen)
   /* --- merge: the solved event's ms is our clock while we own the puzzle --- */
@@ -600,7 +706,7 @@ export function initFreeMode() {
       session: () => (session ? { ...session, elapsed: elapsed(), running: clockRunning() } : null),
       lastSolve: () => lastSolve, mastered: masteredWorlds, learned: learnedTechniques, today: () => todayInfo(now()),
       feedback: () => ruleHooks.feedback(), setFeedback, openBand, openDaily, render,
-      dailyIndex, dayNumber, dayInfo, pickPuzzle, BAND_INFO
+      dailyIndex, dayNumber, dayInfo, pickPuzzle, BAND_INFO, /* step10 */ FMFX
     };
   }
 }

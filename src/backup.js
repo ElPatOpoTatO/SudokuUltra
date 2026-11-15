@@ -28,6 +28,9 @@ import { currentScreen } from './screens.js';
 import { closeSettings } from './settingsui.js';
 import { gameHooks } from './game.js';
 import { SPARKS } from './sparks.js';
+/* --- step10: the copy confirmation travels from the Copy key to the code box --- */
+import { FX } from './particles.js';
+/* --- end step10 --- */
 import { makeFormat, messageFor } from './tokenformat.js';
 import { puzzleTag } from './tokencodec.js';
 
@@ -264,6 +267,22 @@ function loadEffect() {
   const life = SPARKS.bolt(lk, ic, { bow: 0.18, done: land });
   setTimeout(() => document.body.classList.remove('bk-fx'), life + 520);
 }
+/* step10: Copy → a short pulse leaves the Copy key and lands on the code box, which
+   acknowledges with a ring (purpose: confirms exactly what was copied). */
+export const BKFX = { copies: 0 };
+let ackEl = null;
+function copyFx() {
+  BKFX.copies++;
+  if (!ackEl) { ackEl = div('bk-ack', sheetEl); ackEl.setAttribute('aria-hidden', 'true'); }
+  Object.assign(ackEl.style, { left: tokOut.offsetLeft + 'px', top: tokOut.offsetTop + 'px', width: tokOut.offsetWidth + 'px', height: tokOut.offsetHeight + 'px' });
+  document.body.classList.add('fx-top');
+  const flight = FX.carry($('copyKey'), tokOut);
+  setTimeout(() => {
+    ackEl.animate([{ opacity: 0 }, { opacity: 1, offset: 0.2 }, { opacity: 0 }], { duration: 520, easing: 'ease-out' });
+    sfx.noteTick(0, 3);
+  }, flight);
+  setTimeout(() => document.body.classList.remove('fx-top'), flight + 560);
+}
 function shake(el) {
   if (reducedMotion()) return;
   el.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-5px)' }, { transform: 'translateX(4px)' }, { transform: 'translateX(-2px)' }, { transform: 'translateX(0)' }],
@@ -323,7 +342,7 @@ export function initBackup() {
   // Clipboard must run inside a click handler, so Copy listens to click too
   $('copyKey').addEventListener('pointerdown', e => { e.preventDefault(); sfx.unlock(); pressStart('p' + e.pointerId, $('copyKey'), () => sfx.mod(), null); });
   $('copyKey').addEventListener('click', async () => {
-    try { await navigator.clipboard.writeText(tokOut.value); say('Copied. Paste it in the other browser or device.', 'ok'); }
+    try { await navigator.clipboard.writeText(tokOut.value); say('Copied. Paste it in the other browser or device.', 'ok'); copyFx(); }
     catch (e) { tokOut.focus(); tokOut.select(); say('Copy was blocked here. The code is selected, copy it manually.', 'bad'); }
   });
   bindPress($('loadKey'), doLoad);

@@ -14,7 +14,10 @@ import { registerScreen, showScreen } from './screens.js';
 import { worldStats, totals, isWorldOpen, isMastered, worldCount, takePendingBuild, getProfile } from './profile.js';
 import { meter, setMeter, pips, BOLT_SVG } from './chargeui.js';
 import { SPARKS } from './sparks.js';
-import { ICON, screenBtn, expertiseEl } from './home.js';
+import { ICON, screenBtn, expertiseEl, paintGains } from './home.js';
+/* --- step10: deltas since last seen (uistate.js) --- */
+import { seenGet, seenSet } from './uistate.js';
+/* --- end step10 --- */
 import { SOCKETS, WORLD_INFO, WORLD_CHARGES, MASTER_GATE } from './progcfg.js';
 
 let mapEl, wEl, kbdEl, xpEl, totEl, nextEl, sockets = [], cb = null;
@@ -72,7 +75,11 @@ function buildMap() {
   nextEl = div('cmap-next', inner);
   const cap = div('cmap-cap', inner);
   cap.textContent = `Master a world to set its keycap. ${SOCKETS - worldCount()} more sockets to fill.`;
-  registerScreen('campaign', mapEl, { onShow: paintMap, back: () => cb.home() });
+  registerScreen('campaign', mapEl, {
+    onShow: () => { paintMap(); pulseLast(); }, back: () => cb.home(),
+    /* step10: back from a world's list (or the game) collapses into that world's key */
+    anchor: from => { const w = from === 'world' ? curWorld : cb.gameWorld ? cb.gameWorld() : null; const s = w != null ? sockets[w] : null; return s && s.state !== 'locked' && s.state !== 'future' ? s.key : null; }
+  });
 }
 function tapSocket(s) {
   if (s.state === 'built' || s.state === 'open') { sfx.pen(); openWorld(s.w, 1); return; }
@@ -90,9 +97,7 @@ function flashNext(msg) {
 }
 export function paintMap() {
   if (!mapEl) return;
-  xpEl._paint();
-  const t = totals();
-  setMeter(totEl, t.earned, t.available, t.all);
+  /* --- step10 --- */ paintGains(xpEl, totEl, { delay: 280 }); /* --- end step10 --- */
   const pending = new Set(getProfile().flags.pendingBuild);
   for (const s of sockets) paintSocket(s, pending.has(s.w) ? 'open' : socketState(s.w));
   MAP.built = sockets.filter(s => s.state === 'built').map(s => s.w);
@@ -104,7 +109,11 @@ export function paintMap() {
   const card = div('wcard', nextEl); card.setAttribute('role', 'button'); card.tabIndex = 0;
   card.innerHTML = `<div class="wc-t"><b>World ${w}</b><span>${WORLD_INFO[w].name}</span></div><span class="wc-go">${st.mastered ? 'Replay' : 'Open'} <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 5 7 7-7 7"/></svg></span>`;
   const m = meter(card, { label: `World ${w} charges`, ticks: 13 });
-  setMeter(m, st.earned, WORLD_CHARGES);
+  /* --- step10: the next world's card shows its charge delta once --- */
+  const wc0 = seenGet('wc.' + w, st.earned);
+  setMeter(m, st.earned, WORLD_CHARGES, WORLD_CHARGES, wc0 < st.earned ? { animate: true, from: wc0, delay: 320 } : {});
+  seenSet('wc.' + w, st.earned);
+  /* --- end step10 --- */
   card.addEventListener('click', () => { sfx.pen(); openWorld(w, 1); });
   div('cmap-msg', nextEl);
 }
@@ -162,7 +171,11 @@ function buildWorld() {
   const mrow = div('cw-meter', inner);
   wMeter = meter(mrow, { label: 'World charges', ticks: 13, big: true });
   wBody = div('cw-body kp', inner);
-  registerScreen('world', wEl, { onShow: w => paintWorld(w), back: () => openMap(-1) });
+  registerScreen('world', wEl, {
+    onShow: w => { paintWorld(w); enterWorldFx(w); }, back: () => openMap(-1),
+    /* step10: back from a level collapses into its tile */
+    anchor: from => { const id = from === 'game' && cb.gameLevel ? cb.gameLevel() : null; return id ? wBody.querySelector(`[data-level="${id}"]`) : null; }
+  });
 }
 function tile(parent, w, lv, cls, label, sub) {
   const k = makeKey('digit lt ' + cls, `<span class="lg">${label}</span>${sub ? `<span class="lts">${sub}</span>` : ''}`, parent);
@@ -221,6 +234,116 @@ export function paintWorld(w) {
     setMeter(gm, st.gate, MASTER_GATE, MASTER_GATE);
     k.addEventListener('click', () => { sfx.blocked(); haptic(10); if (!reducedMotion()) k.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-4px)' }, { transform: 'translateX(4px)' }, { transform: 'translateX(0)' }], { duration: 200 }); });
   }
+}
+
+/* ---- step10: effects with a source and a purpose ------------------------------------ */
+export const CFX = { pulse: 0, stagger: 0, pips: 0, bar: 0, master: 0, lastPips: [] };
+/** The world key just played pulses once on arrival (purpose: you are here). */
+function pulseLast() {
+  const w = seenGet('pulse', null);
+  if (w == null) return;
+  seenSet('pulse', null);
+  const s = sockets[w];
+  if (!s || s.state === 'locked' || s.state === 'future') return;
+  CFX.pulse++;
+  const cap = s.key.querySelector(':scope > .cap'), sw = s.key.querySelector(':scope > .sw');
+  const target = s.state === 'built' ? cap : sw;
+  if (!target) return;
+  setTimeout(() => {
+    if (!s.key.isConnected) return;
+    if (reducedMotion()) { target.animate([{ opacity: 1 }, { opacity: 0.55 }, { opacity: 1 }], { duration: 360 }); return; }
+    target.animate([{ transform: 'none' }, { transform: 'translate3d(0,-3px,0) scale(1.06)', offset: 0.4 }, { transform: 'none' }], { duration: 420, easing: 'cubic-bezier(.3,1.3,.5,1)' });
+    const r = s.key.getBoundingClientRect();
+    if (!reducedMotion()) SPARKS.crackle({ x: r.left + r.width / 2, y: r.top + 4 }, 4);
+  }, 300);
+}
+/** The level list arrives: the tiles settle in a quick stagger (≤ 200 ms in all), then
+    what changed since this world was last seen fills: pips, the world bar, the gate
+    meter, and the Master lock pops off when the gate was crossed. */
+function enterWorldFx(w) {
+  const rm = reducedMotion();
+  const keys = [...wBody.querySelectorAll('.key, .mlock')];
+  if (!rm) {
+    CFX.stagger++;
+    const n = keys.length, step = n > 1 ? 80 / (n - 1) : 0;
+    keys.forEach((k, j) => {
+      const c = k.classList.contains('key') ? k.querySelector(':scope > .cap') : k;
+      c.animate([{ transform: 'translate3d(0,6px,0)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 120, delay: Math.round(j * step), easing: 'cubic-bezier(.2,.8,.3,1)', fill: 'backwards' });
+    });
+  }
+  const st = worldStats(w);
+  let t = 300;
+  // pips: only the cells above what was last seen, tile by tile (one style change and one short
+  // composited pop per tile: few layers, few main-thread frames)
+  const groups = [];
+  let nPips = 0;
+  for (const lv of st.levels) {
+    if (lv.k === 0) continue;
+    const old = seenGet('lv.' + lv.id, -1), now = lv.best;
+    if (now > Math.max(0, old)) {
+      const tile = wBody.querySelector(`[data-level="${w}.${lv.k}"]`);
+      const cc = tile ? [...tile.querySelectorAll('.pips3 .cc')] : [];
+      const g = [];
+      for (let k = Math.max(0, old); k < now; k++) if (cc[k]) g.push(cc[k]);
+      if (g.length) { groups.push({ pips: g, box: tile.querySelector('.pips3') }); nPips += g.length; }
+    }
+    if (lv.best >= 0) seenSet('lv.' + lv.id, lv.best);
+  }
+  CFX.lastPips = nPips;
+  if (groups.length) CFX.pips++;
+  const gstep = groups.length ? Math.min(120, 600 / groups.length) : 0;   // ≤ 600 ms in all
+  groups.forEach((g, j) => {
+    g.pips.forEach(c => c.classList.add('fx-wait'));
+    setTimeout(() => {
+      g.pips.forEach(c => { c.classList.add('fx-snap'); c.classList.remove('fx-wait'); });
+      if (!g.box.isConnected) return;
+      if (!rm) g.box.animate([{ transform: 'scale(.82)' }, { transform: 'scale(1.16)', offset: 0.45 }, { transform: 'none' }], { duration: 240, easing: 'cubic-bezier(.3,1.3,.5,1)' });
+      else g.box.animate([{ opacity: 0.4 }, { opacity: 1 }], { duration: 160 });
+      sfx.noteTick(0, j);
+    }, t + j * gstep);
+  });
+  if (groups.length) t += groups.length * gstep + 60;
+  // the world bar and the gate meter: the delta only
+  const w0 = seenGet('w.' + w, st.earned);
+  if (w0 < st.earned && !rm) { setMeter(wMeter, st.earned, WORLD_CHARGES, WORLD_CHARGES, { animate: true, from: w0, delay: t }); CFX.bar++; t += 520; }
+  seenSet('w.' + w, st.earned);
+  const g0 = seenGet('gate.' + w, st.gate), gm = wBody.querySelector('.mlock .cm');
+  if (gm && g0 < st.gate && !rm) setMeter(gm, st.gate, MASTER_GATE, MASTER_GATE, { animate: true, from: g0, delay: t - 520 > 300 ? t - 520 : t });
+  seenSet('gate.' + w, st.gate);
+  // the Master gate crossed since last seen: the lock pops off the tile
+  const mo = seenGet('mo.' + w, st.masterOpen);
+  if (st.masterOpen && !mo && !st.mastered) popMasterLock(w, t + 80);
+  seenSet('mo.' + w, st.masterOpen);
+}
+function popMasterLock(w, at) {
+  const tile = wBody.querySelector(`[data-level="${w}.13"]`);
+  if (!tile) return;
+  CFX.master++;
+  const cap = tile.querySelector(':scope > .cap');
+  tile.classList.add('fx-unlit');
+  const lock = document.createElement('span');
+  lock.className = 'm-pop'; lock.innerHTML = ICON.lock; lock.setAttribute('aria-hidden', 'true');
+  cap.appendChild(lock);
+  setTimeout(() => {
+    if (!tile.isConnected) return;
+    sfx.latch(0, 1); haptic(10);
+    tile.classList.remove('fx-unlit');
+    if (reducedMotion()) {
+      lock.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200, fill: 'forwards' }).onfinish = () => lock.remove();
+      cap.animate([{ opacity: 0.6 }, { opacity: 1 }], { duration: 200 });
+      return;
+    }
+    // pops up off the tile, tumbles, falls with gravity (a parabola), fades out low
+    const frames = [], vx = 0.05 + Math.random() * 0.03, vy = -0.32, g = 0.0016, D = 560;
+    for (let i = 0; i <= 10; i++) {
+      const tt = (i / 10) * D, x = vx * tt, y = vy * tt + 0.5 * g * tt * tt;
+      frames.push({ transform: `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) rotate(${(i * 7).toFixed(0)}deg)`, opacity: i < 7 ? 1 : 1 - (i - 6) / 4 });
+    }
+    lock.animate(frames, { duration: D, easing: 'linear', fill: 'forwards' }).onfinish = () => lock.remove();
+    cap.animate([{ transform: 'translate3d(0,2px,0)' }, { transform: 'none' }], { duration: 220, easing: 'cubic-bezier(.3,1.4,.5,1)' });
+    const r = cap.getBoundingClientRect();
+    SPARKS.crackle({ x: r.left + 26, y: r.top + r.height / 2 }, 6);
+  }, at);
 }
 
 /* ---- public ------------------------------------------------------------------- */

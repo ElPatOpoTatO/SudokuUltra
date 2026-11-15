@@ -50,3 +50,5 @@ New modules with no prototype counterpart:
 | `game.js` | start / switch puzzles (free play, Spot it), per-id autosave restore, Next |
 | `devmenu.js` | temporary DEV sheet (puzzle picker, daily, token) |
 | `main.js` | boot |
+| `morph.js` | step 10: spatial screen transitions (expand from the tapped key / collapse into its anchor / crossfade), sheet + toast springs, the swoosh sounds |
+| `uistate.js` | step 10: "last seen" values (`sudoku.ui.v1`) so bars and counters animate only the delta, once |
