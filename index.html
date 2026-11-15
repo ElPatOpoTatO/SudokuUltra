@@ -1758,12 +1758,17 @@ const __m_audio = (() => {
 const engine = (() => {
   let ctx = null, master = null, noise = null, muted = false;
 
+  // iOS 17+ audio session: 'ambient' = game sound effects that MIX with music or
+  // podcasts already playing (they keep playing) and follow the ringer switch.
+  // ('playback' would pause the user's music, which is wrong for a game.)
+  // Set it at load, before any audio exists, so iOS never picks another type.
+  try { if (navigator.audioSession) navigator.audioSession.type = 'ambient'; } catch (e) {}
+
   function unlock() {
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
+    if (muted) return;   // sound off: never create or wake the audio context
     if (!ctx) {
-      // iOS 17+: let Web Audio play even with the ringer switch on silent
-      try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
       ctx = new AC({ latencyHint: 'interactive' });
       const comp = ctx.createDynamicsCompressor();
       comp.threshold.value = -12; comp.knee.value = 10; comp.ratio.value = 4;
@@ -1826,7 +1831,11 @@ const engine = (() => {
     /* --- end keys --- */
     setMuted(m) {
       muted = m;
-      if (master) master.gain.setTargetAtTime(m ? 0 : 0.9, ctx.currentTime, 0.01);
+      if (!ctx) return;   // created later, on the first tap with sound on
+      master.gain.setTargetAtTime(m ? 0 : 0.9, ctx.currentTime, 0.01);
+      // sound off: put the audio context to sleep so the game holds no audio at all;
+      // sound on: wake it (also happens on the next tap via unlock)
+      try { if (m) setTimeout(() => { if (muted && ctx.state === 'running') ctx.suspend(); }, 60); else if (ctx.state !== 'running') ctx.resume(); } catch (e) {}
     },
 
     /* Clicky switch: sharp high transient + bandpassed leaf click + low thock,
